@@ -37,3 +37,6 @@ next-env.d.ts
 tsconfig.tsbuildinfo
 
 /src/generated/prisma
+
+# clerk configuration (can include secrets)
+/.clerk/
