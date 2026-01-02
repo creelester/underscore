@@ -16,6 +16,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.2",
     "@clerk/nextjs": "^6.36.5",
     "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "^6.18.0",
