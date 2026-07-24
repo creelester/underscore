@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+
+# Expo
+app/.expo/
+app/ios/
+app/android/
+app/web-build/
+
+# Prisma
+server/prisma/migrations/dev.db
+
+# macOS
+.DS_Store
