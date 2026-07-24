@@ -9,6 +9,7 @@
   "scripts": {
     "dev:server": "bun run --filter server dev",
     "dev:app": "bun run --filter app start",
+    "dev:ios": "bun run --filter app ios",
     "lint": "bun run --filter '*' lint",
     "typecheck": "bun run --filter '*' typecheck"
   },
