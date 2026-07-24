@@ -11,7 +11,12 @@ export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL,
   basePath: "/api/auth",
   secret: env.BETTER_AUTH_SECRET,
-  trustedOrigins: [`${env.APP_SCHEME}://`, env.APP_ORIGIN],
+  trustedOrigins: [
+    `${env.APP_SCHEME}://`,
+    env.APP_ORIGIN,
+    // Expo Go (not a custom dev client) redirects via exp://<lan-ip>:8081 in development.
+    ...(process.env.NODE_ENV !== "production" ? ["exp://**"] : []),
+  ],
   plugins: [expo()],
   emailAndPassword: {
     enabled: true,
