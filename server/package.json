@@ -21,7 +21,6 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@better-auth/cli": "^1.4.21",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/node": "^22.7.4",
