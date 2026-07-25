@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Button, StyleSheet, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { SocialSignInButtons } from '@/components/social-sign-in-buttons';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { authClient } from '@/lib/auth-client';
@@ -21,17 +22,6 @@ export default function LoginScreen() {
       return;
     }
     router.replace('/');
-  };
-
-  const handleSocialLogin = async (provider: 'google' | 'spotify') => {
-    setError(null);
-    const { error: signInError } = await authClient.signIn.social({
-      provider,
-      callbackURL: '/',
-    });
-    if (signInError) {
-      setError(signInError.message ?? `Failed to sign in with ${provider}`);
-    }
   };
 
   return (
@@ -58,8 +48,7 @@ export default function LoginScreen() {
         {error && <ThemedText themeColor="text">{error}</ThemedText>}
 
         <Button title="Log in" onPress={handleEmailLogin} />
-        <Button title="Continue with Google" onPress={() => handleSocialLogin('google')} />
-        <Button title="Continue with Spotify" onPress={() => handleSocialLogin('spotify')} />
+        <SocialSignInButtons onError={setError} />
 
         <Link href="/sign-up">
           <ThemedText type="link">Don&apos;t have an account? Sign up</ThemedText>

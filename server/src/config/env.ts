@@ -13,6 +13,8 @@ const EnvSchema = z.object({
   ANTHROPIC_API_KEY: z.string().optional(),
   GOOGLE_BOOKS_API_KEY: z.string().optional(),
   APP_ORIGIN: z.string().default("http://localhost:8081"),
+  SEED_USER_EMAIL: z.string().default("test@test.com"),
+  SEED_USER_PASSWORD: z.string().default("password123!"),
 });
 
 export const env = EnvSchema.parse(process.env);

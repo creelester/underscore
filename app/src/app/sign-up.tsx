@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Button, StyleSheet, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { SocialSignInButtons } from '@/components/social-sign-in-buttons';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { authClient } from '@/lib/auth-client';
@@ -49,6 +50,7 @@ export default function SignUpScreen() {
         {error && <ThemedText themeColor="text">{error}</ThemedText>}
 
         <Button title="Sign up" onPress={handleSignUp} />
+        <SocialSignInButtons onError={setError} />
 
         <Link href="/login">
           <ThemedText type="link">Already have an account? Log in</ThemedText>
