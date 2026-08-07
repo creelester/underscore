@@ -1,5 +1,6 @@
-import { auth } from "../src/lib/auth";
-import { env } from "../src/config/env";
+import process from 'process';
+import { auth } from '../src/lib/auth';
+import { env } from '../src/config/env';
 
 async function main() {
   const email = env.SEED_USER_EMAIL;
@@ -18,7 +19,7 @@ async function main() {
     body: {
       email,
       password,
-      name: "Test User",
+      name: 'Test User',
     },
   });
 
