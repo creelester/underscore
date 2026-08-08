@@ -39,6 +39,7 @@ cp app/.env.example app/.env.local
 ```bash
 bun run dev:server   # Express API on :3000
 bun run dev:app      # Expo dev server
+bun run dev          # Runs both client and server concurrently
 ```
 
 Open the app in iOS Simulator, Android emulator, or Expo Go.
