@@ -85,6 +85,26 @@ Handled entirely by Better Auth's mounted handler (`toNodeHandler(auth)`). Not h
 | `POST /api/auth/sign-out`                               | session-required          | —                                           | `{ success: true }`                                                    | `401 UNAUTHORIZED`                      |
 | `POST /api/auth/link-social`                            | session-required          | `{ provider: "spotify", scopes: string[] }` | redirect to provider OAuth (upgrade scopes on existing linked account) | `401 UNAUTHORIZED`                      |
 
+Example bodies — `POST /api/auth/sign-up/email`:
+
+```json
+{ "email": "reader@example.com", "password": "hunter2hunter2", "name": "Ada" }
+```
+
+`POST /api/auth/sign-in/email`:
+
+```json
+{ "email": "reader@example.com", "password": "hunter2hunter2" }
+```
+
+`POST /api/auth/link-social`:
+
+```json
+{ "provider": "spotify", "scopes": ["playlist-modify-private", "playlist-modify-public"] }
+```
+
+`POST /api/auth/sign-out` takes no body.
+
 ---
 
 ## Books
@@ -101,6 +121,20 @@ Handled entirely by Better Auth's mounted handler (`toNodeHandler(auth)`). Not h
 | ------------------------ | ---------------- | ------------------------------------------------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | `POST /api/mood-profile` | session-required | `{ bookId: string }` **or** `{ manualGenre: string }` (exactly one) | `{ profile: MoodProfile }` | `400 INVALID_INPUT` (neither/both fields set), `404 BOOK_NOT_FOUND`, `502 UPSTREAM_UNAVAILABLE` (Claude down or returned unparseable output) |
 
+Example bodies — book path:
+
+```json
+{ "bookId": "clx8k2p0a0001qz7v3n4m5b6c" }
+```
+
+Manual-genre fallback path:
+
+```json
+{ "manualGenre": "gothic horror" }
+```
+
+Sending both keys, or neither, is a `400 INVALID_INPUT` — the zod schema in `/packages/shared` refines on exactly one being present.
+
 Notes: `manualGenre` path never calls Claude — profile is constructed directly from the user's text (`genre = [manualGenre]`, `pacing = "steady"`, `mood = []`, `summary = ""`).
 
 ---
@@ -110,6 +144,18 @@ Notes: `manualGenre` path never calls Claude — profile is constructed directly
 | Endpoint                       | Auth             | Request                                               | Response (200)                                     | Errors                                                                                                |
 | ------------------------------ | ---------------- | ----------------------------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | `POST /api/playlists/generate` | session-required | `{ bookId: string }` **or** `{ manualGenre: string }` | `Playlist` (auto-saved; `spotifyPlaylistId: null`) | `400 INVALID_INPUT`, `404 BOOK_NOT_FOUND`, `502 UPSTREAM_UNAVAILABLE` (Claude or Spotify search down) |
+
+Example bodies — identical shape to `POST /api/mood-profile`, book path:
+
+```json
+{ "bookId": "clx8k2p0a0001qz7v3n4m5b6c" }
+```
+
+Manual-genre fallback path:
+
+```json
+{ "manualGenre": "gothic horror" }
+```
 
 Side effects: runs Mood Engine (if `bookId`) → Playlist Builder (Claude, ~30 anchors) → Spotify app-level resolution (regenerates once if &lt;8 resolve) → persists `Playlist` + `PlaylistTrack` + upserted `Track` rows in a single transaction. No partial `Playlist` row is ever left on failure.
 
@@ -130,6 +176,8 @@ Side effects: runs Mood Engine (if `bookId`) → Playlist Builder (Claude, ~30 a
 | ---------------------------------------- | ---------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `GET /api/music-connector/status`        | session-required | —                  | `{ linked: boolean, provider: "spotify" }`                                                                                                            | —                                                                                                                                                                                                                               |
 | `POST /api/playlists/:playlistId/export` | session-required | path: `playlistId` | `{ spotifyPlaylistId: string, webUrl: string, deepLinkUri: string }` (idempotent — returns the existing export if `spotifyPlaylistId` is already set) | `404 PLAYLIST_NOT_FOUND`, `403 FORBIDDEN` (not owner), `409 SPOTIFY_NOT_LINKED` (client should prompt `link-social`), `401 SPOTIFY_TOKEN_EXPIRED` (client should prompt re-link), `502 UPSTREAM_UNAVAILABLE` (Spotify API down) |
+
+`POST /api/playlists/:playlistId/export` takes no body — the playlist is identified by the path param alone.
 
 ---
 
