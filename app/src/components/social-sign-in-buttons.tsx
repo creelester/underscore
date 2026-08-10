@@ -1,5 +1,5 @@
-import { Button } from 'react-native';
-
+import { Button } from '@/components/ui/button';
+import { Text } from '@/components/ui/text';
 import { authClient } from '@/lib/auth-client';
 
 const PROVIDERS = [
@@ -25,7 +25,9 @@ export function SocialSignInButtons({ onError }: SocialSignInButtonsProps) {
   return (
     <>
       {PROVIDERS.map(({ id, label }) => (
-        <Button key={id} title={label} onPress={() => handleSocialLogin(id)} />
+        <Button key={id} variant="secondary" size="lg" onPress={() => handleSocialLogin(id)}>
+          <Text>{label}</Text>
+        </Button>
       ))}
     </>
   );

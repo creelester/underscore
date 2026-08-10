@@ -1,0 +1,22 @@
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Fredoka:wght@400;500;600;700&family=Baloo+2:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Work+Sans:wght@400;500;600&family=Karla:wght@400;500;600&family=Raleway:wght@400;500;600;700&family=Special+Elite&family=Courier+Prime:wght@400;700&family=Spectral:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+:root{
+/* confirmed default: Quicksand headings + Inter body — rounded, echoes the logo's soft lettering */
+--font-display:'Quicksand',ui-rounded,'Fredoka',sans-serif;
+--font-display-alt-1:'Fredoka',ui-rounded,sans-serif;
+--font-display-alt-2:'Special Elite',ui-serif,serif;
+--font-body:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+--font-body-alt-1:'Raleway',-apple-system,sans-serif;
+--font-body-alt-2:'Karla',-apple-system,sans-serif;
+--font-mono:'Andale Mono','Space Mono',ui-monospace,monospace;
+
+--text-display-xl:600 56px/1.05 var(--font-display);
+--text-display-lg:600 40px/1.08 var(--font-display);
+--text-display-md:600 28px/1.15 var(--font-display);
+--text-title:600 22px/1.25 var(--font-display);
+--text-body-lg:400 18px/1.5 var(--font-body);
+--text-body:400 16px/1.55 var(--font-body);
+--text-body-sm:400 14px/1.5 var(--font-body);
+--text-eyebrow:700 12px/1.4 var(--font-mono);
+--eyebrow-tracking:.14em;
+}

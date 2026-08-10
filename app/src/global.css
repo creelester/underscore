@@ -1,9 +1,99 @@
-:root {
-  --font-display:
-    Spline Sans, Inter, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji,
-    Segoe UI Symbol, Noto Color Emoji;
-  --font-mono:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
-  --font-rounded: 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif;
-  --font-serif: Georgia, 'Times New Roman', serif;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ---- base palette (theme-independent) ---- */
+    --plum-950: 275 60% 3.9%;
+    --plum-900: 273 50% 7.8%;
+    --plum-800: 275.6 47.4% 11.2%;
+    --plum-700: 277.1 43.6% 15.3%;
+    --plum-600: 263.3 54.5% 25.9%;
+    --lilac-300: 278.3 50% 77.3%;
+    --lilac-200: 278.2 52.4% 87.6%;
+    --orchid-500: 320.6 61.5% 58.2%;
+    --magenta-600: 321.9 100% 37.6%;
+    --pink-500: 328.9 100% 50%;
+    --rose-500: 337.6 90.2% 48.2%;
+    --coral-500: 13.2 79.1% 60.6%;
+    --orange-500: 5.7 100% 62.7%;
+    --orange-400: 28 100% 56.3%;
+    --amber-400: 38.1 100% 50%;
+    --peel-400: 45.4 100% 48.2%;
+    --yellow-300: 56.5 93.3% 70.8%;
+    --seafoam-300: 161.8 50% 78%;
+    --indigo-700: 226.4 100% 29.4%;
+
+    /* ---- light theme ---- */
+    --background: 33.7 100% 96.9%;
+    --foreground: 276.5 60.5% 14.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 276.5 60.5% 14.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 276.5 60.5% 14.9%;
+    --primary: 328.9 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 276.5 60.5% 14.9%;
+    --secondary-alpha: 0.1;
+    --secondary-foreground: 276.5 60.5% 14.9%;
+    --muted: 31 87.9% 93.5%;
+    --muted-foreground: 270 20.6% 42%;
+    --accent: 33.7 100% 42.5%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 337.6 90.2% 48.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 276.5 60.5% 14.9%;
+    --border-alpha: 0.12;
+    --border-strong: 276.5 60.5% 14.9%;
+    --border-strong-alpha: 0.22;
+    --input: 276.5 60.5% 14.9%;
+    --input-alpha: 0.12;
+    --ring: 328.9 100% 50%;
+
+    /* Under Score names, kept alongside the shadcn ones */
+    --surface: 0 0% 100%;
+    --surface-2: 31 87.9% 93.5%;
+    --surface-raised: 0 0% 100%;
+    --ink: 276.5 60.5% 14.9%;
+    --ink-muted: 270 20.6% 42%;
+    --ink-faint: 272.6 17.4% 60.6%;
+
+    --radius: 20px;
+  }
+
+  .dark:root {
+    /* ---- dark theme (the product default; see lib/theme.ts) ---- */
+    --background: 275 60% 3.9%;
+    --foreground: 282 55.6% 96.5%;
+    --card: 273 50% 7.8%;
+    --card-foreground: 282 55.6% 96.5%;
+    --popover: 273 50% 7.8%;
+    --popover-foreground: 282 55.6% 96.5%;
+    --primary: 328.9 100% 50%;
+    --primary-foreground: 322.9 77.8% 5.3%;
+    --secondary: 0 0% 100%;
+    --secondary-alpha: 0.12;
+    --secondary-foreground: 282 55.6% 96.5%;
+    --muted: 275.6 47.4% 11.2%;
+    --muted-foreground: 272.6 25.5% 73.1%;
+    --accent: 38.1 100% 50%;
+    --accent-foreground: 322.9 77.8% 5.3%;
+    --destructive: 337.6 90.2% 48.2%;
+    --destructive-foreground: 282 55.6% 96.5%;
+    --border: 0 0% 100%;
+    --border-alpha: 0.1;
+    --border-strong: 0 0% 100%;
+    --border-strong-alpha: 0.18;
+    --input: 0 0% 100%;
+    --input-alpha: 0.1;
+    --ring: 328.9 100% 50%;
+
+    --surface: 273 50% 7.8%;
+    --surface-2: 275.6 47.4% 11.2%;
+    --surface-raised: 277.1 43.6% 15.3%;
+    --ink: 282 55.6% 96.5%;
+    --ink-muted: 272.6 25.5% 73.1%;
+    --ink-faint: 274.3 14.6% 53.1%;
+  }
 }

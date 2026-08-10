@@ -1,77 +1,77 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, router } from 'expo-router';
-import { useState } from 'react';
-import { Button, StyleSheet, TextInput } from 'react-native';
+import { useForm } from 'react-hook-form';
+import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ControlledInput } from '@/components/controlled-input';
 import { SocialSignInButtons } from '@/components/social-sign-in-buttons';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { Button } from '@/components/ui/button';
+import { Text } from '@/components/ui/text';
 import { authClient } from '@/lib/auth-client';
-import { Spacing } from '@/constants/theme';
+import { loginSchema, type LoginValues } from '@/lib/auth-schemas';
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const {
+    control,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: '', password: '' },
+  });
 
-  const handleEmailLogin = async () => {
-    setError(null);
+  const onSubmit = async ({ email, password }: LoginValues) => {
     const { error: signInError } = await authClient.signIn.email({ email, password });
     if (signInError) {
-      setError(signInError.message ?? 'Failed to sign in');
+      setError('root', { message: signInError.message ?? 'Failed to sign in' });
       return;
     }
     router.replace('/');
   };
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="title">Underscore</ThemedText>
-        <ThemedText type="subtitle">Log in</ThemedText>
+    <View className="bg-background flex-1">
+      <SafeAreaView className="px-screen flex-1 justify-center gap-4">
+        <Text className="text-ink-faint font-mono text-eyebrow tracking-eyebrow uppercase">
+          Under Score
+        </Text>
+        <Text className="text-foreground font-display text-display-md tracking-tight mb-2">
+          Welcome back.
+        </Text>
 
-        <TextInput
-          style={styles.input}
+        <ControlledInput
+          control={control}
+          name="email"
           placeholder="Email"
           autoCapitalize="none"
+          autoComplete="email"
           keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
         />
-        <TextInput
-          style={styles.input}
+        <ControlledInput
+          control={control}
+          name="password"
           placeholder="Password"
+          autoComplete="current-password"
           secureTextEntry
-          value={password}
-          onChangeText={setPassword}
+          onSubmitEditing={handleSubmit(onSubmit)}
         />
-        {error && <ThemedText themeColor="text">{error}</ThemedText>}
+        {errors.root && (
+          <Text className="text-destructive font-body text-body-sm">{errors.root.message}</Text>
+        )}
 
-        <Button title="Log in" onPress={handleEmailLogin} />
-        <SocialSignInButtons onError={setError} />
+        <Button size="lg" disabled={isSubmitting} onPress={handleSubmit(onSubmit)}>
+          <Text>Log in</Text>
+        </Button>
+        <SocialSignInButtons onError={(message) => setError('root', { message })} />
 
-        <Link href="/sign-up">
-          <ThemedText type="link">Don&apos;t have an account? Sign up</ThemedText>
+        <Link href="/sign-up" className="mt-2">
+          <Text className="text-ink-muted font-body text-body-sm">
+            Don&apos;t have an account? <Text className="text-primary">Sign up</Text>
+          </Text>
         </Link>
       </SafeAreaView>
-    </ThemedView>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.three,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: Spacing.two,
-  },
-});

@@ -1,79 +1,78 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, router } from 'expo-router';
-import { useState } from 'react';
-import { Button, StyleSheet, TextInput } from 'react-native';
+import { useForm } from 'react-hook-form';
+import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ControlledInput } from '@/components/controlled-input';
 import { SocialSignInButtons } from '@/components/social-sign-in-buttons';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { Button } from '@/components/ui/button';
+import { Text } from '@/components/ui/text';
 import { authClient } from '@/lib/auth-client';
-import { Spacing } from '@/constants/theme';
+import { signUpSchema, type SignUpValues } from '@/lib/auth-schemas';
 
 export default function SignUpScreen() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const {
+    control,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<SignUpValues>({
+    resolver: zodResolver(signUpSchema),
+    defaultValues: { name: '', email: '', password: '' },
+  });
 
-  const handleSignUp = async () => {
-    setError(null);
+  const onSubmit = async ({ name, email, password }: SignUpValues) => {
     const { error: signUpError } = await authClient.signUp.email({ email, password, name });
     if (signUpError) {
-      setError(signUpError.message ?? 'Failed to sign up');
+      setError('root', { message: signUpError.message ?? 'Failed to sign up' });
       return;
     }
     router.replace('/');
   };
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="title">Underscore</ThemedText>
-        <ThemedText type="subtitle">Sign up</ThemedText>
+    <View className="bg-background flex-1">
+      <SafeAreaView className="px-screen flex-1 justify-center gap-4">
+        <Text className="text-ink-faint font-mono text-eyebrow tracking-eyebrow uppercase">
+          Under Score
+        </Text>
+        <Text className="text-foreground font-display text-display-md tracking-tight mb-2">
+          Start a score.
+        </Text>
 
-        <TextInput style={styles.input} placeholder="Name" value={name} onChangeText={setName} />
-        <TextInput
-          style={styles.input}
+        <ControlledInput control={control} name="name" placeholder="Name" autoComplete="name" />
+        <ControlledInput
+          control={control}
+          name="email"
           placeholder="Email"
           autoCapitalize="none"
+          autoComplete="email"
           keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
         />
-        <TextInput
-          style={styles.input}
+        <ControlledInput
+          control={control}
+          name="password"
           placeholder="Password"
+          autoComplete="new-password"
           secureTextEntry
-          value={password}
-          onChangeText={setPassword}
+          onSubmitEditing={handleSubmit(onSubmit)}
         />
-        {error && <ThemedText themeColor="text">{error}</ThemedText>}
+        {errors.root && (
+          <Text className="text-destructive font-body text-body-sm">{errors.root.message}</Text>
+        )}
 
-        <Button title="Sign up" onPress={handleSignUp} />
-        <SocialSignInButtons onError={setError} />
+        <Button size="lg" disabled={isSubmitting} onPress={handleSubmit(onSubmit)}>
+          <Text>Sign up</Text>
+        </Button>
+        <SocialSignInButtons onError={(message) => setError('root', { message })} />
 
-        <Link href="/login">
-          <ThemedText type="link">Already have an account? Log in</ThemedText>
+        <Link href="/login" className="mt-2">
+          <Text className="text-ink-muted font-body text-body-sm">
+            Already have an account? <Text className="text-primary">Log in</Text>
+          </Text>
         </Link>
       </SafeAreaView>
-    </ThemedView>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.three,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: Spacing.two,
-  },
-});

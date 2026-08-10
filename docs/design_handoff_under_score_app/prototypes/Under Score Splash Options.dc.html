@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/under-score-design-system-cd4dffbc-468e-4972-8cdc-f26a7565cd42/tokens/colors.css">
+<link rel="stylesheet" href="_ds/under-score-design-system-cd4dffbc-468e-4972-8cdc-f26a7565cd42/tokens/typography.css">
+<link rel="stylesheet" href="_ds/under-score-design-system-cd4dffbc-468e-4972-8cdc-f26a7565cd42/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/under-score-design-system-cd4dffbc-468e-4972-8cdc-f26a7565cd42/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/under-score-design-system-cd4dffbc-468e-4972-8cdc-f26a7565cd42/tokens/radius-shadow.css">
+<link rel="stylesheet" href="_ds/under-score-design-system-cd4dffbc-468e-4972-8cdc-f26a7565cd42/styles.css">
+<script src="_ds/under-score-design-system-cd4dffbc-468e-4972-8cdc-f26a7565cd42/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:#f0eee9;font-family:'Inter',system-ui,sans-serif}
+a{color:#2a78d6}a:hover{color:#1b5cab}
+.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(0,0,0,.08);scroll-margin-top:16px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 8px}
+.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px;text-decoration:none}
+.dv-tname{font:600 13px/1.2 system-ui,sans-serif;color:#1a1a1a}
+.dv-opts{display:flex;flex-wrap:wrap;gap:34px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:11px;scroll-margin-top:16px;width:393px}
+.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 11.5px/1.3 system-ui,sans-serif;color:rgba(0,0,0,.55)}
+.dv-opt:target .dv-oid{background:#2a78d6;color:#fff}
+.dv-next{margin:26px 0 0;font:12px/1.5 system-ui,sans-serif;color:rgba(0,0,0,.5)}
+.dv-note{margin:0;font:400 11.5px/1.45 system-ui,sans-serif;color:rgba(0,0,0,.55)}
+.dv-ratio{font:600 10px ui-monospace,Menlo,monospace;color:#1a1a1a;background:rgba(0,0,0,.07);border-radius:4px;padding:2px 5px}
+.brief{max-width:790px;margin:0 0 28px;font:400 13px/1.6 system-ui,sans-serif;color:#4a453f}
+.ph{width:393px;height:852px;border-radius:44px;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 3px 14px rgba(0,0,0,.14)}
+.st{height:52px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 30px 8px;font:600 13px var(--font-mono);z-index:5}
+.stb{display:flex;align-items:center;gap:5px}
+.b1{width:16px;height:9px;border-radius:2px;background:currentColor;opacity:.75}
+.b2{width:22px;height:10px;border-radius:3px;border:1px solid currentColor;opacity:.75}
+.bd{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:space-between;padding:0 26px 34px;position:relative;overflow:hidden}
+.lg{font:400 66px/1.04 var(--font-logo),var(--font-display);letter-spacing:-.01em;text-align:center;padding:6px 12px}
+.lgr{font-family:var(--font-logo-rough),var(--font-display)}
+.wv{width:210px;height:58px;background:var(--grad-warm);-webkit-mask:url(assets/wave.svg) no-repeat center/contain;mask:url(assets/wave.svg) no-repeat center/contain}
+.lock{display:flex;flex-direction:column;align-items:center;gap:6px}
+.h1{margin:0;font:600 34px/1.12 var(--font-display);letter-spacing:-.02em;text-align:center}
+.sub{margin:0;font:var(--text-body);text-align:center}
+.hi{height:22px;flex:none;display:flex;align-items:center;justify-content:center}
+.hib{width:132px;height:5px;border-radius:99px;background:currentColor;opacity:.3}
+.cta{display:flex;flex-direction:column;gap:12px;position:relative}
+</style></helmet>
+
+<section class="dv-turn" id="t5">
+<div class="dv-thd"><a class="dv-tid" href="#t5">5</a><span class="dv-tname">Dark splash under the new rule — one gradient per screen</span></div>
+<p class="brief"><b>Rule applied:</b> two gradients never overlap. The background wash is the only gradient on the splash, so both buttons go solid — plum, as in <a class="dv-oid" href="#4e">4e</a>. The wash starts dark purple where the logo sits, holds that ground through all the type, then runs purple → pink → orange into the bottom of the screen, which is where the buttons sit — so dark plum buttons land on the brightest part of the wash and get their contrast from it instead of from a glow. The lockup's own gradient sits on flat dark purple, so nothing overlaps.</p>
+
+<div class="dv-opts">
+
+<div class="dv-opt" id="5a">
+<div class="dv-olabel"><a class="dv-oid" href="#5a">5a</a>Purple → pink → orange, solid plum buttons <b>(the rule, literally)</b></div>
+<div class="ph" style="background:var(--plum-900);color:var(--ink)">
+<div class="st"><span>9:41</span><span class="stb"><span class="b1"></span><span class="b2"></span></span></div>
+<div class="bd">
+<div style="position:absolute;inset:-10%;filter:blur(26px) saturate(1.5) contrast(1.06);background:radial-gradient(80% 48% at 12% 98%,#FFA200 0%,#FF5341 44%,rgba(255,83,65,0) 72%),radial-gradient(70% 44% at 88% 86%,#FF0084 0%,rgba(255,0,132,0) 70%),radial-gradient(88% 46% at 34% 74%,#EA0C5F 0%,rgba(234,12,95,0) 72%),radial-gradient(62% 36% at 94% 56%,#D653A9 0%,rgba(214,83,169,0) 74%),radial-gradient(90% 42% at 20% 48%,#3A1E66 0%,rgba(58,30,102,0) 76%),linear-gradient(148deg,#150A1E 0%,#1F0F2A 34%,#3A1E66 62%,#C0007A 86%,#FF0084 100%)"></div>
+<div style="position:relative;display:flex;flex-direction:column;gap:22px;padding-top:44px;align-items:center">
+<div class="lock">
+<div class="lg" style="background:var(--grad-warm);-webkit-background-clip:text;background-clip:text;color:transparent">under<br><span class="lgr">score</span></div>
+<div class="wv"></div>
+</div>
+<h1 class="h1" style="max-width:310px">Every book has a rhythm. Let's find yours.</h1>
+<p class="sub" style="max-width:296px;color:rgba(248,241,251,.86)">Tell us what you're reading. We'll score it — a playlist that moves with the story, not just its genre.</p>
+</div>
+<div class="cta">
+<x-import component-from-global-scope="UnderScoreDesignSystem_cd4dff.Button" size="lg" dc-props="{{ solidCta }}" hint-size="100%,56px">Get started →</x-import>
+<x-import component-from-global-scope="UnderScoreDesignSystem_cd4dff.Button" variant="secondary" size="lg" dc-props="{{ darkGhost }}" hint-size="100%,56px">I already have an account</x-import>
+</div>
+</div>
+<div class="hi" style="color:#2B0F3D"><span class="hib"></span></div>
+</div>
+<p class="dv-note">All type sits in the purple half — headline <span class="dv-ratio">11:1</span>, body <span class="dv-ratio">8.4:1</span>. Wash is a blurred mesh — five soft radial blooms over a diagonal plum base — so the colour pools in patches instead of banding. Buttons sit in the pink-to-orange half: solid plum <span class="dv-ratio">#2B0F3D</span> primary and a plum hairline secondary, both dark-on-bright, no glow shadow needed. The lockup keeps its warm gradient because the ground behind it is flat.</p>
+</div>
+
+<div class="dv-opt" id="5b">
+<div class="dv-olabel"><a class="dv-oid" href="#5b">5b</a>Same, but pink at the bezel</div>
+<div class="ph" style="background:var(--plum-900);color:var(--ink)">
+<div class="st"><span>9:41</span><span class="stb"><span class="b1"></span><span class="b2"></span></span></div>
+<div class="bd">
+<div style="position:absolute;inset:0;background:linear-gradient(178deg,#150A1E 0%,#1F0F2A 28%,#3A1E66 48%,#EA6E4B 68%,#FF8820 80%,#FF0084 100%)"></div>
+<div style="position:relative;display:flex;flex-direction:column;gap:22px;padding-top:44px;align-items:center">
+<div class="lock">
+<div class="lg" style="color:var(--peel-400)">under<br><span class="lgr">score</span></div>
+<div class="wv" style="background:var(--peel-400)"></div>
+</div>
+<h1 class="h1" style="max-width:310px">Every book has a rhythm. Let's find yours.</h1>
+<p class="sub" style="max-width:296px;color:rgba(248,241,251,.86)">Tell us what you're reading. We'll score it — a playlist that moves with the story, not just its genre.</p>
+</div>
+<div class="cta">
+<x-import component-from-global-scope="UnderScoreDesignSystem_cd4dff.Button" size="lg" dc-props="{{ solidCta }}" hint-size="100%,56px">Get started →</x-import>
+<x-import component-from-global-scope="UnderScoreDesignSystem_cd4dff.Button" variant="secondary" size="lg" dc-props="{{ darkGhost }}" hint-size="100%,56px">I already have an account</x-import>
+</div>
+</div>
+<div class="hi" style="color:#2B0F3D"><span class="hib"></span></div>
+</div>
+<p class="dv-note">Warm order flipped so hot pink lands at the very bottom edge. With no gradient on the lockup either, the wordmark goes solid amber — this is the strictest reading of the rule: exactly one gradient in the whole screen.</p>
+</div>
+
+</div>
+
+<p class="dv-next">Try next: "put <a class="dv-oid" href="#5a">5a</a> in the app as dark, <a class="dv-oid" href="#4e">4e</a> as light" · "make the purple hold longer in <a class="dv-oid" href="#5a">5a</a>" · "apply the one-gradient rule to the playlist and player screens"</p>
+</section>
+
+<section class="dv-turn" id="t4">
+<div class="dv-thd"><a class="dv-tid" href="#t4">4</a><span class="dv-tname">Riffs on <a class="dv-oid" href="#3a">3a</a> — plum grounds instead of near-black, plus light theme</span></div>
+<p class="brief">Same lockup and layout as <a class="dv-oid" href="#3a">3a</a> throughout; only the ground and the wash change. The dark set walks up the plum ramp — <span class="dv-ratio">#150A1E</span> → <span class="dv-ratio">#1F0F2A</span> → <span class="dv-ratio">#2B1638</span> — so the bottom of the screen reads as deep purple rather than black. The light set uses the DS cream surfaces with plum ink; there the CTA goes solid plum so the warm gradient stays a background device, not a button.</p>
+
+<div class="dv-opts">
+
+<div class="dv-opt" id="4a">
+<div class="dv-olabel"><a class="dv-oid" href="#4a">4a</a>Plum 900 ground — the literal fix to <a class="dv-oid" href="#3a">3a</a></div>
+<div class="ph" style="background:var(--plum-900);color:var(--ink)">
+<div class="st"><span>9:41</span><span class="stb"><span class="b1"></span><span class="b2"></span></span></div>
+<div class="bd">
+<div style="position:absolute;left:-30%;right:-30%;top:-10%;height:88%;background:var(--grad-hero);opacity:.78;-webkit-mask-image:linear-gradient(180deg,#000 0%,#000 52%,rgba(0,0,0,.45) 78%,transparent 100%);mask-image:linear-gradient(180deg,#000 0%,#000 52%,rgba(0,0,0,.45) 78%,transparent 100%);filter:blur(30px)"></div>
+<div style="position:relative;display:flex;flex-direction:column;gap:22px;padding-top:44px;align-items:center">
+<div class="lock">
+<div class="lg" style="background:var(--grad-warm);-webkit-background-clip:text;background-clip:text;color:transparent">under<br><span class="lgr">score</span></div>
+<div class="wv"></div>
+</div>
+<h1 class="h1" style="max-width:310px">Every book has a rhythm. Let's find yours.</h1>
+<p class="sub" style="max-width:296px;color:rgba(248,241,251,.82)">Tell us what you're reading. We'll score it — a playlist that moves with the story, not just its genre.</p>
+</div>
+<div class="cta">
+<x-import component-from-global-scope="UnderScoreDesignSystem_cd4dff.Button" size="lg" dc-props="{{ ctaStyle }}" hint-size="100%,56px">Get started →</x-import>
+<x-import component-from-global-scope="UnderScoreDesignSystem_cd4dff.Button" variant="secondary" size="lg" dc-props="{{ ctaStyle }}" hint-size="100%,56px">I already have an account</x-import>
+</div>
+</div>
+<div class="hi"><span class="hib"></span></div>
+</div>
+<p class="dv-note">Nothing changed but the ground: <span class="dv-ratio">#150A1E</span>, the DS surface colour. Subtle, and it keeps the wash reading as light falling on a dark room.</p>
+</div>
+
+<div class="dv-opt" id="4b">
+<div class="dv-olabel"><a class="dv-oid" href="#4b">4b</a>Plum 800 with a violet floor</div>
+<div class="ph" style="background:var(--plum-800);color:var(--ink)">
+<div class="st"><span>9:41</span><span class="stb"><span class="b1"></span><span class="b2"></span></span></div>
+<div class="bd">
+<div style="position:absolute;left:-30%;right:-30%;top:-10%;height:84%;background:var(--grad-hero);opacity:.8;-webkit-mask-image:linear-gradient(180deg,#000 0%,#000 50%,rgba(0,0,0,.4) 76%,transparent 100%);mask-image:linear-gradient(180deg,#000 0%,#000 50%,rgba(0,0,0,.4) 76%,transparent 100%);filter:blur(30px)"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;height:44%;background:linear-gradient(180deg,transparent 0%,var(--plum-600) 100%);opacity:.5"></div>
+<div style="position:relative;display:flex;flex-direction:column;gap:22px;padding-top:44px;align-items:center">
+<div class="lock">
+<div class="lg" style="background:var(--grad-warm);-webkit-background-clip:text;background-clip:text;color:transparent">under<br><span class="lgr">score</span></div>
+<div class="wv"></div>
+</div>
+<h1 class="h1" style="max-width:310px">Every book has a rhythm. Let's find yours.</h1>
+<p class="sub" style="max-width:296px;color:rgba(248,241,251,.84)">Tell us what you're reading. We'll score it — a playlist that moves with the story, not just its genre.</p>
+</div>
+<div class="cta">
+<x-import component-from-global-scope="UnderScoreDesignSystem_cd4dff.Button" size="lg" dc-props="{{ ctaStyle }}" hint-size="100%,56px">Get started →</x-import>
+<x-import component-from-global-scope="UnderScoreDesignSystem_cd4dff.Button" variant="secondary" size="lg" dc-props="{{ ctaStyle }}" hint-size="100%,56px">I already have an account</x-import>
+</div>
+</div>
+<div class="hi"><span class="hib"></span></div>
+</div>
+<p class="dv-note">Ground is <span class="dv-ratio">#1F0F2A</span> and the bottom third lifts toward <span class="dv-ratio">#3A1E66</span>, so the screen is purple top and bottom with the warm wash in between. The CTA glow has the most room to read here.</p>
+</div>
+
+<div class="dv-opt" id="4c">
+<div class="dv-olabel"><a class="dv-oid" href="#4c">4c</a>Plum 700 — lightest dark, wash held high</div>
+<div class="ph" style="background:var(--plum-700);color:var(--ink)">
+<div class="st"><span>9:41</span><span class="stb"><span class="b1"></span><span class="b2"></span></span></div>
+<div class="bd">
+<div style="position:absolute;left:-30%;right:-30%;top:-12%;height:70%;background:var(--grad-hero);opacity:.85;-webkit-mask-image:linear-gradient(180deg,#000 0%,#000 46%,rgba(0,0,0,.4) 72%,transparent 100%);mask-image:linear-gradient(180deg,#000 0%,#000 46%,rgba(0,0,0,.4) 72%,transparent 100%);filter:blur(34px)"></div>
+<div style="position:relative;display:flex;flex-direction:column;gap:22px;padding-top:44px;align-items:center">
+<div class="lock">
+<div class="lg" style="background:var(--grad-warm);-webkit-background-clip:text;background-clip:text;color:transparent">under<br><span class="lgr">score</span></div>
+<div class="wv"></div>
+</div>
+<h1 class="h1" style="max-width:310px">Every book has a rhythm. Let's find yours.</h1>
+<p class="sub" style="max-width:296px;color:rgba(248,241,251,.86)">Tell us what you're reading. We'll score it — a playlist that moves with the story, not just its genre.</p>
+</div>
+<div class="cta">
+<x-import component-from-global-scope="UnderScoreDesignSystem_cd4dff.Button" size="lg" dc-props="{{ ctaStyle }}" hint-size="100%,56px">Get started →</x-import>
+<x-import component-from-global-scope="UnderScoreDesignSystem_cd4dff.Button" variant="secondary" size="lg" dc-props="{{ ctaStyle }}" hint-size="100%,56px">I already have an account</x-import>
+</div>
+</div>
+<div class="hi"><span class="hib"></span></div>
+</div>
+<p class="dv-note">Ground <span class="dv-ratio">#2B1638</span>, wash stopped at ~58% and slightly softer. Warmest, most "lit" of the three — but the secondary button's hairline has the least separation, so check it on a real screen.</p>
+</div>
+
+<div class="dv-opt" id="4d">
+<div class="dv-olabel"><a class="dv-oid" href="#4d">4d</a>Light theme — cream ground, wash at the top</div>
+<div class="ph" data-theme="light" style="background:#FFF8EF;color:#2B0F3D">
+<div class="st"><span>9:41</span><span class="stb"><span class="b1"></span><span class="b2"></span></span></div>
+<div class="bd">
+<div style="position:absolute;left:-25%;right:-25%;top:-14%;height:42%;background:var(--grad-hero);opacity:.84;-webkit-mask-image:linear-gradient(180deg,#000 0%,#000 88%,transparent 100%);mask-image:linear-gradient(180deg,#000 0%,#000 88%,transparent 100%);filter:blur(26px)"></div>
+<div style="position:relative;display:flex;flex-direction:column;gap:22px;padding-top:44px;align-items:center">
+<div class="lock">
+<div class="lg" style="color:#FFF8EF">under<br><span class="lgr">score</span></div>
+<div class="wv" style="background:#FFF8EF"></div>
+</div>
+<h1 class="h1" style="max-width:310px;color:#2B0F3D">Every book has a rhythm. Let's find yours.</h1>
+<p class="sub" style="max-width:296px;color:rgba(43,15,61,.82)">Tell us what you're reading. We'll score it — a playlist that moves with the story, not just its genre.</p>
+</div>
+<div class="cta">
+<x-import component-from-global-scope="UnderScoreDesignSystem_cd4dff.Button" size="lg" dc-props="{{ inkCta }}" hint-size="100%,56px">Get started →</x-import>
+<x-import component-from-global-scope="UnderScoreDesignSystem_cd4dff.Button" variant="secondary" size="lg" dc-props="{{ ctaStyle }}" hint-size="100%,56px">I already have an account</x-import>
+</div>
+</div>
+<div class="hi"><span class="hib"></span></div>
+</div>
+<p class="dv-note">The wash is a band behind the lockup only — cream logo and wave on gradient <span class="dv-ratio">~7:1</span>, then headline and body in plum ink on bare cream <span class="dv-ratio">13:1</span>. CTA is solid plum, since the warm gradient is already spent on the background.</p>
+</div>
+
+<div class="dv-opt" id="4e">
+<div class="dv-olabel"><a class="dv-oid" href="#4e">4e</a>Light theme, plum lockup — warm ground, no cream type</div>
+<div class="ph" data-theme="light" style="background:#FDEFE0;color:#2B0F3D">
+<div class="st"><span>9:41</span><span class="stb"><span class="b1"></span><span class="b2"></span></span></div>
+<div class="bd">
+<div style="position:absolute;left:-25%;right:-25%;top:-10%;height:120%;background:linear-gradient(165deg,var(--yellow-300) 0%,var(--peel-400) 22%,var(--amber-400) 42%,var(--orange-500) 60%,var(--rose-500) 78%,var(--pink-500) 100%);opacity:.88;filter:blur(30px)"></div>
+<div style="position:relative;display:flex;flex-direction:column;gap:22px;padding-top:44px;align-items:center">
+<div class="lock">
+<div class="lg" style="color:#2B0F3D">under<br><span class="lgr">score</span></div>
+<div class="wv" style="background:#2B0F3D"></div>
+</div>
+<h1 class="h1" style="max-width:310px;color:#2B0F3D">Every book has a rhythm. Let's find yours.</h1>
+<p class="sub" style="max-width:296px;color:rgba(43,15,61,.84)">Tell us what you're reading. We'll score it — a playlist that moves with the story, not just its genre.</p>
+</div>
+<div class="cta">
+<x-import component-from-global-scope="UnderScoreDesignSystem_cd4dff.Button" size="lg" dc-props="{{ inkCta }}" hint-size="100%,56px">Get started →</x-import>
+<x-import component-from-global-scope="UnderScoreDesignSystem_cd4dff.Button" variant="secondary" size="lg" dc-props="{{ ctaStyle }}" hint-size="100%,56px">I already have an account</x-import>
+</div>
+</div>
+<div class="hi"><span class="hib"></span></div>
+</div>
+<p class="dv-note">Wash now runs the full screen, citrus through orange into hot pink at the bezel. Every piece of type is plum, so contrast never depends on where the gradient lands — <span class="dv-ratio">6.4:1</span> at the worst point, the body copy over rose. Secondary button is a plum hairline pill. The nearest light-mode twin of <a class="dv-oid" href="#4a">4a</a>.</p>
+</div>
+
+</div>
+
+<p class="dv-next">Try next: "ship <a class="dv-oid" href="#4b">4b</a> as dark and <a class="dv-oid" href="#4e">4e</a> as light — put them in the app" · "<a class="dv-oid" href="#4a">4a</a> but with the violet floor from <a class="dv-oid" href="#4b">4b</a>" · "carry this ground through the rest of the screens"</p>
+</section>
+
+<section class="dv-turn" id="t3">
+<div class="dv-thd"><a class="dv-tid" href="#t3">3</a><span class="dv-tname">Splash — wordmark colour + how far the gradient runs</span></div>
+<p class="brief">Four ways to get the gradient down the screen without a second gradient fighting the CTA. In every one the wordmark stops being flat white, and the button zone sits on its own quieter ground. Contrast ratios are measured against the colour directly behind each text block — anything at <span class="dv-ratio">4.5:1</span> or better passes AA for body text, <span class="dv-ratio">3:1</span> for the 34px headline.</p>
+
+<div class="dv-opts">
+
+<div class="dv-opt" id="3a">
+<div class="dv-olabel"><a class="dv-oid" href="#3a">3a</a>Gradient-filled wordmark, wash to two-thirds <b>(closest to what you have)</b></div>
+<div class="ph" style="background:var(--bg);color:var(--ink)">
+<div class="st"><span>9:41</span><span class="stb"><span class="b1"></span><span class="b2"></span></span></div>
+<div class="bd">
+<div style="position:absolute;left:-30%;right:-30%;top:-10%;height:88%;background:var(--grad-hero);opacity:.78;-webkit-mask-image:linear-gradient(180deg,#000 0%,#000 52%,rgba(0,0,0,.45) 78%,transparent 100%);mask-image:linear-gradient(180deg,#000 0%,#000 52%,rgba(0,0,0,.45) 78%,transparent 100%);filter:blur(30px)"></div>
+<div style="position:relative;display:flex;flex-direction:column;gap:22px;padding-top:44px;align-items:center">
+<div class="lock">
+<div class="lg" style="background:var(--grad-warm);-webkit-background-clip:text;background-clip:text;color:transparent">under<br><span class="lgr">score</span></div>
+<div class="wv"></div>
+</div>
+<h1 class="h1" style="max-width:310px">Every book has a rhythm. Let's find yours.</h1>
+<p class="sub" style="max-width:296px;color:rgba(248,241,251,.82)">Tell us what you're reading. We'll score it — a playlist that moves with the story, not just its genre.</p>
+</div>
+<div class="cta">
+<x-import component-from-global-scope="UnderScoreDesignSystem_cd4dff.Button" size="lg" dc-props="{{ ctaStyle }}" hint-size="100%,56px">Get started →</x-import>
+<x-import component-from-global-scope="UnderScoreDesignSystem_cd4dff.Button" variant="secondary" size="lg" dc-props="{{ ctaStyle }}" hint-size="100%,56px">I already have an account</x-import>
+</div>
+</div>
+<div class="hi"><span class="hib"></span></div>
+</div>
+<p class="dv-note">Wave and wordmark share one warm gradient, so the lockup reads as a single object. The wash reaches ~66% down and dies before the buttons, leaving the CTA the only saturated thing at the bottom. Headline white on magenta <span class="dv-ratio">5.4:1</span>, body <span class="dv-ratio">4.6:1</span>.</p>
+</div>
+
+<div class="dv-opt" id="3b">
+<div class="dv-olabel"><a class="dv-oid" href="#3b">3b</a>Full-bleed gradient, buttons on a plum shelf</div>
+<div class="ph" style="background:var(--bg);color:var(--ink)">
+<div class="st"><span>9:41</span><span class="stb"><span class="b1"></span><span class="b2"></span></span></div>
+<div class="bd" style="padding:0 26px 0">
+<div style="position:absolute;inset:0;background:var(--grad-hero)"></div>
+<div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,4,16,0) 0%,rgba(11,4,16,.5) 26%,rgba(11,4,16,.62) 52%,rgba(11,4,16,.84) 78%,var(--bg) 100%)"></div>
+<div style="position:relative;display:flex;flex-direction:column;gap:22px;padding-top:44px;align-items:center">
+<div class="lock">
+<div class="lg" style="color:var(--peel-400)">under<br><span class="lgr">score</span></div>
+<div class="wv" style="background:#0B0410;opacity:.72"></div>
+</div>
+<h1 class="h1" style="max-width:310px;color:#FFF8EF">Every book has a rhythm. Let's find yours.</h1>
+<p class="sub" style="max-width:296px;color:rgba(255,248,239,.88)">Tell us what you're reading. We'll score it — a playlist that moves with the story, not just its genre.</p>
+</div>
+<div class="cta" style="padding-bottom:34px">
+<x-import component-from-global-scope="UnderScoreDesignSystem_cd4dff.Button" size="lg" dc-props="{{ ctaStyle }}" hint-size="100%,56px">Get started →</x-import>
+<x-import component-from-global-scope="UnderScoreDesignSystem_cd4dff.Button" variant="secondary" size="lg" dc-props="{{ ctaStyle }}" hint-size="100%,56px">I already have an account</x-import>
+</div>
+</div>
+<div class="hi"><span class="hib"></span></div>
+</div>
+<p class="dv-note">Gradient runs edge to edge, with a plum veil that deepens from the logo down so the CTA keeps dark ground under it. Amber wordmark with a dark plum wave — the inverse of <a class="dv-oid" href="#3a">3a</a>'s lockup. Headline <span class="dv-ratio">~8:1</span>, body <span class="dv-ratio">~6.5:1</span> over the veiled gradient.</p>
+</div>
+
+<div class="dv-opt" id="3c">
+<div class="dv-olabel"><a class="dv-oid" href="#3c">3c</a>Daylight — bright gradient, plum ink, no white at all</div>
+<div class="ph" data-theme="light" style="background:#FFF8EF;color:#2B0F3D">
+<div class="st"><span>9:41</span><span class="stb"><span class="b1"></span><span class="b2"></span></span></div>
+<div class="bd">
+<div style="position:absolute;left:-20%;right:-20%;top:-14%;height:96%;background:linear-gradient(165deg,var(--peel-400) 0%,var(--amber-400) 26%,var(--orange-500) 58%,var(--rose-500) 100%);opacity:.92;-webkit-mask-image:linear-gradient(180deg,#000 0%,#000 58%,rgba(0,0,0,.4) 84%,transparent 100%);mask-image:linear-gradient(180deg,#000 0%,#000 58%,rgba(0,0,0,.4) 84%,transparent 100%);filter:blur(24px)"></div>
+<div style="position:relative;display:flex;flex-direction:column;gap:22px;padding-top:44px;align-items:center">
+<div class="lock">
+<div class="lg" style="color:#2B0F3D">under<br><span class="lgr">score</span></div>
+<div class="wv" style="background:#2B0F3D"></div>
+</div>
+<h1 class="h1" style="max-width:310px;color:#2B0F3D">Every book has a rhythm. Let's find yours.</h1>
+<p class="sub" style="max-width:296px;color:rgba(43,15,61,.82)">Tell us what you're reading. We'll score it — a playlist that moves with the story, not just its genre.</p>
+</div>
+<div class="cta">
+<x-import component-from-global-scope="UnderScoreDesignSystem_cd4dff.Button" size="lg" dc-props="{{ inkCta }}" hint-size="100%,56px">Get started →</x-import>
+<x-import component-from-global-scope="UnderScoreDesignSystem_cd4dff.Button" variant="secondary" size="lg" dc-props="{{ ctaStyle }}" hint-size="100%,56px">I already have an account</x-import>
+</div>
+</div>
+<div class="hi"><span class="hib"></span></div>
+</div>
+<p class="dv-note">The one direction with no white type anywhere — plum ink on a citrus-to-rose wash, gradient running nearly to the bottom. The CTA goes solid plum precisely so it doesn't repeat the gradient. Wordmark on amber <span class="dv-ratio">8.9:1</span>, body <span class="dv-ratio">6.7:1</span>. This is the light-theme splash if you ever want one.</p>
+</div>
+
+<div class="dv-opt" id="3d">
+<div class="dv-olabel"><a class="dv-oid" href="#3d">3d</a>Long wash — gradient full height, low opacity, wordmark in pink</div>
+<div class="ph" style="background:var(--bg);color:var(--ink)">
+<div class="st"><span>9:41</span><span class="stb"><span class="b1"></span><span class="b2"></span></span></div>
+<div class="bd">
+<div style="position:absolute;left:-25%;right:-25%;top:-6%;height:112%;background:var(--grad-hero);opacity:.5;filter:blur(54px)"></div>
+<div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 0%,rgba(11,4,16,.35) 62%,rgba(11,4,16,.78) 100%)"></div>
+<div style="position:relative;display:flex;flex-direction:column;gap:22px;padding-top:44px;align-items:center">
+<div class="lock">
+<div class="lg" style="color:var(--pink-500)">under<br><span class="lgr" style="color:var(--amber-400)">score</span></div>
+<div class="wv"></div>
+</div>
+<h1 class="h1" style="max-width:310px">Every book has a rhythm. Let's find yours.</h1>
+<p class="sub" style="max-width:296px;color:rgba(248,241,251,.8)">Tell us what you're reading. We'll score it — a playlist that moves with the story, not just its genre.</p>
+</div>
+<div class="cta">
+<x-import component-from-global-scope="UnderScoreDesignSystem_cd4dff.Button" size="lg" dc-props="{{ ctaStyle }}" hint-size="100%,56px">Get started →</x-import>
+<x-import component-from-global-scope="UnderScoreDesignSystem_cd4dff.Button" variant="secondary" size="lg" dc-props="{{ ctaStyle }}" hint-size="100%,56px">I already have an account</x-import>
+</div>
+</div>
+<div class="hi"><span class="hib"></span></div>
+</div>
+<p class="dv-note">Gradient covers the whole screen but at half strength and heavily blurred, then a plum veil deepens toward the bottom — so it never competes with the CTA even though it reaches the bezel. Two-tone wordmark: pink "under", amber "score", which is where the logo's own colours live. Headline <span class="dv-ratio">9.2:1</span>.</p>
+</div>
+
+</div>
+
+<p class="dv-next">Try next: "put <a class="dv-oid" href="#3a">3a</a> into the app" · "<a class="dv-oid" href="#3d">3d</a>'s wash with <a class="dv-oid" href="#3b">3b</a>'s amber wordmark" · "try <a class="dv-oid" href="#3c">3c</a> as the light theme and <a class="dv-oid" href="#3a">3a</a> as dark"</p>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1760,&quot;height&quot;:1080}}">
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      ctaStyle: { style: { justifyContent: 'center', width: '100%' } },
+      inkCta: { style: { justifyContent: 'center', width: '100%', background: '#2B0F3D', color: '#FFF8EF', boxShadow: '0 16px 32px -14px rgba(43,15,61,.5)' } },
+      solidCta: { style: { justifyContent: 'center', width: '100%', background: '#2B0F3D', color: '#FFF8EF', boxShadow: '0 18px 34px -16px rgba(43,15,61,.55)' } },
+      darkGhost: { style: { justifyContent: 'center', width: '100%', background: 'transparent', color: '#2B0F3D', border: '1px solid rgba(43,15,61,.42)' } }
+    };
+  }
+}
+</script>
+</body>
+</html>

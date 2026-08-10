@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><meta name="design_doc_mode" content="canvas"><style>
+body{margin:0;background:#f0eee9;font-family:system-ui,sans-serif}
+a{color:#2a78d6}a:hover{color:#1b5cab}
+.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(0,0,0,.08);scroll-margin-top:16px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 16px}
+.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px;text-decoration:none}
+.dv-tname{font:600 13px/1.2 system-ui,sans-serif;color:#1a1a1a}
+.dv-opts{display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:12px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 11.5px/1.3 system-ui,sans-serif;color:rgba(0,0,0,.55)}
+.dv-card{max-width:100%;background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.06);overflow:hidden}
+.dv-opt:target .dv-oid{background:#2a78d6;color:#fff}
+.dv-next{margin:26px 0 0;font:12px/1.5 system-ui,sans-serif;color:rgba(0,0,0,.5)}
+.brief{max-width:780px;margin:0 0 30px;font:400 13px/1.6 system-ui,sans-serif;color:#4a453f}
+.brief h3{font:600 11px ui-monospace,Menlo,monospace;letter-spacing:.1em;color:#9a958e;margin:0 0 8px}
+.brief ul{margin:0 0 16px;padding-left:18px}
+.brief li{margin-bottom:5px}
+.wf-seq{display:flex;gap:22px;align-items:flex-start}
+.wf-screen{display:flex;flex-direction:column;gap:10px;width:390px;flex:none}
+.wf-phone{width:390px;height:844px;background:#fff;border:1.5px solid #cfcbc4;border-radius:44px;overflow:hidden;display:flex;flex-direction:column;font:400 15px/1.4 system-ui,sans-serif;color:#2b2b2b;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.wf-status{height:54px;flex:none;display:flex;justify-content:space-between;align-items:flex-end;padding:0 28px 8px;font:600 12px ui-monospace,Menlo,monospace;color:#a5a09a}
+.wf-body{flex:1;min-height:0;overflow:hidden;padding:8px 20px 0;display:flex;flex-direction:column;gap:16px}
+.wf-h1{font:700 28px/1.15 system-ui,sans-serif;margin:0;letter-spacing:-.02em}
+.wf-h2{font:700 19px/1.25 system-ui,sans-serif;margin:0}
+.wf-p{font:400 14.5px/1.45 system-ui,sans-serif;color:#6f6a63;margin:0}
+.wf-eyebrow{font:600 10px ui-monospace,Menlo,monospace;letter-spacing:.14em;color:#a5a09a}
+.wf-ph{background:#ebe8e2;border:1px dashed #c8c4bd;border-radius:10px;display:flex;align-items:center;justify-content:center;font:600 9.5px ui-monospace,Menlo,monospace;color:#9a958e;text-align:center;letter-spacing:.06em;padding:6px}
+.wf-box{background:#f1efea;border:1px solid #e2ded7;border-radius:10px}
+.wf-btn{height:52px;border-radius:999px;background:#2b2b2b;color:#fff;display:flex;align-items:center;justify-content:center;font:600 16px system-ui,sans-serif;flex:none}
+.wf-btn2{height:52px;border-radius:999px;background:#fff;border:1.5px solid #cfcbc4;color:#2b2b2b;display:flex;align-items:center;justify-content:center;font:600 16px system-ui,sans-serif;flex:none}
+.wf-chip{padding:10px 15px;border-radius:999px;border:1.5px solid #cfcbc4;font:600 13px system-ui,sans-serif;color:#57534d}
+.wf-chip-on{padding:10px 15px;border-radius:999px;background:#2b2b2b;border:1.5px solid #2b2b2b;color:#fff;font:600 13px system-ui,sans-serif}
+.wf-row{display:flex;align-items:center;gap:12px}
+.wf-list{display:flex;flex-direction:column;gap:2px}
+.wf-li{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #efece6}
+.wf-tab{height:80px;flex:none;border-top:1px solid #e2ded7;display:flex;align-items:flex-start;padding-top:14px;justify-content:space-around;background:#fdfcfa}
+.wf-tabi{display:flex;flex-direction:column;align-items:center;gap:7px;font:600 10px system-ui,sans-serif;color:#a5a09a}
+.wf-tabd{width:22px;height:22px;border-radius:6px;border:1.5px solid #c8c4bd}
+.wf-note{font:400 11px/1.4 system-ui,sans-serif;color:#2a78d6;border-left:2px solid #cfe0f5;padding-left:8px}
+.wf-cap{display:flex;gap:8px;align-items:baseline;font:400 11.5px/1.4 system-ui,sans-serif;color:rgba(0,0,0,.55);width:390px}
+.wf-num{font:600 10px ui-monospace,Menlo,monospace;background:#2b2b2b;color:#fff;border-radius:4px;padding:2px 6px;flex:none}
+.fm{display:flex;flex-direction:column;gap:24px;padding:30px 32px}
+.fm-lane{display:flex;flex-direction:column;gap:11px}
+.fm-laneh{font:600 10px ui-monospace,Menlo,monospace;letter-spacing:.14em;color:#9a958e}
+.fm-rowf{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.fm-node{padding:11px 13px;border:1.5px solid #cfcbc4;border-radius:10px;background:#fff;font:600 12.5px/1.2 system-ui,sans-serif;min-width:92px;text-align:center;color:#2b2b2b}
+.fm-dec{border-radius:999px;border-style:dashed;background:#faf8f4}
+.fm-term{background:#2b2b2b;color:#fff;border-color:#2b2b2b}
+.fm-arrow{font:600 15px system-ui,sans-serif;color:#b0aba4}
+.fm-sub{display:block;margin-top:3px;font:400 10px system-ui,sans-serif;color:#8a857e}
+.fm-loop{font:400 11px/1.4 system-ui,sans-serif;color:#2a78d6;padding-left:2px}
+.rs{display:flex;padding:26px 30px}
+.rs-col{width:300px;padding:0 22px;border-right:1px dashed #ddd8d0;display:flex;flex-direction:column;gap:10px}
+</style></helmet>
+
+<section class="dv-turn" id="t2">
+<div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Merging <a class="dv-oid" href="#1g">1g</a> + <a class="dv-oid" href="#1e">1e</a> — AI guesses from metadata first, chips are the adjustment</span></div>
+
+<div class="brief">
+<h3>WHAT CHANGED</h3>
+<ul>
+<li>Mood and pacing are now <b>chips, pre-filled by the model</b> from Google Books metadata + description + your progress. Nothing is ever blank.</li>
+<li>The read comes first and reads as a sentence, so the user's job is to <i>correct</i>, not to author. Chips are the correction mechanism — same DS <i>MoodChip</i> component as <a class="dv-oid" href="#1e">1e</a>.</li>
+<li>Two ways to sequence it: <a class="dv-oid" href="#2a">2a</a> puts read and chips on one screen; <a class="dv-oid" href="#2b">2b</a> hides the chips until asked. <a class="dv-oid" href="#2a">2a</a> is my pick — one screen, no hidden state, and the primary button still works untouched.</li>
+<li>Screen <span class="wf-num" style="background:#a5a09a">07</span> in <a class="dv-oid" href="#1c">1c</a> is replaced by whichever of these you choose.</li>
+</ul>
+</div>
+
+<div class="dv-opts">
+
+<div class="dv-opt" id="2a">
+<div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>One screen — the read, then pre-filled chips <b>(recommended)</b></div>
+<div class="wf-phone">
+<div class="wf-status"><span>9:41</span><span>▮ ▮ ▮</span></div>
+<div class="wf-body" style="justify-content:space-between;padding-bottom:34px">
+<div style="display:flex;flex-direction:column;gap:14px;padding-top:6px">
+<div class="wf-row" style="justify-content:space-between"><span style="font:600 15px system-ui">←</span><span class="wf-eyebrow">STEP 02 · MOOD</span><span style="width:44px"></span></div>
+<h2 class="wf-h2" style="font-size:25px">Here's how we read it.</h2>
+<div class="wf-ph" style="height:120px;border-radius:16px">MOOD GRADIENT — melancholy → dreamy blend</div>
+<p style="margin:0;font:600 17px/1.35 system-ui">Melancholy · Dreamy · Slow burn</p>
+<p class="wf-p" style="font-size:13px">From the blurb and where you are — a quiet, watchful first third, wonder shading into unease.</p>
+<div style="height:1px;background:#efece6"></div>
+<div class="wf-row" style="justify-content:space-between"><span class="wf-eyebrow">MOOD · CHANGE IF WE'RE OFF</span><span style="font:600 11px system-ui;color:#8a857e">Reset</span></div>
+<div class="wf-row" style="flex-wrap:wrap;gap:9px">
+<span class="wf-chip-on">Melancholy ✓</span><span class="wf-chip-on">Dreamy ✓</span><span class="wf-chip">Cozy</span><span class="wf-chip">Tense</span><span class="wf-chip">Hopeful</span><span class="wf-chip">Nostalgic</span><span class="wf-chip">Elegiac</span><span class="wf-chip">Restless</span>
+</div>
+<span class="wf-eyebrow">PACING</span>
+<div class="wf-row" style="gap:9px"><span class="wf-chip-on">Slow burn ✓</span><span class="wf-chip">Steady</span><span class="wf-chip">Breakneck</span></div>
+<div class="wf-note">Pre-selected chips carry a ✓ so it's obvious these were <i>guessed</i>, not chosen. Deselecting is how you disagree; the sentence and gradient rewrite live as chips change.</div>
+</div>
+<div class="wf-btn">Generate playlist →</div>
+</div>
+</div>
+<div class="wf-cap"><span class="wf-num">07</span><span>Zero taps required — the button works as-is. Editing costs one tap, and the vocabulary problem from <a class="dv-oid" href="#1e">1e</a> is gone because the answer is already filled in.</span></div>
+</div>
+
+<div class="dv-opt" id="2b">
+<div class="dv-olabel"><a class="dv-oid" href="#2b">2b</a>Progressive — read only, chips on request</div>
+<div class="wf-seq">
+
+<div class="wf-screen">
+<div class="wf-phone">
+<div class="wf-status"><span>9:41</span><span>▮ ▮ ▮</span></div>
+<div class="wf-body" style="justify-content:space-between;padding-bottom:34px">
+<div style="display:flex;flex-direction:column;gap:18px;padding-top:6px">
+<div class="wf-row" style="justify-content:space-between"><span style="font:600 15px system-ui">←</span><span class="wf-eyebrow">STEP 02 · MOOD</span><span style="width:44px"></span></div>
+<h2 class="wf-h2" style="font-size:25px">Here's how we read it.</h2>
+<div class="wf-ph" style="height:214px;border-radius:16px">MOOD GRADIENT — full bleed to the edges in hi-fi</div>
+<div style="display:flex;flex-direction:column;gap:9px">
+<p style="margin:0;font:600 20px/1.35 system-ui">Melancholy · Dreamy · Slow burn</p>
+<p class="wf-p" style="font-size:13.5px">Drawn from the blurb, the genre and where you are in it — a quiet, watchful first third, wonder shading into unease.</p>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div class="wf-btn">Sounds right — generate →</div>
+<div class="wf-btn2">Not quite — adjust it</div>
+</div>
+</div>
+</div>
+<div class="wf-cap"><span class="wf-num">07a</span><span>The read gets the whole screen. Two exits: accept, or open the chips.</span></div>
+</div>
+
+<div class="wf-screen">
+<div class="wf-phone">
+<div class="wf-status"><span>9:41</span><span>▮ ▮ ▮</span></div>
+<div class="wf-body" style="padding:0;gap:0;background:#f6f4f0">
+<div style="padding:60px 20px 0;display:flex;flex-direction:column;gap:10px;opacity:.45">
+<span class="wf-eyebrow">STEP 02 · MOOD</span>
+<h2 class="wf-h2" style="font-size:25px">Here's how we read it.</h2>
+<div class="wf-ph" style="height:90px;border-radius:16px">GRADIENT</div>
+</div>
+<div style="flex:1"></div>
+<div style="background:#fff;border-top:1px solid #e2ded7;border-radius:22px 22px 0 0;padding:20px 20px 34px;display:flex;flex-direction:column;gap:14px">
+<div style="width:40px;height:4px;border-radius:99px;background:#e2ded7;align-self:center"></div>
+<h2 class="wf-h2" style="font-size:19px">What would you change?</h2>
+<span class="wf-eyebrow">MOOD · PICK UP TO TWO</span>
+<div class="wf-row" style="flex-wrap:wrap;gap:9px">
+<span class="wf-chip-on">Melancholy ✓</span><span class="wf-chip-on">Dreamy ✓</span><span class="wf-chip">Cozy</span><span class="wf-chip">Tense</span><span class="wf-chip">Hopeful</span><span class="wf-chip">Nostalgic</span><span class="wf-chip">Elegiac</span>
+</div>
+<span class="wf-eyebrow">PACING</span>
+<div class="wf-row" style="gap:9px"><span class="wf-chip-on">Slow burn ✓</span><span class="wf-chip">Steady</span><span class="wf-chip">Breakneck</span></div>
+<div class="wf-btn" style="margin-top:2px">Generate playlist →</div>
+</div>
+</div>
+</div>
+<div class="wf-cap"><span class="wf-num">07b</span><span>Sheet, not a new screen — the read stays visible behind it so corrections feel anchored to it.</span></div>
+</div>
+
+</div>
+</div>
+
+</div>
+
+<p class="dv-next">Try next: "go with <a class="dv-oid" href="#2a">2a</a> — take flow <a class="dv-oid" href="#1c">1c</a> to hi-fi in the design system" · "show <a class="dv-oid" href="#2a">2a</a> with the gradient full-bleed like <a class="dv-oid" href="#2b">2b</a>" · "what happens when the AI's read is confidently wrong?"</p>
+</section>
+
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Under Score — user flow &amp; wireframes</span></div>
+
+<sc-if value="{{ showBrief }}" hint-placeholder-val="{{ true }}">
+<div class="brief">
+<h3>WHAT I ASSUMED</h3>
+<ul>
+<li><b>Audience:</b> casual readers who want ambience with zero effort — so the happy path is <b>search a title → one tap → playlist in Spotify</b>. Mood tuning exists but is optional and comes with a proposed answer already filled in, never a blank form.</li>
+<li><b>Entry:</b> title/author search only (Google Books). No cover scan this pass.</li>
+<li><b>Playlist:</b> fixed ~30 Claude-curated tracks resolved against Spotify search, per your working conventions. No ratings, no runtime sizing.</li>
+<li><b>Nav:</b> 3 tabs — Now (current book + player), Library, Profile. Generation is a full-screen flow launched from Now/Library, not a tab.</li>
+<li><b>Fidelity:</b> grayscale, 390×844 iOS metrics, 44px+ targets, real brand-voice copy. Blue text is my annotation, not UI. Colour, mood gradients and the DS components arrive in the hi-fi pass.</li>
+</ul>
+<h3>OPEN DECISIONS FOR YOU</h3>
+<ul>
+<li>Mood capture — three models: <a class="dv-oid" href="#1e">1e</a> chips, <a class="dv-oid" href="#1f">1f</a> sliders, <a class="dv-oid" href="#1g">1g</a> AI-proposes. For a zero-effort audience I'd ship <a class="dv-oid" href="#1g">1g</a> with <a class="dv-oid" href="#1e">1e</a> as its "advanced" escape hatch.</li>
+<li>Re-scoring as the story shifts — three models in <a class="dv-oid" href="#1h">1h</a>. This is where the product could get complicated fast; I'd start with model 1.</li>
+</ul>
+</div>
+</sc-if>
+
+<div class="dv-opts">
+
+<sc-if value="{{ showFlowMap }}" hint-placeholder-val="{{ true }}">
+<div class="dv-opt" id="1a">
+<div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Whole-app flow map — four lanes, first run through repeat use</div>
+<div class="dv-card">
+<div class="fm">
+
+<div class="fm-lane">
+<div class="fm-laneh">LANE 1 · FIRST RUN</div>
+<div class="fm-rowf">
+<div class="fm-node fm-term">Launch</div>
+<span class="fm-arrow">→</span>
+<div class="fm-node">Splash<span class="fm-sub">value prop</span></div>
+<span class="fm-arrow">→</span>
+<div class="fm-node">How it works<span class="fm-sub">3 cards, skippable</span></div>
+<span class="fm-arrow">→</span>
+<div class="fm-node">Sign in<span class="fm-sub">Apple / email</span></div>
+<span class="fm-arrow">→</span>
+<div class="fm-node">Connect music<span class="fm-sub">Spotify OAuth</span></div>
+<span class="fm-arrow">→</span>
+<div class="fm-node fm-dec">Connected?</div>
+<span class="fm-arrow">→</span>
+<div class="fm-node">First book search</div>
+</div>
+<div class="fm-loop">↳ no / skipped → the app still generates; the playlist is preview-only and a "Connect to save" banner persists on Now and on every result.</div>
+</div>
+
+<div class="fm-lane">
+<div class="fm-laneh">LANE 2 · SCORE A BOOK — THE CORE LOOP</div>
+<div class="fm-rowf">
+<div class="fm-node">Search<span class="fm-sub">title / author</span></div>
+<span class="fm-arrow">→</span>
+<div class="fm-node">Results</div>
+<span class="fm-arrow">→</span>
+<div class="fm-node">Confirm book<span class="fm-sub">+ where you are</span></div>
+<span class="fm-arrow">→</span>
+<div class="fm-node">Mood<span class="fm-sub">1e / 1f / 1g</span></div>
+<span class="fm-arrow">→</span>
+<div class="fm-node">Generating<span class="fm-sub">8–15s</span></div>
+<span class="fm-arrow">→</span>
+<div class="fm-node fm-term">Playlist</div>
+<span class="fm-arrow">→</span>
+<div class="fm-node">Save to Spotify</div>
+<span class="fm-arrow">→</span>
+<div class="fm-node fm-dec">Saved sheet</div>
+</div>
+<div class="fm-loop">↳ failure states to design next: no search results → "add it by hand"; Claude or Spotify error → keep the draft, offer retry; fewer than 30 tracks resolved → ship what resolved and say the count.</div>
+</div>
+
+<div class="fm-lane">
+<div class="fm-laneh">LANE 3 · LISTEN &amp; RETURN</div>
+<div class="fm-rowf">
+<div class="fm-node fm-term">Now tab</div>
+<span class="fm-arrow">→</span>
+<div class="fm-node">Current book<span class="fm-sub">+ its sections</span></div>
+<span class="fm-arrow">→</span>
+<div class="fm-node">Player<span class="fm-sub">Spotify remote</span></div>
+<span class="fm-arrow">→</span>
+<div class="fm-node fm-dec">Story turned?</div>
+<span class="fm-arrow">→</span>
+<div class="fm-node">Re-score<span class="fm-sub">see 1h</span></div>
+<span class="fm-arrow">→</span>
+<div class="fm-node">New section<span class="fm-sub">appended to the book</span></div>
+</div>
+</div>
+
+<div class="fm-lane">
+<div class="fm-laneh">LANE 4 · MANAGE</div>
+<div class="fm-rowf">
+<div class="fm-node fm-term">Library tab</div>
+<span class="fm-arrow">→</span>
+<div class="fm-node">Book detail<span class="fm-sub">all sections</span></div>
+<span class="fm-arrow">→</span>
+<div class="fm-node">Playlist</div>
+<span class="fm-arrow">→</span>
+<div class="fm-node">Regenerate / delete</div>
+<span class="fm-arrow">·</span>
+<div class="fm-node fm-term">Profile tab</div>
+<span class="fm-arrow">→</span>
+<div class="fm-node">Connections</div>
+<span class="fm-arrow">·</span>
+<div class="fm-node">Theme</div>
+<span class="fm-arrow">·</span>
+<div class="fm-node">Sign out</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</sc-if>
+
+<div class="dv-opt" id="1b">
+<div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Flow 1 — onboarding &amp; music connect (4 screens)</div>
+<div class="wf-seq">
+
+<div class="wf-screen">
+<div class="wf-phone">
+<div class="wf-status"><span>9:41</span><span>▮ ▮ ▮</span></div>
+<div class="wf-body" style="justify-content:space-between;padding-bottom:34px">
+<div style="display:flex;flex-direction:column;gap:16px;padding-top:56px">
+<div class="wf-ph" style="width:150px;height:52px">LOGO LOCKUP</div>
+<h1 class="wf-h1" style="font-size:34px;max-width:300px">Every book has a rhythm. Let's find yours.</h1>
+<p class="wf-p" style="max-width:290px">Tell us what you're reading. We'll score it — a playlist that moves with the story, not just its genre.</p>
+</div>
+<div class="wf-ph" style="height:196px">HERO GRADIENT BAND — full-bleed in hi-fi</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div class="wf-btn">Get started →</div>
+<div class="wf-btn2">I already have an account</div>
+</div>
+</div>
+</div>
+<div class="wf-cap"><span class="wf-num">01</span><span>Splash. One promise, one primary action — no carousel gate in front of it.</span></div>
+</div>
+
+<div class="wf-screen">
+<div class="wf-phone">
+<div class="wf-status"><span>9:41</span><span>▮ ▮ ▮</span></div>
+<div class="wf-body" style="justify-content:space-between;padding-bottom:34px">
+<div style="display:flex;flex-direction:column;gap:20px;padding-top:18px">
+<div class="wf-row" style="justify-content:space-between"><span class="wf-eyebrow">STEP 01 · HOW IT WORKS</span><span style="font:600 13px system-ui;color:#8a857e">Skip</span></div>
+<h2 class="wf-h2" style="font-size:24px">Three taps to a soundtrack.</h2>
+<div class="wf-list">
+<div class="wf-li"><div class="wf-ph" style="width:44px;height:44px;border-radius:999px">1</div><div><div style="font-weight:600">Say what you're reading</div><p class="wf-p" style="font-size:13px">Search any title or author.</p></div></div>
+<div class="wf-li"><div class="wf-ph" style="width:44px;height:44px;border-radius:999px">2</div><div><div style="font-weight:600">We read the mood</div><p class="wf-p" style="font-size:13px">Pacing, tone, setting, era.</p></div></div>
+<div class="wf-li" style="border:0"><div class="wf-ph" style="width:44px;height:44px;border-radius:999px">3</div><div><div style="font-weight:600">Press play</div><p class="wf-p" style="font-size:13px">Thirty tracks, straight to Spotify.</p></div></div>
+</div>
+<div class="wf-ph" style="height:168px">MOOD-GRADIENT ILLUSTRATION SLOT</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="wf-row" style="justify-content:center;gap:7px"><div style="width:22px;height:6px;border-radius:99px;background:#2b2b2b"></div><div style="width:6px;height:6px;border-radius:99px;background:#d5d1cb"></div><div style="width:6px;height:6px;border-radius:99px;background:#d5d1cb"></div></div>
+<div class="wf-btn">Next →</div>
+</div>
+</div>
+</div>
+<div class="wf-cap"><span class="wf-num">02</span><span>Swipeable, three pages, always skippable. Dots = the DS <i>ProgressDots</i>.</span></div>
+</div>
+
+<div class="wf-screen">
+<div class="wf-phone">
+<div class="wf-status"><span>9:41</span><span>▮ ▮ ▮</span></div>
+<div class="wf-body" style="justify-content:space-between;padding-bottom:34px">
+<div style="display:flex;flex-direction:column;gap:18px;padding-top:48px">
+<span class="wf-eyebrow">STEP 03 · CONNECT</span>
+<h2 class="wf-h2" style="font-size:26px">Where should we send the music?</h2>
+<p class="wf-p">Pick one now, add the other later. We only ever create new playlists — we never touch what you already have.</p>
+<div style="display:flex;flex-direction:column;gap:10px;margin-top:6px">
+<div class="wf-box" style="padding:16px;display:flex;align-items:center;gap:14px"><div class="wf-ph" style="width:36px;height:36px;border-radius:999px">SP</div><div style="flex:1"><div style="font-weight:600">Spotify</div><p class="wf-p" style="font-size:12.5px">Playlists + playback control</p></div><span style="color:#a5a09a">→</span></div>
+<div class="wf-box" style="padding:16px;display:flex;align-items:center;gap:14px"><div class="wf-ph" style="width:36px;height:36px;border-radius:999px">AM</div><div style="flex:1"><div style="font-weight:600">Apple Music</div><p class="wf-p" style="font-size:12.5px">Playlists only</p></div><span style="color:#a5a09a">→</span></div>
+</div>
+<div class="wf-note">If Apple Music is out of MVP scope this row greys out to "Coming soon" rather than disappearing.</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div class="wf-btn2">Not now — just show me a preview</div>
+<p class="wf-p" style="font-size:11.5px;text-align:center">You can hear 30-second previews without connecting.</p>
+</div>
+</div>
+</div>
+<div class="wf-cap"><span class="wf-num">03</span><span>Connect is <b>soft-gated</b>: skipping still reaches a playlist, just an unsaveable one. Protects the zero-effort promise.</span></div>
+</div>
+
+<div class="wf-screen">
+<div class="wf-phone">
+<div class="wf-status"><span>9:41</span><span>▮ ▮ ▮</span></div>
+<div class="wf-body" style="justify-content:space-between;padding-bottom:34px">
+<div style="display:flex;flex-direction:column;gap:18px;padding-top:86px;align-items:center;text-align:center">
+<div class="wf-ph" style="width:88px;height:88px;border-radius:999px">✓ GLYPH</div>
+<h2 class="wf-h2" style="font-size:26px">Connected to Spotify.</h2>
+<p class="wf-p" style="max-width:270px">Now — what are you reading?</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div class="wf-box" style="height:52px;border-radius:999px;display:flex;align-items:center;gap:12px;padding:0 18px"><div style="width:10px;height:10px;border-radius:99px;background:#a5a09a"></div><span style="color:#9a958e">Search a title or author</span></div>
+<div class="wf-note">Field is focused on entry, so first run ends inside the core loop instead of on a dead-end success screen.</div>
+</div>
+</div>
+</div>
+<div class="wf-cap"><span class="wf-num">04</span><span>Confirmation doubles as the handoff into flow 2.</span></div>
+</div>
+
+</div>
+</div>
+
+<div class="dv-opt" id="1c">
+<div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Flow 2 — book → mood → playlist → Spotify (6 screens)</div>
+<div class="wf-seq">
+
+<div class="wf-screen">
+<div class="wf-phone">
+<div class="wf-status"><span>9:41</span><span>▮ ▮ ▮</span></div>
+<div class="wf-body">
+<div class="wf-row" style="justify-content:space-between;padding-top:6px"><span style="font:600 15px system-ui">Cancel</span><span class="wf-eyebrow">NEW SCORE</span><span style="width:44px"></span></div>
+<div class="wf-box" style="height:52px;border-radius:999px;display:flex;align-items:center;gap:12px;padding:0 18px"><div style="width:10px;height:10px;border-radius:99px;background:#2b2b2b"></div><span style="font-weight:500">piranesi</span><span style="margin-left:auto;color:#a5a09a">✕</span></div>
+<span class="wf-eyebrow">RESULTS</span>
+<div class="wf-list">
+<div class="wf-li"><div class="wf-ph" style="width:46px;height:68px">COVER</div><div style="flex:1"><div style="font-weight:600">Piranesi</div><p class="wf-p" style="font-size:12.5px">Susanna Clarke · 2020 · Fantasy</p></div></div>
+<div class="wf-li"><div class="wf-ph" style="width:46px;height:68px">COVER</div><div style="flex:1"><div style="font-weight:600">Piranesi's Prisons</div><p class="wf-p" style="font-size:12.5px">G. B. Piranesi · 1749 · Art</p></div></div>
+<div class="wf-li"><div class="wf-ph" style="width:46px;height:68px">COVER</div><div style="flex:1"><div style="font-weight:600">The Piranesi Effect</div><p class="wf-p" style="font-size:12.5px">Various · 2011 · Essays</p></div></div>
+</div>
+<div class="wf-note">Debounced Google Books query, eight results max, no infinite scroll. Empty state: "Can't find it? Add it by hand."</div>
+</div>
+</div>
+<div class="wf-cap"><span class="wf-num">05</span><span>Search. Recent books fill this list when the field is empty.</span></div>
+</div>
+
+<div class="wf-screen">
+<div class="wf-phone">
+<div class="wf-status"><span>9:41</span><span>▮ ▮ ▮</span></div>
+<div class="wf-body" style="justify-content:space-between;padding-bottom:34px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="wf-row" style="padding-top:6px"><span style="font:600 15px system-ui">←</span></div>
+<div class="wf-row" style="gap:16px;align-items:flex-start"><div class="wf-ph" style="width:104px;height:154px">COVER</div><div style="display:flex;flex-direction:column;gap:7px"><h2 class="wf-h2">Piranesi</h2><p class="wf-p" style="font-size:13.5px">Susanna Clarke</p><div class="wf-row" style="gap:6px;flex-wrap:wrap"><span class="wf-chip" style="padding:6px 11px;font-size:11.5px">Fantasy</span><span class="wf-chip" style="padding:6px 11px;font-size:11.5px">2020</span></div></div></div>
+<p class="wf-p" style="font-size:13.5px">A man lives in an infinite house of statues and tides, keeping careful notes on a world he has never thought to question.</p>
+<div style="height:1px;background:#efece6"></div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<span class="wf-eyebrow">WHERE ARE YOU?</span>
+<div class="wf-row" style="gap:14px"><div style="flex:1;height:5px;border-radius:99px;background:#e2ded7;position:relative"><div style="position:absolute;left:0;top:0;bottom:0;width:38%;background:#2b2b2b;border-radius:99px"></div><div style="position:absolute;left:38%;top:-10px;width:26px;height:26px;margin-left:-13px;border-radius:99px;background:#fff;border:1.5px solid #2b2b2b"></div></div><span style="font:600 13px ui-monospace,Menlo,monospace">38%</span></div>
+<p class="wf-p" style="font-size:12.5px">Roughly is fine. It decides which part of the story we score.</p>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div class="wf-btn">Score it →</div>
+<p class="wf-p" style="font-size:11.5px;text-align:center">Takes about ten seconds.</p>
+</div>
+</div>
+</div>
+<div class="wf-cap"><span class="wf-num">06</span><span>Confirm + progress. A slider, never a required chapter number — casual readers don't track those.</span></div>
+</div>
+
+<div class="wf-screen">
+<div class="wf-phone">
+<div class="wf-status"><span>9:41</span><span>▮ ▮ ▮</span></div>
+<div class="wf-body" style="justify-content:space-between;padding-bottom:34px">
+<div style="display:flex;flex-direction:column;gap:16px;padding-top:6px">
+<div class="wf-row" style="justify-content:space-between"><span style="font:600 15px system-ui">←</span><span class="wf-eyebrow">STEP 02 · MOOD</span><span style="font:600 13px system-ui;color:#8a857e">Skip</span></div>
+<h2 class="wf-h2" style="font-size:24px">How does this part feel?</h2>
+<p class="wf-p">Optional. Skip it and we'll go with what the book tells us.</p>
+<div class="wf-ph" style="height:424px;border-radius:14px">MOOD CAPTURE — three models explored in 1e · 1f · 1g</div>
+</div>
+<div class="wf-btn">Generate playlist →</div>
+</div>
+</div>
+<div class="wf-cap"><span class="wf-num">07</span><span>The one variable step. Always skippable — the constraint every option in <a class="dv-oid" href="#1e">1e</a>–<a class="dv-oid" href="#1g">1g</a> respects.</span></div>
+</div>
+
+<div class="wf-screen">
+<div class="wf-phone">
+<div class="wf-status"><span>9:41</span><span>▮ ▮ ▮</span></div>
+<div class="wf-body" style="justify-content:center;align-items:center;gap:26px;padding-bottom:80px">
+<div class="wf-ph" style="width:200px;height:200px;border-radius:20px">GRADIENT, SLOWLY CROSS-FADING</div>
+<h2 class="wf-h2" style="font-size:22px;text-align:center">Scoring Piranesi…</h2>
+<div class="wf-list" style="width:252px;gap:8px">
+<div class="wf-row" style="gap:10px"><span style="font:600 12px ui-monospace,Menlo,monospace">✓</span><span style="font-size:13.5px">Read the book's register</span></div>
+<div class="wf-row" style="gap:10px"><span style="font:600 12px ui-monospace,Menlo,monospace">✓</span><span style="font-size:13.5px">Melancholy · Slow burn · Tides</span></div>
+<div class="wf-row" style="gap:10px"><span style="font:600 12px ui-monospace,Menlo,monospace;color:#a5a09a">◌</span><span style="font-size:13.5px;color:#8a857e">Finding thirty tracks…</span></div>
+</div>
+<div class="wf-note" style="max-width:280px">Named steps, not a spinner — the wait is the moment the product's intelligence becomes legible. Back cancels.</div>
+</div>
+</div>
+<div class="wf-cap"><span class="wf-num">08</span><span>Generating. 8–15s of Claude analysis plus Spotify search resolution.</span></div>
+</div>
+
+<div class="wf-screen">
+<div class="wf-phone">
+<div class="wf-status"><span>9:41</span><span>▮ ▮ ▮</span></div>
+<div class="wf-body" style="padding:0;gap:0">
+<div class="wf-ph" style="height:248px;border-radius:0;border-left:0;border-right:0;border-top:0">MOOD-GRADIENT ARTWORK BAND (melancholy) — ← and ⋯ overlaid</div>
+<div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px;flex:1;min-height:0">
+<div style="display:flex;flex-direction:column;gap:6px">
+<span class="wf-eyebrow">PIRANESI · 38%</span>
+<h2 class="wf-h2" style="font-size:23px">Tides and Statues</h2>
+<p class="wf-p" style="font-size:13px">Melancholy · Slow burn · Vast interiors</p>
+<p class="wf-p" style="font-size:13px">30 tracks · 1 hr 52 min</p>
+</div>
+<div class="wf-row" style="gap:10px"><div class="wf-btn" style="flex:1;height:48px;font-size:15px">Save to Spotify</div><div class="wf-ph" style="width:48px;height:48px;border-radius:999px">▶</div></div>
+<div class="wf-list" style="flex:1;min-height:0;overflow:hidden">
+<div class="wf-li"><div class="wf-ph" style="width:40px;height:40px">ART</div><div style="flex:1"><div style="font-weight:600;font-size:14px">Avril 14th</div><p class="wf-p" style="font-size:12px">Aphex Twin</p></div><span style="font:500 11.5px ui-monospace,Menlo,monospace;color:#a5a09a">2:05</span></div>
+<div class="wf-li"><div class="wf-ph" style="width:40px;height:40px">ART</div><div style="flex:1"><div style="font-weight:600;font-size:14px">An Ending (Ascent)</div><p class="wf-p" style="font-size:12px">Brian Eno</p></div><span style="font:500 11.5px ui-monospace,Menlo,monospace;color:#a5a09a">4:23</span></div>
+<div class="wf-li"><div class="wf-ph" style="width:40px;height:40px">ART</div><div style="flex:1"><div style="font-weight:600;font-size:14px">Nude</div><p class="wf-p" style="font-size:12px">Radiohead</p></div><span style="font:500 11.5px ui-monospace,Menlo,monospace;color:#a5a09a">4:15</span></div>
+<div class="wf-li"><div class="wf-ph" style="width:40px;height:40px">ART</div><div style="flex:1"><div style="font-weight:600;font-size:14px">Rothko Chapel III</div><p class="wf-p" style="font-size:12px">Morton Feldman</p></div><span style="font:500 11.5px ui-monospace,Menlo,monospace;color:#a5a09a">6:40</span></div>
+</div>
+</div>
+</div>
+</div>
+<div class="wf-cap"><span class="wf-num">09</span><span>Result. The title is generated, not "Piranesi playlist". ⋯ holds regenerate / tune the mood / delete.</span></div>
+</div>
+
+<div class="wf-screen">
+<div class="wf-phone">
+<div class="wf-status"><span>9:41</span><span>▮ ▮ ▮</span></div>
+<div class="wf-body" style="padding:0;gap:0;background:#f6f4f0">
+<div style="flex:1"></div>
+<div style="background:#fff;border-top:1px solid #e2ded7;border-radius:22px 22px 0 0;padding:22px 22px 34px;display:flex;flex-direction:column;gap:15px">
+<div style="width:40px;height:4px;border-radius:99px;background:#e2ded7;align-self:center"></div>
+<div class="wf-ph" style="width:56px;height:56px;border-radius:999px;align-self:center">✓</div>
+<h2 class="wf-h2" style="font-size:21px;text-align:center">Tides and Statues is in your Spotify.</h2>
+<p class="wf-p" style="font-size:13.5px;text-align:center">We'll keep it in step with the book — nudge us when the story turns.</p>
+<div class="wf-btn">Open in Spotify →</div>
+<div class="wf-btn2">Play here instead</div>
+<p class="wf-p" style="font-size:12.5px;text-align:center">Done</p>
+</div>
+</div>
+</div>
+<div class="wf-cap"><span class="wf-num">10</span><span>Saved sheet. Dismiss lands on <b>Now</b> with this book current, closing the loop into daily use.</span></div>
+</div>
+
+</div>
+</div>
+
+<div class="dv-opt" id="1d">
+<div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a>Flow 3 — now, library, player, profile (4 screens)</div>
+<div class="wf-seq">
+
+<div class="wf-screen">
+<div class="wf-phone">
+<div class="wf-status"><span>9:41</span><span>▮ ▮ ▮</span></div>
+<div class="wf-body">
+<div class="wf-row" style="justify-content:space-between;padding-top:8px"><h1 class="wf-h1" style="font-size:26px">Now Playing</h1><div class="wf-ph" style="width:36px;height:36px;border-radius:999px">＋</div></div>
+<div class="wf-box" style="padding:0;overflow:hidden">
+<div class="wf-ph" style="height:118px;border:0;border-radius:0">MOOD GRADIENT</div>
+<div style="padding:14px 16px;display:flex;flex-direction:column;gap:5px">
+<span class="wf-eyebrow">READING NOW · 38%</span>
+<div style="font-weight:600;font-size:17px">Piranesi</div>
+<p class="wf-p" style="font-size:12.5px">Tides and Statues · 30 tracks</p>
+<div class="wf-row" style="gap:8px;padding-top:8px"><div class="wf-btn" style="flex:1;height:44px;font-size:14px">Resume</div><div class="wf-btn2" style="flex:1;height:44px;font-size:14px">Story turned?</div></div>
+</div>
+</div>
+<div class="wf-note">"Story turned?" is the re-score entry point — see <a class="dv-oid" href="#1h">1h</a>.</div>
+<span class="wf-eyebrow">EARLIER SECTIONS</span>
+<div class="wf-list">
+<div class="wf-li"><div class="wf-ph" style="width:44px;height:44px">GRAD</div><div style="flex:1"><div style="font-weight:600;font-size:14px">The Halls</div><p class="wf-p" style="font-size:12px">0–20% · Dreamy</p></div><span style="color:#a5a09a">▶</span></div>
+<div class="wf-li"><div class="wf-ph" style="width:44px;height:44px">GRAD</div><div style="flex:1"><div style="font-weight:600;font-size:14px">The Other</div><p class="wf-p" style="font-size:12px">20–38% · Tense</p></div><span style="color:#a5a09a">▶</span></div>
+</div>
+</div>
+<div class="wf-tab"><div class="wf-tabi" style="color:#2b2b2b"><div class="wf-tabd" style="border-color:#2b2b2b;background:#2b2b2b"></div>Now</div><div class="wf-tabi"><div class="wf-tabd"></div>Library</div><div class="wf-tabi"><div class="wf-tabd"></div>Profile</div></div>
+</div>
+<div class="wf-cap"><span class="wf-num">11</span><span>Home is one book, one action. Sections accumulate as the reader moves through it.</span></div>
+</div>
+
+<div class="wf-screen">
+<div class="wf-phone">
+<div class="wf-status"><span>9:41</span><span>▮ ▮ ▮</span></div>
+<div class="wf-body">
+<div class="wf-row" style="justify-content:space-between;padding-top:8px"><h1 class="wf-h1" style="font-size:26px">Library</h1><div class="wf-ph" style="width:36px;height:36px;border-radius:999px">⌕</div></div>
+<div class="wf-row" style="gap:8px"><span class="wf-chip-on" style="padding:8px 14px;font-size:12.5px">All</span><span class="wf-chip" style="padding:8px 14px;font-size:12.5px">Reading</span><span class="wf-chip" style="padding:8px 14px;font-size:12.5px">Finished</span></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<div style="display:flex;flex-direction:column;gap:7px"><div class="wf-ph" style="height:150px;border-radius:14px">GRADIENT</div><div style="font-weight:600;font-size:13.5px">Piranesi</div><p class="wf-p" style="font-size:11.5px">3 sections · reading</p></div>
+<div style="display:flex;flex-direction:column;gap:7px"><div class="wf-ph" style="height:150px;border-radius:14px">GRADIENT</div><div style="font-weight:600;font-size:13.5px">Small Things Like These</div><p class="wf-p" style="font-size:11.5px">1 section · finished</p></div>
+<div style="display:flex;flex-direction:column;gap:7px"><div class="wf-ph" style="height:150px;border-radius:14px">GRADIENT</div><div style="font-weight:600;font-size:13.5px">The Bee Sting</div><p class="wf-p" style="font-size:11.5px">2 sections · finished</p></div>
+<div style="display:flex;flex-direction:column;gap:7px"><div class="wf-ph" style="height:150px;border-radius:14px">GRADIENT</div><div style="font-weight:600;font-size:13.5px">Beloved</div><p class="wf-p" style="font-size:11.5px">1 section · finished</p></div>
+</div>
+<div class="wf-note">The grid reads as a shelf of moods — gradients give an at-a-glance emotional history, so no cover art is needed here.</div>
+</div>
+<div class="wf-tab"><div class="wf-tabi"><div class="wf-tabd"></div>Now</div><div class="wf-tabi" style="color:#2b2b2b"><div class="wf-tabd" style="border-color:#2b2b2b;background:#2b2b2b"></div>Library</div><div class="wf-tabi"><div class="wf-tabd"></div>Profile</div></div>
+</div>
+<div class="wf-cap"><span class="wf-num">12</span><span>Library. Tap → book detail with all its sections; long-press → delete.</span></div>
+</div>
+
+<div class="wf-screen">
+<div class="wf-phone">
+<div class="wf-status"><span>9:41</span><span>▮ ▮ ▮</span></div>
+<div class="wf-body" style="justify-content:space-between;padding-bottom:24px">
+<div style="display:flex;flex-direction:column;gap:20px">
+<div class="wf-row" style="justify-content:space-between;padding-top:6px"><span style="font:600 15px system-ui">⌄</span><span class="wf-eyebrow">TIDES AND STATUES</span><span style="font:600 15px system-ui">⋯</span></div>
+<div class="wf-ph" style="height:314px;border-radius:18px">TRACK ART OVER MOOD GRADIENT</div>
+<div style="display:flex;flex-direction:column;gap:6px"><h2 class="wf-h2" style="font-size:22px">An Ending (Ascent)</h2><p class="wf-p">Brian Eno</p><p class="wf-p" style="font-size:12.5px">Piranesi · 38% · Melancholy</p></div>
+<div style="display:flex;flex-direction:column;gap:7px"><div style="height:4px;border-radius:99px;background:#e2ded7;position:relative"><div style="position:absolute;inset:0 62% 0 0;background:#2b2b2b;border-radius:99px"></div></div><div class="wf-row" style="justify-content:space-between;font:500 11px ui-monospace,Menlo,monospace;color:#a5a09a"><span>1:38</span><span>4:23</span></div></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="wf-row" style="justify-content:center;gap:28px"><span style="font-size:20px;color:#8a857e">↺</span><span style="font-size:22px">⏮</span><div class="wf-ph" style="width:68px;height:68px;border-radius:999px">▶</div><span style="font-size:22px">⏭</span><span style="font-size:19px;color:#8a857e">≡</span></div>
+<div class="wf-note">Playback is Spotify remote-control, not local audio. With no Premium session this collapses to a single "Open in Spotify" button.</div>
+</div>
+</div>
+</div>
+<div class="wf-cap"><span class="wf-num">13</span><span>Player. The book-context line is the only thing keeping this from being a generic player — keep it.</span></div>
+</div>
+
+<div class="wf-screen">
+<div class="wf-phone">
+<div class="wf-status"><span>9:41</span><span>▮ ▮ ▮</span></div>
+<div class="wf-body">
+<h1 class="wf-h1" style="font-size:26px;padding-top:8px">Profile</h1>
+<div class="wf-row" style="gap:14px"><div class="wf-ph" style="width:56px;height:56px;border-radius:999px">AV</div><div><div style="font-weight:600;font-size:16px">Ada Fenwick</div><p class="wf-p" style="font-size:12.5px">14 books scored · 9 hrs listened</p></div></div>
+<span class="wf-eyebrow">CONNECTED</span>
+<div class="wf-list">
+<div class="wf-li"><div class="wf-ph" style="width:34px;height:34px;border-radius:999px">SP</div><div style="flex:1"><div style="font-weight:600;font-size:14px">Spotify</div><p class="wf-p" style="font-size:12px">ada@fenwick.co</p></div><span style="font:600 12px system-ui;color:#8a857e">Disconnect</span></div>
+<div class="wf-li"><div class="wf-ph" style="width:34px;height:34px;border-radius:999px">AM</div><div style="flex:1"><div style="font-weight:600;font-size:14px">Apple Music</div><p class="wf-p" style="font-size:12px">Not connected</p></div><span style="font:600 12px system-ui">Connect</span></div>
+</div>
+<span class="wf-eyebrow">PREFERENCES</span>
+<div class="wf-list">
+<div class="wf-li"><span style="flex:1;font-size:14.5px">Appearance</span><div class="wf-box" style="width:76px;height:32px;border-radius:999px;display:flex;align-items:center;padding:3px"><div style="width:36px;height:26px;border-radius:999px;background:#2b2b2b"></div></div></div>
+<div class="wf-li"><span style="flex:1;font-size:14.5px">Nudge me when the mood drifts</span><div class="wf-box" style="width:50px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:flex-end;padding:3px;background:#2b2b2b;border-color:#2b2b2b"><div style="width:24px;height:24px;border-radius:999px;background:#fff"></div></div></div>
+<div class="wf-li"><span style="flex:1;font-size:14.5px">Explicit tracks</span><div class="wf-box" style="width:50px;height:30px;border-radius:999px;display:flex;align-items:center;padding:3px"><div style="width:24px;height:24px;border-radius:999px;background:#fff;border:1px solid #e2ded7"></div></div></div>
+<div class="wf-li" style="border:0"><span style="flex:1;font-size:14.5px;color:#8a857e">Sign out</span></div>
+</div>
+<div class="wf-note">Appearance is the DS <i>ThemeSwitch</i> — light / dark / system.</div>
+</div>
+<div class="wf-tab"><div class="wf-tabi"><div class="wf-tabd"></div>Now</div><div class="wf-tabi"><div class="wf-tabd"></div>Library</div><div class="wf-tabi" style="color:#2b2b2b"><div class="wf-tabd" style="border-color:#2b2b2b;background:#2b2b2b"></div>Profile</div></div>
+</div>
+<div class="wf-cap"><span class="wf-num">14</span><span>Profile. Thin by design — settings are not a feature surface in this product.</span></div>
+</div>
+
+</div>
+</div>
+
+<div class="dv-opt" id="1e">
+<div class="dv-olabel"><a class="dv-oid" href="#1e">1e</a>Mood capture A — chips, closest to the DS reference screen</div>
+<div class="wf-phone">
+<div class="wf-status"><span>9:41</span><span>▮ ▮ ▮</span></div>
+<div class="wf-body" style="justify-content:space-between;padding-bottom:34px">
+<div style="display:flex;flex-direction:column;gap:16px;padding-top:6px">
+<div class="wf-row" style="justify-content:space-between"><span style="font:600 15px system-ui">←</span><span class="wf-eyebrow">STEP 02 · MOOD</span><span style="font:600 13px system-ui;color:#8a857e">Skip</span></div>
+<h2 class="wf-h2" style="font-size:25px">Pick how this part feels.</h2>
+<p class="wf-p">Up to two. We've pre-selected what the book suggests.</p>
+<div class="wf-row" style="flex-wrap:wrap;gap:10px;padding-top:2px">
+<span class="wf-chip-on">Melancholy</span><span class="wf-chip">Cozy</span><span class="wf-chip-on">Dreamy</span><span class="wf-chip">Tense</span><span class="wf-chip">Hopeful</span><span class="wf-chip">Nostalgic</span><span class="wf-chip">Restless</span><span class="wf-chip">Elegiac</span><span class="wf-chip">Playful</span>
+</div>
+<div style="height:1px;background:#efece6"></div>
+<span class="wf-eyebrow">PACING</span>
+<div class="wf-row" style="gap:10px"><span class="wf-chip-on">Slow burn</span><span class="wf-chip">Steady</span><span class="wf-chip">Breakneck</span></div>
+<div class="wf-ph" style="height:104px;margin-top:4px">LIVE GRADIENT PREVIEW — cross-fades as chips change</div>
+<div class="wf-note">Each chip fills with its own mood gradient when selected (DS <i>MoodChip</i>), turning the screen into a colour instrument.</div>
+</div>
+<div class="wf-btn">Generate playlist →</div>
+</div>
+</div>
+<div class="wf-cap"><span class="wf-num">A</span><span><b>Pro:</b> no learning curve, straight out of the DS, immediate gradient payoff. <b>Con:</b> nine words is a vocabulary quiz, and two chips is a blunt instrument.</span></div>
+</div>
+
+<div class="dv-opt" id="1f">
+<div class="dv-olabel"><a class="dv-oid" href="#1f">1f</a>Mood capture B — three sliders with one live readout</div>
+<div class="wf-phone">
+<div class="wf-status"><span>9:41</span><span>▮ ▮ ▮</span></div>
+<div class="wf-body" style="justify-content:space-between;padding-bottom:34px">
+<div style="display:flex;flex-direction:column;gap:16px;padding-top:6px">
+<div class="wf-row" style="justify-content:space-between"><span style="font:600 15px system-ui">←</span><span class="wf-eyebrow">STEP 02 · MOOD</span><span style="font:600 13px system-ui;color:#8a857e">Skip</span></div>
+<h2 class="wf-h2" style="font-size:25px">Tune it by feel.</h2>
+<p class="wf-p">Three dials. Nudge them, or leave them where the book put them.</p>
+<div class="wf-ph" style="height:128px;margin:2px 0">GRADIENT RESPONDS LIVE TO ALL THREE AXES</div>
+<div style="display:flex;flex-direction:column;gap:22px">
+<div style="display:flex;flex-direction:column;gap:9px"><div class="wf-row" style="justify-content:space-between;font:600 11.5px ui-monospace,Menlo,monospace;color:#8a857e"><span>CALM</span><span>INTENSE</span></div><div style="height:5px;border-radius:99px;background:#e2ded7;position:relative"><div style="position:absolute;inset:0 68% 0 0;background:#2b2b2b;border-radius:99px"></div><div style="position:absolute;left:32%;top:-10px;width:26px;height:26px;margin-left:-13px;border-radius:99px;background:#fff;border:1.5px solid #2b2b2b"></div></div></div>
+<div style="display:flex;flex-direction:column;gap:9px"><div class="wf-row" style="justify-content:space-between;font:600 11.5px ui-monospace,Menlo,monospace;color:#8a857e"><span>WARM</span><span>COLD</span></div><div style="height:5px;border-radius:99px;background:#e2ded7;position:relative"><div style="position:absolute;inset:0 26% 0 0;background:#2b2b2b;border-radius:99px"></div><div style="position:absolute;left:74%;top:-10px;width:26px;height:26px;margin-left:-13px;border-radius:99px;background:#fff;border:1.5px solid #2b2b2b"></div></div></div>
+<div style="display:flex;flex-direction:column;gap:9px"><div class="wf-row" style="justify-content:space-between;font:600 11.5px ui-monospace,Menlo,monospace;color:#8a857e"><span>SPARSE</span><span>DENSE</span></div><div style="height:5px;border-radius:99px;background:#e2ded7;position:relative"><div style="position:absolute;inset:0 78% 0 0;background:#2b2b2b;border-radius:99px"></div><div style="position:absolute;left:22%;top:-10px;width:26px;height:26px;margin-left:-13px;border-radius:99px;background:#fff;border:1.5px solid #2b2b2b"></div></div></div>
+</div>
+<div class="wf-box" style="padding:14px 16px;margin-top:2px"><span class="wf-eyebrow">READS AS</span><p style="margin:6px 0 0;font:600 15px system-ui">Melancholy · Slow burn · Rain</p></div>
+</div>
+<div class="wf-btn">Generate playlist →</div>
+</div>
+</div>
+<div class="wf-cap"><span class="wf-num">B</span><span><b>Pro:</b> continuous, no vocabulary needed, and the "reads as" line teaches the mood language. <b>Con:</b> three dials is work — the wrong tax for a zero-effort reader, and the hardest input to map predictably to prompts.</span></div>
+</div>
+
+<div class="dv-opt" id="1g">
+<div class="dv-olabel"><a class="dv-oid" href="#1g">1g</a>Mood capture C — the app proposes, you nudge <b>(my recommendation)</b></div>
+<div class="wf-phone">
+<div class="wf-status"><span>9:41</span><span>▮ ▮ ▮</span></div>
+<div class="wf-body" style="justify-content:space-between;padding-bottom:34px">
+<div style="display:flex;flex-direction:column;gap:16px;padding-top:6px">
+<div class="wf-row" style="justify-content:space-between"><span style="font:600 15px system-ui">←</span><span class="wf-eyebrow">STEP 02 · MOOD</span><span style="width:44px"></span></div>
+<h2 class="wf-h2" style="font-size:25px">Here's how we read it.</h2>
+<div class="wf-ph" style="height:186px;border-radius:16px">MOOD GRADIENT — melancholy</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="margin:0;font:600 19px/1.35 system-ui">Melancholy · Slow burn · Vast, tidal interiors</p>
+<p class="wf-p" style="font-size:13.5px">A quiet, watchful first third — wonder shading into unease. We'll lean ambient, piano and low strings.</p>
+</div>
+<div style="height:1px;background:#efece6"></div>
+<span class="wf-eyebrow">NOT QUITE? NUDGE IT</span>
+<div class="wf-row" style="flex-wrap:wrap;gap:9px">
+<span class="wf-chip">Warmer</span><span class="wf-chip">Darker</span><span class="wf-chip">Faster</span><span class="wf-chip">Quieter</span><span class="wf-chip">Stranger</span><span class="wf-chip">More hopeful</span>
+</div>
+<div class="wf-note">Each nudge rewrites the sentence above and re-runs the gradient: one tap, visible consequence, no form to fill.</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div class="wf-btn">Sounds right — generate →</div>
+<p class="wf-p" style="font-size:12px;text-align:center">Advanced: pick moods by hand</p>
+</div>
+</div>
+</div>
+<div class="wf-cap"><span class="wf-num">C</span><span><b>Pro:</b> zero required input; the product demonstrates its intelligence instead of interviewing you, and nudges map cleanly to prompt deltas. <b>Con:</b> a bad read is now the product's fault, so the escape hatch to <a class="dv-oid" href="#1e">1e</a> has to exist.</span></div>
+</div>
+
+<div class="dv-opt" id="1h">
+<div class="dv-olabel"><a class="dv-oid" href="#1h">1h</a>Re-score models — how a playlist "shifts with the story"</div>
+<div class="dv-card" style="width:1000px">
+<div class="rs">
+<div class="rs-col">
+<span class="wf-eyebrow">MODEL 1 · READER-TRIGGERED</span>
+<p style="margin:0;font:700 17px/1.25 system-ui">"Story turned?"</p>
+<p class="wf-p" style="font-size:13px">A persistent button on Now. Tap it, confirm where you are, take one nudge pass, and a new <b>section</b> playlist is appended to the book. Earlier sections stay playable.</p>
+<div class="fm-rowf" style="gap:7px;padding:4px 0"><div class="fm-node" style="min-width:0;font-size:11.5px">Now</div><span class="fm-arrow">→</span><div class="fm-node" style="min-width:0;font-size:11.5px">Where are you?</div><span class="fm-arrow">→</span><div class="fm-node fm-term" style="min-width:0;font-size:11.5px">New section</div></div>
+<p class="wf-p" style="font-size:12px"><b>+</b> Honest, cheap, no false positives, reuses one API path.<br><b>−</b> Depends on the reader remembering to do it.</p>
+<p class="wf-note" style="margin:0">Ship this one in MVP.</p>
+</div>
+<div class="rs-col">
+<span class="wf-eyebrow">MODEL 2 · PRE-CUT ACTS</span>
+<p style="margin:0;font:700 17px/1.25 system-ui">One score, three acts</p>
+<p class="wf-p" style="font-size:13px">Generation produces three mood-sequenced parts up front — beginning, middle, end — and the player advances between them as the progress slider moves.</p>
+<div class="fm-rowf" style="gap:7px;padding:4px 0"><div class="fm-node" style="min-width:0;font-size:11.5px">Generate</div><span class="fm-arrow">→</span><div class="fm-node" style="min-width:0;font-size:11.5px">Act I · II · III</div><span class="fm-arrow">→</span><div class="fm-node fm-dec" style="min-width:0;font-size:11.5px">Auto-advance</div></div>
+<p class="wf-p" style="font-size:12px"><b>+</b> Delivers the "shifts with the story" promise in one shot; nothing to remember.<br><b>−</b> Triple generation cost, spoiler risk in act titles, three playlists per book in Spotify.</p>
+</div>
+<div class="rs-col" style="border:0">
+<span class="wf-eyebrow">MODEL 3 · NUDGED</span>
+<p style="margin:0;font:700 17px/1.25 system-ui">We ask first</p>
+<p class="wf-p" style="font-size:13px">After a listening threshold or a few days, a soft prompt: "Still in the Halls, or has something changed?" Two taps re-scores. Opt-out lives in Profile.</p>
+<div class="fm-rowf" style="gap:7px;padding:4px 0"><div class="fm-node fm-dec" style="min-width:0;font-size:11.5px">Threshold</div><span class="fm-arrow">→</span><div class="fm-node" style="min-width:0;font-size:11.5px">Soft prompt</div><span class="fm-arrow">→</span><div class="fm-node fm-term" style="min-width:0;font-size:11.5px">Re-score</div></div>
+<p class="wf-p" style="font-size:12px"><b>+</b> Zero effort, matches the audience, and creates a reason to come back.<br><b>−</b> Notification fatigue, and it needs a listening-time signal we may not have if playback is remote.</p>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+
+<p class="dv-next">Try next: "go with <a class="dv-oid" href="#1g">1g</a> plus model 1 from <a class="dv-oid" href="#1h">1h</a> — take flow <a class="dv-oid" href="#1c">1c</a> to hi-fi" · "show an alternate nav with no Now tab" · "wireframe the failure states from lane 2 of <a class="dv-oid" href="#1a">1a</a>"</p>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1600,&quot;height&quot;:1100},&quot;showBrief&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Review&quot;},&quot;showFlowMap&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Review&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      showBrief: this.props.showBrief ?? true,
+      showFlowMap: this.props.showFlowMap ?? true
+    };
+  }
+}
+</script>
+</body>
+</html>
