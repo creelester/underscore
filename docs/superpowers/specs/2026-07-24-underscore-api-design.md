@@ -27,7 +27,7 @@ Derived per generation, not a property of a `Book`: it is Claude's read of one b
 | Field     | Type                                    | Notes                                                                                                          |
 | --------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `genre`   | `string[]`                              | Normalized genres, most representative first — e.g. `["sci-fi", "literary fiction"]`. A book can span several. |
-| `mood`    | `string[]`                              | Individual mood descriptors — e.g. `["tense", "melancholic"]`                                                  |
+| `mood`    | `Mood[]`, max 2                         | Closed vocabulary — `cozy \| melancholy \| hopeful \| tense \| dreamy \| nostalgic \| romantic \| playful \| epic \| haunting`. Each has a gradient that stands in for artwork and a chip in the correction UI, so the set is fixed; `MOODS` in `/packages/shared` is the source of truth. Empty on the manual-genre path. See `docs/2026-08-10-mood-vocabulary-decision.md`. |
 | `pacing`  | `"slow" \| "steady" \| "fast"`          |                                                                                                                |
 | `summary` | `string`                                | 1-2 sentence rationale, shown as QA/debug info                                                                 |
 
@@ -135,7 +135,9 @@ Manual-genre fallback path:
 
 Sending both keys, or neither, is a `400 INVALID_INPUT` — the zod schema in `/packages/shared` refines on exactly one being present.
 
-Notes: `manualGenre` path never calls Claude — profile is constructed directly from the user's text (`genre = [manualGenre]`, `pacing = "steady"`, `mood = []`, `summary = ""`).
+Notes: `manualGenre` path never calls Claude — profile is constructed directly from the user's text (`genre = [manualGenre]`, `pacing = "steady"`, `mood = []`, `summary = ""`). The UI renders the default mood gradient for an empty `mood`; `moodGradient` in `app/src/lib/gradients.ts` applies that fallback itself.
+
+**Constraining `mood`.** The analysis tool's `input_schema` carries `MOODS` as an `enum` with `maxItems: 2`, so Claude maps its own read onto the vocabulary rather than inventing a descriptor the UI would have to discard. Nuance the ten can't carry goes in `summary`, which is free text. An `enum` in a tool schema is a strong steer and not a guarantee, so `MoodProfileSchema.parse` on the server stays the real gate: a parse failure gets one retry, then `502 UPSTREAM_UNAVAILABLE`.
 
 ---
 
