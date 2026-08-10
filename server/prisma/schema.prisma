@@ -59,6 +59,18 @@ model Account {
   @@map("account")
 }
 
+// Backs Better Auth's rate limiter. The @@map target is camelCase, unlike the
+// other tables here, because it must match Better Auth's default modelName.
+model RateLimit {
+  id          String @id
+  key         String
+  count       Int
+  lastRequest BigInt
+
+  @@unique([key])
+  @@map("rateLimit")
+}
+
 model Verification {
   id         String   @id
   identifier String

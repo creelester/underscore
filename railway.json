@@ -5,7 +5,7 @@
     "buildCommand": "bun install && bun run --filter server build"
   },
   "deploy": {
-    "startCommand": "bun run --filter server start",
+    "startCommand": "NODE_ENV=production bun run --filter server start",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 30,
     "restartPolicyType": "ON_FAILURE",

@@ -31,5 +31,12 @@ export function createApp() {
     }
   });
 
+  // Terminal error handler. Without this, Express 4's default handler serialises
+  // stack traces into the response whenever NODE_ENV !== "production".
+  app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    console.error(err);
+    res.status(500).json({ code: "INTERNAL", message: "Something went wrong", retryable: true });
+  });
+
   return app;
 }

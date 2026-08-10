@@ -14,11 +14,17 @@ declare global {
 }
 
 export async function requireSession(req: Request, res: Response, next: NextFunction) {
-  const session = await auth.api.getSession({ headers: fromNodeHeaders(req.headers) });
-  if (!session) {
-    res.status(401).json({ code: "UNAUTHORIZED", message: "Authentication required", retryable: false });
-    return;
+  // Express 4 does not forward rejected promises from async middleware, so an
+  // unguarded throw here becomes a fatal unhandled rejection rather than a 500.
+  try {
+    const session = await auth.api.getSession({ headers: fromNodeHeaders(req.headers) });
+    if (!session) {
+      res.status(401).json({ code: "UNAUTHORIZED", message: "Authentication required", retryable: false });
+      return;
+    }
+    req.user = session.user;
+    next();
+  } catch (err) {
+    next(err);
   }
-  req.user = session.user;
-  next();
 }

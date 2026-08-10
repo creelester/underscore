@@ -11,13 +11,28 @@ export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL,
   basePath: "/api/auth",
   secret: env.BETTER_AUTH_SECRET,
-  trustedOrigins: [
-    `${env.APP_SCHEME}://`,
-    env.APP_ORIGIN,
-    // Expo Go (not a custom dev client) redirects via exp://<lan-ip>:8081 in development.
-    ...(process.env.NODE_ENV !== "production" ? ["exp://**"] : []),
-  ],
+  // Every entry here is also a permitted recipient of the session token: the Expo
+  // plugin appends the session cookie to the post-OAuth redirect URL, gated only by
+  // isTrustedOrigin. Keep this list exact — no wildcards. Expo Go's exp:// origin is
+  // added by the plugin itself when NODE_ENV === "development".
+  trustedOrigins: [`${env.APP_SCHEME}://`, env.APP_ORIGIN],
   plugins: [expo()],
+  // Enabled in every environment rather than relying on Better Auth's
+  // production-only default, so the throttle can't vanish if NODE_ENV drifts.
+  // Database storage survives Railway restarts and works across replicas.
+  rateLimit: {
+    enabled: true,
+    storage: "database",
+  },
+  advanced: {
+    ipAddress: {
+      // Railway sets x-real-ip as a single value it controls at the edge. The
+      // default (x-forwarded-for) arrives as a multi-hop chain, which Better Auth
+      // refuses to parse without trustedProxies — it would then key every request
+      // into one shared bucket, making 3 failed logins lock out all users.
+      ipAddressHeaders: ["x-real-ip"],
+    },
+  },
   emailAndPassword: {
     enabled: true,
   },
