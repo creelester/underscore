@@ -10,6 +10,8 @@ services:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      # Creates underscore_e2e for the Playwright suite. Runs on a fresh volume only.
+      - ./docker/postgres:/docker-entrypoint-initdb.d:ro
 
 volumes:
   postgres-data:

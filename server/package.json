@@ -9,7 +9,9 @@
     "typecheck": "tsc --noEmit",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:seed": "tsx prisma/seed.ts"
+    "prisma:seed": "tsx prisma/seed.ts",
+    "e2e:db:reset": "prisma migrate reset --force --skip-generate",
+    "start:e2e": "tsx src/index.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

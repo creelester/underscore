@@ -17,11 +17,14 @@ export const auth = betterAuth({
   // added by the plugin itself when NODE_ENV === "development".
   trustedOrigins: [`${env.APP_SCHEME}://`, env.APP_ORIGIN],
   plugins: [expo()],
-  // Enabled in every environment rather than relying on Better Auth's
-  // production-only default, so the throttle can't vanish if NODE_ENV drifts.
+  // Production only. Locally and under test the throttle is pure friction: it
+  // locks the shared seed account out after a few deliberate bad-password
+  // attempts, and because storage is "database" that counter outlives the
+  // process. Railway's startCommand hardcodes NODE_ENV=production, so any deploy
+  // through railway.json gets it; a deploy path that omits NODE_ENV would not.
   // Database storage survives Railway restarts and works across replicas.
   rateLimit: {
-    enabled: true,
+    enabled: env.NODE_ENV === "production",
     storage: "database",
   },
   advanced: {
