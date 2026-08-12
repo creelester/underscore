@@ -3,6 +3,18 @@
 Playwright drives the Expo **web** build (`react-native-web`) in Chromium, backed
 by a dedicated database that is reset on every run.
 
+The web build under test is a **production export** (`expo export` into
+`app/dist-e2e`, served by `expo serve`), not `expo start --web`. That is not a
+preference — it is what makes the API URL injection hold. In a dev bundle the
+client's `process.env` comes from `expo/virtual/env`, which spreads the contents
+of `app/.env*` over anything the shell injected, so a developer's local
+`app/.env.local` (`EXPO_PUBLIC_API_URL=http://localhost:3000`) silently wins and
+the whole suite drives the **dev** API. `expo export` runs in production mode,
+where `babel-preset-expo` inlines `EXPO_PUBLIC_*` from the CLI's own environment
+and `.env.local` is not in the production env-file list; `EXPO_NO_DOTENV=1` is set
+on top of that so no `.env` file of any name is read. The export is rebuilt on
+every run, so no test ever runs against a stale bundle.
+
 ## Isolation
 
 The suite runs its own stack alongside — never instead of — your dev stack:
@@ -43,8 +55,13 @@ bun run test:e2e:report   # open the last HTML report
 ```
 
 Playwright boots both servers itself. The first run is slow — Metro has to cold-
-bundle for web (up to ~3 min). Each run resets the database and reseeds
+bundle the web export (up to ~3 min); later runs reuse Metro's transform cache and
+take about 30s to re-export. Each run resets the database and reseeds
 `e2e@underscore.test` / `e2e-password-1234`.
+
+Reseeding happens once per *run*, not per test, and workers run in parallel, so a
+test that mutates state must create its own account with a unique email rather
+than touching the seeded one. See `uniqueEmail()` in `auth.spec.ts`.
 
 Auth rate limiting is off here: it is gated to `NODE_ENV === "production"` in
 `server/src/lib/auth.ts`, and the e2e API runs as `test`. Tests can make as many
@@ -62,6 +79,17 @@ await page.goto("/login");
 Both projects (`chromium` desktop, `mobile-chrome` Pixel 7) run every file.
 Scope a test to one with `test.skip(({ browserName }) => ...)` or a `testMatch`
 on the project.
+
+Two things about react-native-web's output are worth knowing before you write a
+locator:
+
+- Screens pushed onto an expo-router `Stack` stay mounted underneath the current
+  one, so after `/login → /sign-up → /login` the text "Welcome back." matches
+  twice and strict mode fails. Start each test from a `page.goto`, and assert on
+  something the screen you navigated *from* does not also render.
+- `Pressable` renders a real `<button>` with `disabled`/`aria-disabled`, and
+  `TextInput` a real `<input>`, so `getByRole`, `getByPlaceholder` and
+  `toBeDisabled()` all work without any test-only markup.
 
 ## Environment overrides
 
