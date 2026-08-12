@@ -11,7 +11,7 @@ app/android/
 app/web-build/
 
 # Playwright
-test-results/
+e2e/test-results/
 e2e/.report/
 playwright/.cache/
 blob-report/
