@@ -12,7 +12,7 @@
     "dev:app": "bun run --filter app start",
     "dev:ios": "bun run --filter app ios",
     "lint": "bun run --filter '*' lint",
-    "typecheck": "bun run --filter '*' typecheck",
+    "typecheck": "bun run --filter '*' typecheck && tsc --noEmit -p tsconfig.json",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report e2e/.report"
