@@ -43,6 +43,9 @@ const E2E_USER_PASSWORD = "e2e-password-1234";
 
 export default defineConfig({
   testDir: "./e2e",
+  // Traces, screenshots and videos land beside the HTML report rather than in a
+  // `test-results/` directory at the repo root.
+  outputDir: "./e2e/test-results",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -94,18 +97,29 @@ export default defineConfig({
       },
     },
     {
-      command: `bun run --filter app web -- --port ${WEB_PORT}`,
+      // A *production* web export, not `expo start --web`. In a dev bundle the
+      // client's `process.env` comes from expo/virtual/env, which spreads the
+      // contents of app/.env* over anything the shell injected — so a developer's
+      // app/.env.local (EXPO_PUBLIC_API_URL=:3000) silently wins and the whole
+      // e2e run drives the *dev* API. `expo export` runs in production mode,
+      // where babel-preset-expo inlines EXPO_PUBLIC_* straight from this
+      // process.env and .env.local is not part of the production env-file list.
+      // That makes the injection below the only source of the API URL.
+      command: `bun run --filter app e2e:export && bun run --filter app e2e:serve -- --port ${WEB_PORT}`,
       url: WEB_URL,
-      // Safe to reuse: a dev Metro sits on 8081, so only a previous e2e Metro
-      // can match here — and that saves a cold bundle on every run.
-      reuseExistingServer: !process.env.CI,
-      // Metro's first web bundle is slow.
-      timeout: 180_000,
+      // Never reuse: the served bundle is a build artefact, so a stale server
+      // would test whatever the app looked like on a previous run.
+      reuseExistingServer: false,
+      // Metro's first cold export is slow.
+      timeout: 300_000,
       stdout: "pipe",
       stderr: "pipe",
       env: {
         // app/src/lib/auth-client.ts otherwise defaults to :3000, the dev API.
         EXPO_PUBLIC_API_URL: API_URL,
+        // Belt and braces on top of the production env-file list: no .env file
+        // of any name gets read, so nothing can shadow the value above.
+        EXPO_NO_DOTENV: "1",
       },
     },
   ],

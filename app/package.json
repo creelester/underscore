@@ -68,6 +68,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "e2e:export": "expo export --platform web --output-dir dist-e2e",
+    "e2e:serve": "expo serve dist-e2e",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit"
   },

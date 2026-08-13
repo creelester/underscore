@@ -43,7 +43,7 @@ Derived per generation, not a property of a `Book`: it is Claude's read of one b
 | Field     | Type                                    | Notes                                                                                                          |
 | --------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `genre`   | `string[]`                              | Normalized genres, most representative first — e.g. `["sci-fi", "literary fiction"]`. A book can span several. |
-| `mood`    | `Mood[]`, max 2                         | Closed vocabulary — `cozy \| melancholy \| hopeful \| tense \| dreamy \| nostalgic \| romantic \| playful \| epic \| haunting`. Each has a gradient that stands in for artwork and a chip in the correction UI, so the set is fixed; `MOODS` in `/packages/shared` is the source of truth. Empty on the manual-genre path. See `docs/2026-08-10-mood-vocabulary-decision.md`. |
+| `mood`    | `Mood[]`, max 2                         | Closed vocabulary — `cozy \| melancholy \| hopeful \| tense \| dreamy \| nostalgic \| romantic \| playful \| epic \| haunting`. Each has a gradient that stands in for artwork and a chip in the correction UI, so the set is fixed; `MOODS` in `/packages/shared` is the source of truth. Empty on the manual-genre path. |
 | `pacing`  | `"slow" \| "steady" \| "fast"`          |                                                                                                                |
 | `summary` | `string`                                | 1-2 sentence rationale, shown as QA/debug info                                                                 |
 
