@@ -5,7 +5,6 @@ import { z } from "zod";
  * throughout the app, and the correction UI offers exactly these as chips — so a mood outside
  * this list has no artwork and no way for the user to confirm or correct it.
  *
- * Decision and rationale: docs/2026-08-10-mood-vocabulary-decision.md
  * Gradient stops: app/src/lib/gradients.ts (MOOD_STOPS)
  */
 export const MOODS = [
