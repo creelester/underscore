@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,15 +8,16 @@ datasource db {
 }
 
 model User {
-  id            String    @id
+  id            String     @id
   name          String
   email         String
-  emailVerified Boolean   @default(false)
+  emailVerified Boolean    @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
   sessions      Session[]
   accounts      Account[]
+  playlists     Playlist[]
 
   @@unique([email])
   @@map("user")
@@ -81,4 +81,90 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+// ---------------------------------------------------------------------------
+// Domain models. Everything above this line is Better Auth's.
+// ---------------------------------------------------------------------------
+
+enum BookSource {
+  GOOGLE_BOOKS
+  MANUAL_GENRE
+}
+
+// Written at generation time, not at search time: `GET /api/books/search` is
+// read-only and hands back Google's volume ids, so a row here means somebody
+// actually scored this book. MANUAL_GENRE rows are the fallback path's stand-in
+// book — `title` holds the genre text the user typed and googleBooksId is null.
+// Postgres allows many NULLs under a unique index, so those never collide.
+model Book {
+  id            String     @id @default(cuid())
+  googleBooksId String?    @unique
+  title         String
+  authors       String[]
+  description   String?
+  categories    String[]
+  pageCount     Int?
+  thumbnailUrl  String?
+  source        BookSource
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  playlists     Playlist[]
+
+  @@map("book")
+}
+
+// Deduplicated across every playlist: the catalog metadata behind a Spotify id
+// is the same for everyone, so it is upserted once and referenced by many.
+model Track {
+  id             String          @id @default(cuid())
+  spotifyTrackId String          @unique
+  name           String
+  artist         String
+  albumArtUrl    String?
+  durationMs     Int
+  createdAt      DateTime        @default(now())
+  playlistTracks PlaylistTrack[]
+
+  @@map("track")
+}
+
+model Playlist {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookId String
+  book   Book   @relation(fields: [bookId], references: [id])
+
+  // Claude's read of one book, valid only for this generation — generating the
+  // same book twice yields two independent profiles, so it belongs to the
+  // playlist rather than to the book. Only ever read whole; MoodProfileSchema
+  // in @underscore/shared is the gate on the way out.
+  moodProfile Json
+
+  // Informational only. The MVP does not size playlists to a target runtime.
+  totalRuntimeMs    Int
+  isTooShort        Boolean         @default(false)
+  spotifyPlaylistId String?
+  createdAt         DateTime        @default(now())
+  tracks            PlaylistTrack[]
+
+  @@index([userId, createdAt])
+  @@index([bookId])
+  @@map("playlist")
+}
+
+// Keyed by position rather than by a surrogate id: order is the identity of a
+// row here, and the composite primary key makes a duplicated slot impossible.
+model PlaylistTrack {
+  playlistId String
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  trackId    String
+  track      Track    @relation(fields: [trackId], references: [id])
+  position   Int
+  isAnchor   Boolean  @default(true)
+
+  @@id([playlistId, position])
+  @@index([trackId])
+  @@map("playlistTrack")
 }

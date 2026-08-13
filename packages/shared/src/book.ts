@@ -3,6 +3,7 @@ import { z } from "zod";
 export const BookSourceSchema = z.enum(["GOOGLE_BOOKS", "MANUAL_GENRE"]);
 export type BookSource = z.infer<typeof BookSourceSchema>;
 
+/** A book we have persisted — it has an internal id and a playlist behind it. */
 export const BookSchema = z.object({
   id: z.string(),
   googleBooksId: z.string().nullable(),
@@ -15,3 +16,18 @@ export const BookSchema = z.object({
   source: BookSourceSchema,
 });
 export type Book = z.infer<typeof BookSchema>;
+
+/**
+ * A search hit, which is not persisted. `GET /api/books/search` writes nothing —
+ * a `Book` row is minted only when a playlist is generated — so a candidate has
+ * no internal `id` to offer and is identified by its Google volume id, which is
+ * what the generation endpoints take. `source` is omitted because search only
+ * ever returns Google results; MANUAL_GENRE books never pass through here.
+ */
+export const BookCandidateSchema = BookSchema.omit({
+  id: true,
+  source: true,
+}).extend({
+  googleBooksId: z.string(),
+});
+export type BookCandidate = z.infer<typeof BookCandidateSchema>;

@@ -24,7 +24,7 @@ export const PlaylistSchema = z.object({
   moodProfile: MoodProfileSchema,
   tracks: z.array(PlaylistTrackSchema),
   totalRuntimeMs: z.number().int().nonnegative(),
-  smallerThanUsual: z.boolean(),
+  isTooShort: z.boolean(),
   spotifyPlaylistId: z.string().nullable(),
   createdAt: z.string(),
 });

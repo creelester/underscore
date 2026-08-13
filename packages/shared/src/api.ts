@@ -1,24 +1,35 @@
 import { z } from "zod";
-import { BookSchema } from "./book";
+import { BookCandidateSchema } from "./book";
 import { PlaylistSchema } from "./playlist";
 import { MoodProfileSchema } from "./moodProfile";
 
+export const BookSearchQuerySchema = z.object({
+  q: z.string().trim().min(1, "A search term is required"),
+});
+export type BookSearchQuery = z.infer<typeof BookSearchQuerySchema>;
+
 export const BookSearchResponseSchema = z.object({
-  results: z.array(BookSchema),
+  results: z.array(BookCandidateSchema),
 });
 export type BookSearchResponse = z.infer<typeof BookSearchResponseSchema>;
 
-const bookOrGenreRefinement = <T extends { bookId?: string; manualGenre?: string }>(
+/**
+ * The generation endpoints take a Google volume id rather than an internal book
+ * id: search persists nothing, so at the point of asking for a playlist the only
+ * handle the client holds is Google's. The server re-fetches the volume and
+ * mints the `Book` row itself, so book metadata is never client-supplied.
+ */
+const bookOrGenreRefinement = <T extends { googleBooksId?: string; manualGenre?: string }>(
   data: T,
-) => (data.bookId ? !data.manualGenre : !!data.manualGenre);
+) => (data.googleBooksId ? !data.manualGenre : !!data.manualGenre);
 
 export const MoodProfileRequestSchema = z
   .object({
-    bookId: z.string().optional(),
+    googleBooksId: z.string().optional(),
     manualGenre: z.string().optional(),
   })
   .refine(bookOrGenreRefinement, {
-    message: "Exactly one of bookId or manualGenre must be set",
+    message: "Exactly one of googleBooksId or manualGenre must be set",
   });
 export type MoodProfileRequest = z.infer<typeof MoodProfileRequestSchema>;
 
@@ -29,11 +40,11 @@ export type MoodProfileResponse = z.infer<typeof MoodProfileResponseSchema>;
 
 export const GeneratePlaylistRequestSchema = z
   .object({
-    bookId: z.string().optional(),
+    googleBooksId: z.string().optional(),
     manualGenre: z.string().optional(),
   })
   .refine(bookOrGenreRefinement, {
-    message: "Exactly one of bookId or manualGenre must be set",
+    message: "Exactly one of googleBooksId or manualGenre must be set",
   });
 export type GeneratePlaylistRequest = z.infer<typeof GeneratePlaylistRequestSchema>;
 

@@ -1,6 +1,7 @@
 import '@/global.css';
 
 import { PortalHost } from '@rn-primitives/portal';
+import { QueryClientProvider } from '@tanstack/react-query';
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -21,6 +22,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AnimatedSplashOverlay } from '@/components/splash-overlay';
 import { useSession } from '@/lib/auth-client';
+import { queryClient } from '@/lib/query-client';
 import { DEFAULT_COLOR_SCHEME, NAV_THEME } from '@/lib/theme';
 
 SplashScreen.preventAutoHideAsync();
@@ -48,23 +50,27 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider value={NAV_THEME[theme]}>
-        <StatusBar style={theme === 'light' ? 'dark' : 'light'} />
-        <AnimatedSplashOverlay />
-        {!isPending && fontsLoaded && (
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Protected guard={!!session}>
-              <Stack.Screen name="(app)" />
-            </Stack.Protected>
+      {/* Above ThemeProvider so the cache outlives any theme remount, and above
+          the fonts/session gate below so no screen can mount without it. */}
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider value={NAV_THEME[theme]}>
+          <StatusBar style={theme === 'light' ? 'dark' : 'light'} />
+          <AnimatedSplashOverlay />
+          {!isPending && fontsLoaded && (
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Protected guard={!!session}>
+                <Stack.Screen name="(app)" />
+              </Stack.Protected>
 
-            <Stack.Protected guard={!session}>
-              <Stack.Screen name="login" />
-              <Stack.Screen name="sign-up" />
-            </Stack.Protected>
-          </Stack>
-        )}
-        <PortalHost />
-      </ThemeProvider>
+              <Stack.Protected guard={!session}>
+                <Stack.Screen name="login" />
+                <Stack.Screen name="sign-up" />
+              </Stack.Protected>
+            </Stack>
+          )}
+          <PortalHost />
+        </ThemeProvider>
+      </QueryClientProvider>
     </GestureHandlerRootView>
   );
 }

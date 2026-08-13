@@ -10,7 +10,7 @@ These are defined as zod schemas in `/packages/shared` and referenced by name in
 
 | Field           | Type                               | Notes                                                                                                                                                                                                                                                                                                         |
 | --------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`            | `string` (cuid)                    | Internal id                                                                                                                                                                                                                                                                                                   |
+| `id`            | `string` (cuid)                    | Internal id. Only exists once the book has been persisted, which happens at generation time — search returns [`BookCandidate`](#bookcandidate), not this.                                                                                                                                                       |
 | `googleBooksId` | `string \| null`                   | Null when `source = MANUAL_GENRE`                                                                                                                                                                                                                                                                             |
 | `title`         | `string`                           |                                                                                                                                                                                                                                                                                                               |
 | `authors`       | `string[]`                         |                                                                                                                                                                                                                                                                                                               |
@@ -19,6 +19,22 @@ These are defined as zod schemas in `/packages/shared` and referenced by name in
 | `pageCount`     | `number \| null`                   | Display-only; does not drive playlist length                                                                                                                                                                                                                                                                  |
 | `thumbnailUrl`  | `string \| null`                   |                                                                                                                                                                                                                                                                                                               |
 | `source`        | `"GOOGLE_BOOKS" \| "MANUAL_GENRE"` |                                                                                                                                                                                                                                                                                                               |
+
+### `BookCandidate`
+
+A search hit, which is **not** persisted. `GET /api/books/search` writes nothing to the database — a `Book` row is minted only when a playlist is generated from it — so a candidate has no internal `id` to offer and is identified by its Google volume id. That is why the generation endpoints below take `googleBooksId` rather than `bookId`.
+
+| Field           | Type             | Notes                                                                          |
+| --------------- | ---------------- | ------------------------------------------------------------------------------ |
+| `googleBooksId` | `string`         | Non-null: search only ever returns Google results                              |
+| `title`         | `string`         | Volumes without one are dropped                                                |
+| `authors`       | `string[]`       |                                                                                |
+| `description`   | `string \| null` |                                                                                |
+| `categories`    | `string[]`       | As on `Book`                                                                   |
+| `pageCount`     | `number \| null` | Null when Google reports 0 (unknown length)                                    |
+| `thumbnailUrl`  | `string \| null` | Rewritten to `https://` — Google serves `http://`, which iOS ATS blocks        |
+
+`BookCandidateSchema` in `/packages/shared` derives from `BookSchema` (minus `id` and `source`) so the two cannot drift.
 
 ### `MoodProfile`
 
@@ -58,7 +74,7 @@ Derived per generation, not a property of a `Book`: it is Claude's read of one b
 | `moodProfile`       | `MoodProfile`       |                                                                                      |
 | `tracks`            | `PlaylistTrack[]`   | Ordered                                                                              |
 | `totalRuntimeMs`    | `number`            | Sum of track durations — informational only                                          |
-| `smallerThanUsual`  | `boolean`           | True if the &lt;8-anchor regeneration path was hit and fewer than 20 tracks resolved |
+| `isTooShort`        | `boolean`           | True if the &lt;8-anchor regeneration path was hit and fewer than 20 tracks resolved |
 | `spotifyPlaylistId` | `string \| null`    | Set after first successful export (Phase 7)                                          |
 | `createdAt`         | `string` (ISO date) |                                                                                      |
 
@@ -111,7 +127,11 @@ Example bodies — `POST /api/auth/sign-up/email`:
 
 | Endpoint                | Auth             | Request                           | Response (200)                                               | Errors                                                 |
 | ----------------------- | ---------------- | --------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------ |
-| `GET /api/books/search` | session-required | query: `q: string` (title/author) | `{ results: Book[] }` (empty array = no match, not an error) | `502 UPSTREAM_UNAVAILABLE` (Google Books down/timeout) |
+| `GET /api/books/search` | session-required | query: `q: string` (title/author) | `{ results: BookCandidate[] }` (empty array = no match, not an error) | `400 INVALID_INPUT` (blank `q`), `502 UPSTREAM_UNAVAILABLE` (Google Books down/timeout) |
+
+`GOOGLE_BOOKS_BASE_URL` overrides the upstream root, defaulting to the real endpoint. It exists so the e2e stack can point at a local fixture server — the suite must never reach a live third-party API. The key (`GOOGLE_BOOKS_API_KEY`) is optional: the volumes endpoint is public, though keyless requests are rate-limited hard enough to 429 in practice.
+
+Read-only: search performs no database writes. Persisting every hit would write ~20 `Book` rows per query for books nobody selects, so the row is deferred to `POST /api/playlists/generate`, which re-fetches the volume by id. That keeps the `book` table meaning "books someone scored" and means book metadata is never client-supplied.
 
 ---
 
@@ -119,12 +139,12 @@ Example bodies — `POST /api/auth/sign-up/email`:
 
 | Endpoint                 | Auth             | Request                                                             | Response (200)             | Errors                                                                                                                                       |
 | ------------------------ | ---------------- | ------------------------------------------------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `POST /api/mood-profile` | session-required | `{ bookId: string }` **or** `{ manualGenre: string }` (exactly one) | `{ profile: MoodProfile }` | `400 INVALID_INPUT` (neither/both fields set), `404 BOOK_NOT_FOUND`, `502 UPSTREAM_UNAVAILABLE` (Claude down or returned unparseable output) |
+| `POST /api/mood-profile` | session-required | `{ googleBooksId: string }` **or** `{ manualGenre: string }` (exactly one) | `{ profile: MoodProfile }` | `400 INVALID_INPUT` (neither/both fields set), `404 BOOK_NOT_FOUND`, `502 UPSTREAM_UNAVAILABLE` (Claude down or returned unparseable output) |
 
 Example bodies — book path:
 
 ```json
-{ "bookId": "clx8k2p0a0001qz7v3n4m5b6c" }
+{ "googleBooksId": "_LettPDhwR0C" }
 ```
 
 Manual-genre fallback path:
@@ -145,12 +165,12 @@ Notes: `manualGenre` path never calls Claude — profile is constructed directly
 
 | Endpoint                       | Auth             | Request                                               | Response (200)                                     | Errors                                                                                                |
 | ------------------------------ | ---------------- | ----------------------------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `POST /api/playlists/generate` | session-required | `{ bookId: string }` **or** `{ manualGenre: string }` | `Playlist` (auto-saved; `spotifyPlaylistId: null`) | `400 INVALID_INPUT`, `404 BOOK_NOT_FOUND`, `502 UPSTREAM_UNAVAILABLE` (Claude or Spotify search down) |
+| `POST /api/playlists/generate` | session-required | `{ googleBooksId: string }` **or** `{ manualGenre: string }` | `Playlist` (auto-saved; `spotifyPlaylistId: null`) | `400 INVALID_INPUT`, `404 BOOK_NOT_FOUND`, `502 UPSTREAM_UNAVAILABLE` (Claude or Spotify search down) |
 
 Example bodies — identical shape to `POST /api/mood-profile`, book path:
 
 ```json
-{ "bookId": "clx8k2p0a0001qz7v3n4m5b6c" }
+{ "googleBooksId": "_LettPDhwR0C" }
 ```
 
 Manual-genre fallback path:
@@ -159,7 +179,7 @@ Manual-genre fallback path:
 { "manualGenre": "gothic horror" }
 ```
 
-Side effects: runs Mood Engine (if `bookId`) → Playlist Builder (Claude, ~30 anchors) → Spotify app-level resolution (regenerates once if &lt;8 resolve) → persists `Playlist` + `PlaylistTrack` + upserted `Track` rows in a single transaction. No partial `Playlist` row is ever left on failure.
+Side effects: on the `googleBooksId` path, re-fetches the volume from Google Books and upserts the `Book` row (this is the only place a `GOOGLE_BOOKS` book is created — search does not write one) → runs Mood Engine → Playlist Builder (Claude, ~30 anchors) → Spotify app-level resolution (regenerates once if &lt;8 resolve) → persists `Playlist` + `PlaylistTrack` + upserted `Track` rows in a single transaction. The `manualGenre` path upserts a `MANUAL_GENRE` book whose `title` is the user's text and skips the Mood Engine. No partial `Playlist` row is ever left on failure.
 
 ---
 
@@ -191,7 +211,7 @@ Side effects: runs Mood Engine (if `bookId`) → Playlist Builder (Claude, ~30 a
 | `UNAUTHORIZED`          | 401         | No/invalid session                                              |
 | `SPOTIFY_TOKEN_EXPIRED` | 401         | User-level Spotify token expired/revoked; re-link required      |
 | `FORBIDDEN`             | 403         | Authenticated but not resource owner                            |
-| `BOOK_NOT_FOUND`        | 404         | `bookId` doesn't exist                                          |
+| `BOOK_NOT_FOUND`        | 404         | Google Books doesn't know the `googleBooksId`                   |
 | `PLAYLIST_NOT_FOUND`    | 404         | `playlistId` doesn't exist                                      |
 | `EMAIL_EXISTS`          | 409         | Sign-up with already-registered email                           |
 | `SPOTIFY_NOT_LINKED`    | 409         | Export attempted with no linked Spotify account                 |

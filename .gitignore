@@ -15,6 +15,8 @@ test-results/
 e2e/.report/
 playwright/.cache/
 blob-report/
+# Production web export the suite serves — a build artifact, rebuilt per run.
+app/dist-e2e/
 
 # Prisma
 server/prisma/migrations/dev.db

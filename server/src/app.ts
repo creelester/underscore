@@ -4,7 +4,9 @@ import { toNodeHandler } from "better-auth/node";
 import { Pool } from "pg";
 import { auth } from "./lib/auth";
 import { env } from "./config/env";
+import { isApiError } from "./lib/apiError";
 import { requireSession } from "./middleware/requireSession";
+import { booksRouter } from "./routes/books";
 
 export function createApp() {
   const app = express();
@@ -22,6 +24,8 @@ export function createApp() {
     res.json({ user: req.user });
   });
 
+  app.use("/api/books", booksRouter);
+
   app.get("/health", async (_req, res) => {
     try {
       await pool.query("SELECT 1");
@@ -33,7 +37,21 @@ export function createApp() {
 
   // Terminal error handler. Without this, Express 4's default handler serialises
   // stack traces into the response whenever NODE_ENV !== "production".
+  //
+  // An ApiError is a message we wrote and checked, so it goes out as-is. Anything
+  // else is a bug, and its message is unvetted — it could carry a connection
+  // string or an upstream key — so it becomes an opaque 500 and only the log
+  // sees the detail.
   app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    if (isApiError(err)) {
+      // Log the upstream detail carried on `cause` — method, url, status — so a
+      // 502 is diagnosable. The client only ever sees the envelope.
+      if (err.code === "UPSTREAM_UNAVAILABLE") {
+        console.error(`[upstream] ${err.message}`, err.cause ?? "");
+      }
+      res.status(err.status).json(err.toBody());
+      return;
+    }
     console.error(err);
     res.status(500).json({ code: "INTERNAL", message: "Something went wrong", retryable: true });
   });

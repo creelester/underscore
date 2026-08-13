@@ -17,9 +17,10 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@underscore/shared": "workspace:*",
     "@better-auth/expo": "1.6.25",
     "@prisma/client": "5.22.0",
+    "@underscore/shared": "workspace:*",
+    "axios": "^1.19.0",
     "better-auth": "1.6.25",
     "cors": "^2.8.5",
     "express": "^4.21.0",

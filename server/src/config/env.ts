@@ -15,6 +15,9 @@ const EnvSchema = z.object({
   SPOTIFY_CLIENT_SECRET: z.string().default(""),
   ANTHROPIC_API_KEY: z.string().optional(),
   GOOGLE_BOOKS_API_KEY: z.string().optional(),
+  // Overridable so the e2e stack can point at a local fixture server: the suite
+  // must never reach a live third-party API. Unset means the real endpoint.
+  GOOGLE_BOOKS_BASE_URL: z.string().url().default("https://www.googleapis.com/books/v1"),
   APP_ORIGIN: z.string().url(),
   SEED_USER_EMAIL: z.string().email().optional(),
   SEED_USER_PASSWORD: z.string().optional(),
