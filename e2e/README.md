@@ -90,6 +90,12 @@ locator:
 - `Pressable` renders a real `<button>` with `disabled`/`aria-disabled`, and
   `TextInput` a real `<input>`, so `getByRole`, `getByPlaceholder` and
   `toBeDisabled()` all work without any test-only markup.
+- `keyboardType="email-address"` becomes `<input type="email">`, and Chromium
+  runs the HTML value-sanitization algorithm on that type — leading and trailing
+  whitespace is stripped before the app ever sees it. So a `fill("  a@b.c  ")`
+  test asserts the user-visible outcome but cannot prove the app trims; the
+  `.trim()` in `app/src/lib/auth-schemas.ts` is only observable on native and
+  belongs to a unit test.
 
 ## Environment overrides
 

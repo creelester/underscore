@@ -58,6 +58,35 @@ test.describe("logging in", () => {
     await expect(page.getByText("Signed in.")).toBeVisible();
   });
 
+  test("matches the account when the email is padded with whitespace", async ({ page }) => {
+    await page.goto("/login");
+    await fillLoginForm(page, `  ${SEEDED_USER.email}  `, SEEDED_USER.password);
+    await page.getByRole("button", { name: "Log in" }).click();
+
+    // loginSchema trims the email before it reaches the submit handler, so a
+    // padded address is the same credential as the bare one. Better Auth
+    // lowercases but never trims. Caveat for whoever edits this: Chromium also
+    // sanitizes input[type=email] (react-native-web maps keyboardType
+    // "email-address" to that type), so on the web surface the padding is gone
+    // before zod runs — this pins the user-visible behaviour, not the schema.
+    // Only a unit test on loginSchema can guard the `.trim()` itself.
+    await expect(page.getByText("Signed in.")).toBeVisible();
+  });
+
+  test("reports a whitespace-only email as missing, not malformed", async ({ page }) => {
+    await page.goto("/login");
+    await fillLoginForm(page, "   ", SEEDED_USER.password);
+    await page.getByRole("button", { name: "Log in" }).click();
+
+    // `.trim()` runs before `.min(1)`, so blank-but-not-empty is "required"
+    // rather than "invalid" — though on web the browser's own email-input
+    // sanitization would produce the same message either way (see the padded
+    // login test above), so this documents the wording rather than the ordering.
+    await expect(page.getByText("Email is required")).toBeVisible();
+    await expect(page.getByText("Enter a valid email")).toBeHidden();
+    await expect(page).toHaveURL(/\/login$/);
+  });
+
   test("rejects a wrong password and stays on the login screen", async ({ page }) => {
     await page.goto("/login");
     await fillLoginForm(page, SEEDED_USER.email, "not-the-right-password");
@@ -159,6 +188,55 @@ test.describe("signing up", () => {
     await expect(page.getByText("Welcome back.")).toBeVisible();
 
     await fillLoginForm(page, email, NEW_USER_PASSWORD);
+    await page.getByRole("button", { name: "Log in" }).click();
+    await expect(page.getByText("Signed in.")).toBeVisible();
+  });
+
+  test("creates the account under the trimmed address when the email is padded", async ({
+    page,
+  }) => {
+    const email = uniqueEmail("padded-sign-up");
+
+    await page.goto("/sign-up");
+    await page.getByPlaceholder("Name").fill("Padded Email");
+    await page.getByPlaceholder("Email").fill(`  ${email}  `);
+    await page.getByPlaceholder("Password").fill(NEW_USER_PASSWORD);
+    await page.getByRole("button", { name: "Sign up" }).click();
+    await expect(page).toHaveURL("/");
+    await expect(page.getByText("Signed in.")).toBeVisible();
+
+    // Logging back in with the bare address proves the padding never reached the
+    // server. Same caveat as the padded login test: on web the browser strips it
+    // too, so this cannot fail on its own if the schema's `.trim()` is dropped.
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await expect(page.getByText("Welcome back.")).toBeVisible();
+
+    await fillLoginForm(page, email, NEW_USER_PASSWORD);
+    await page.getByRole("button", { name: "Log in" }).click();
+    await expect(page.getByText("Signed in.")).toBeVisible();
+  });
+
+  test("keeps whitespace in the password, which is never trimmed", async ({ page }) => {
+    const email = uniqueEmail("padded-password");
+    const paddedPassword = `  ${NEW_USER_PASSWORD}  `;
+
+    await page.goto("/sign-up");
+    await page.getByPlaceholder("Name").fill("Padded Password");
+    await page.getByPlaceholder("Email").fill(email);
+    await page.getByPlaceholder("Password").fill(paddedPassword);
+    await page.getByRole("button", { name: "Sign up" }).click();
+    await expect(page.getByText("Signed in.")).toBeVisible();
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await expect(page.getByText("Welcome back.")).toBeVisible();
+
+    // The trimmed form is a different passphrase, deliberately: only the email
+    // is trimmed, because padding can be part of a real password.
+    await fillLoginForm(page, email, NEW_USER_PASSWORD);
+    await page.getByRole("button", { name: "Log in" }).click();
+    await expect(page.getByText("Invalid email or password")).toBeVisible();
+
+    await fillLoginForm(page, email, paddedPassword);
     await page.getByRole("button", { name: "Log in" }).click();
     await expect(page.getByText("Signed in.")).toBeVisible();
   });
