@@ -1,12 +1,12 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import * as SplashScreen from 'expo-splash-screen';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { Easing, Keyframe } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { GRAD_WARM } from '@/lib/gradients';
-import { RADIUS, THEME } from '@/lib/theme';
+import { LogoLockup } from '@/components/logo-lockup';
+import { LOCKUP_TOP, SplashBackdrop } from '@/components/splash-backdrop';
 
 const DURATION = 600;
 
@@ -14,10 +14,12 @@ const DURATION = 600;
  * Bridges the native splash to the first rendered screen: draws the same artwork over
  * the whole viewport, hides the native splash underneath it, then fades itself out.
  *
- * The mark is a placeholder — the real lockup needs the JayaGiri display face, which
- * is not licensed yet.
+ * It shares `SplashBackdrop` and `LogoLockup` with `app/splash.tsx`, and the native
+ * splash in `app.json` is configured from the same colours, so the three surfaces hand
+ * off without a seam in either colour scheme.
  */
 export function AnimatedSplashOverlay() {
+  const insets = useSafeAreaInsets();
   const [animate, setAnimate] = useState(false);
   const [visible, setVisible] = useState(true);
 
@@ -42,7 +44,16 @@ export function AnimatedSplashOverlay() {
     },
   });
 
-  const mark = <LinearGradient {...GRAD_WARM} style={styles.mark} />;
+  // The lockup sits where `app/splash.tsx` puts it, not centred, so the fade reveals an
+  // identical frame instead of letting the mark settle into place.
+  const artwork = (
+    <>
+      <SplashBackdrop />
+      <View style={[styles.lockup, { paddingTop: insets.top + LOCKUP_TOP }]}>
+        <LogoLockup />
+      </View>
+    </>
+  );
 
   return animate ? (
     <Animated.View
@@ -53,7 +64,7 @@ export function AnimatedSplashOverlay() {
         }
       })}
       style={styles.splashOverlay}>
-      {mark}
+      {artwork}
     </Animated.View>
   ) : (
     <View
@@ -63,22 +74,18 @@ export function AnimatedSplashOverlay() {
         });
       }}
       style={styles.splashOverlay}>
-      {mark}
+      {artwork}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  mark: {
-    width: 96,
-    height: 96,
-    borderRadius: RADIUS.card,
+  lockup: {
+    ...StyleSheet.absoluteFill,
+    alignItems: 'center',
   },
   splashOverlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: THEME.dark.background,
-    alignItems: 'center',
-    justifyContent: 'center',
     zIndex: 1000,
   },
 });

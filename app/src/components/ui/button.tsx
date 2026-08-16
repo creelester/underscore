@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 import { useColorScheme } from 'nativewind';
 
 /**
- * Under Score's button, per docs/design_handoff_under_score_app.
+ * Under Score's button, per docs/design/README.md.
  *
  * Three variants, one shared label spec (16px / 500 / uppercase / .05em tracking).
  * `primary` carries the warm gradient; `tertiary` is the solid-plum alternative used

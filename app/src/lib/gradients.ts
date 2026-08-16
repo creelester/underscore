@@ -8,7 +8,7 @@ export { MOODS, type Mood };
  * NativeWind has no native gradient support, so gradients are data rather than classes.
  * Every value here feeds `<LinearGradient>` from expo-linear-gradient.
  *
- * Source of truth: docs/design_handoff_under_score_app/design-system/tokens/colors.css
+ * Source of truth: docs/design/design-system/tokens/colors.css
  */
 
 export type GradientSpec = {

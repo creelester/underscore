@@ -2,8 +2,8 @@
 
 AI-powered, mood-matched playlists for books being read.
 
-See `docs/superpowers/specs/2026-07-24-underscore-mvp-design.md` (MVP PRD) and
-`docs/superpowers/specs/2026-07-24-underscore-api-design.md` (API reference) for the full design.
+See `docs/specs/2026-07-24-underscore-mvp-design.md` (MVP PRD) and
+`docs/specs/2026-07-24-underscore-api-design.md` (API reference) for the full design.
 
 ## Stack
 

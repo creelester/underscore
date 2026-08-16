@@ -5,7 +5,7 @@ import { DarkTheme, DefaultTheme, type Theme } from 'expo-router';
  * colour value is required (gradients, status bar, navigation theme, SVG fills) and
  * Tailwind classes everywhere else — the two must stay in sync.
  *
- * Source of truth: docs/design_handoff_under_score_app/design-system/tokens/
+ * Source of truth: docs/design/design-system/tokens/
  */
 export const THEME = {
   light: {
@@ -93,8 +93,28 @@ export const SHADOWS = {
   },
 } as const;
 
-/** Dark is the product default; light is a user preference (Profile > Light theme). */
-export const DEFAULT_COLOR_SCHEME = 'dark' as const;
+/**
+ * The splash is the one surface that does not sit on `THEME.background`: it stacks a
+ * flat ground, a faded hero haze and a half-visible record. See the Splash section of
+ * docs/design/README.md; the values come from the prototype's computed styles.
+ *
+ * `ground` is deliberately deeper than `background` in both themes — the haze and the
+ * record are read against it, not against the app surface.
+ */
+export const SPLASH = {
+  light: {
+    ground: '#FDEFE0',
+    hazeOpacity: 0.5,
+    record: '#E4CFF0',
+    groove: 'rgba(43,15,61,0.14)',
+  },
+  dark: {
+    ground: '#1F0F2A',
+    hazeOpacity: 0.78,
+    record: '#3A1E66',
+    groove: 'rgba(11,4,16,0.32)',
+  },
+} as const;
 
 export const NAV_THEME: Record<'light' | 'dark', Theme> = {
   light: {

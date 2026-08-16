@@ -1,3 +1,7 @@
+import { mkdirSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
 import { defineConfig, devices } from "@playwright/test";
 
 // The e2e stack runs on its own ports and its own database so a running dev
@@ -31,6 +35,21 @@ if (databaseName !== "underscore_e2e") {
       `The e2e suite resets this database on every run.`,
   );
 }
+
+// A Metro cache of this stack's own, for the same reason it gets its own ports and
+// database. `expo export` *inlines* EXPO_PUBLIC_* at transform time, but Metro's
+// transform cache is keyed on file contents and babel config only — the env vars are
+// in no part of that key. A cache warmed by any other production export therefore
+// hands this run a bundle with that export's API URL inlined, which in practice means
+// the dev API on :3000: the suite would drive the dev stack while every comment above
+// promised it could not. Pointing TMPDIR at a directory of our own gives the export
+// its own `<TMPDIR>/metro-cache`, so no other build can poison it and it stays warm
+// between runs (a cold export is ~15s, a warm one ~5s). `--clear` would fix the
+// staleness too, but it deletes the *shared* cache — including a running dev server's.
+// The API port is in the directory name so that changing it starts from a clean cache
+// rather than a stale inline of the old one.
+const METRO_CACHE_DIR = join(tmpdir(), `underscore-e2e-metro-${API_PORT}`);
+mkdirSync(METRO_CACHE_DIR, { recursive: true });
 
 // Test-only credentials for a throwaway localhost database. These unlock
 // nothing — server/src/config/env.ts deliberately refuses to default
@@ -120,6 +139,9 @@ export default defineConfig({
         // Belt and braces on top of the production env-file list: no .env file
         // of any name gets read, so nothing can shadow the value above.
         EXPO_NO_DOTENV: "1",
+        // …and the third way that URL could be wrong: a Metro cache holding a
+        // transform with someone else's value already inlined. See METRO_CACHE_DIR.
+        TMPDIR: METRO_CACHE_DIR,
       },
     },
   ],

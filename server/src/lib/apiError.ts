@@ -2,7 +2,7 @@ import type { ApiError as ApiErrorBody, ErrorCode } from "@underscore/shared";
 
 /**
  * The HTTP status each error code is served at, transcribed from the error code
- * reference in docs/superpowers/specs/2026-07-24-underscore-api-design.md. The
+ * reference in docs/specs/2026-07-24-underscore-api-design.md. The
  * mapping lives here rather than at each throw site so a code cannot go out at
  * one status from one route and a different status from another.
  */

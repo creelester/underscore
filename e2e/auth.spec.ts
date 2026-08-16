@@ -1,6 +1,14 @@
-import { randomUUID } from "node:crypto";
+import { expect, test } from "@playwright/test";
 
-import { expect, test, type Page } from "@playwright/test";
+import {
+  NEW_USER_PASSWORD,
+  SEEDED_USER,
+  SPLASH_TAGLINE,
+  fillLoginForm,
+  logInAsSeededUser,
+  signOutToLogin,
+  uniqueEmail,
+} from "./helpers";
 
 /**
  * Authentication: email/password sign-up, login, logout, and the route guards in
@@ -11,34 +19,13 @@ import { expect, test, type Page } from "@playwright/test";
  * test, and workers run in parallel — so tests only ever *read* it. Anything that
  * creates an account uses `uniqueEmail()`.
  *
+ * Signed-out visitors land on `/splash`, not on `/login` — the splash screen's own
+ * coverage lives in splash.spec.ts; here it only shows up as where `/` and a
+ * sign-out settle. The forms themselves are still reached directly by URL.
+ *
  * Social sign-in is deliberately uncovered: it would leave localhost for Google's
  * and Spotify's consent screens.
  */
-
-const SEEDED_USER = {
-  email: "e2e@underscore.test",
-  password: "e2e-password-1234",
-} as const;
-
-const NEW_USER_PASSWORD = "new-user-password-1234";
-
-/** A never-before-seen address, so parallel workers can never collide on one account. */
-function uniqueEmail(label: string) {
-  return `${label}-${randomUUID()}@underscore.test`;
-}
-
-async function fillLoginForm(page: Page, email: string, password: string) {
-  await page.getByPlaceholder("Email").fill(email);
-  await page.getByPlaceholder("Password").fill(password);
-}
-
-/** Signs in as the seeded user and waits for the app to be on screen. */
-async function logInAsSeededUser(page: Page) {
-  await page.goto("/login");
-  await fillLoginForm(page, SEEDED_USER.email, SEEDED_USER.password);
-  await page.getByRole("button", { name: "Log in" }).click();
-  await expect(page.getByText("Signed in.")).toBeVisible();
-}
 
 test.describe("logging in", () => {
   test("signs in with the seeded account and lands on the app", async ({ page }) => {
@@ -184,8 +171,7 @@ test.describe("signing up", () => {
     await page.getByRole("button", { name: "Sign up" }).click();
     await expect(page.getByText("Signed in.")).toBeVisible();
 
-    await page.getByRole("button", { name: "Sign out" }).click();
-    await expect(page.getByText("Welcome back.")).toBeVisible();
+    await signOutToLogin(page);
 
     await fillLoginForm(page, email, NEW_USER_PASSWORD);
     await page.getByRole("button", { name: "Log in" }).click();
@@ -208,8 +194,7 @@ test.describe("signing up", () => {
     // Logging back in with the bare address proves the padding never reached the
     // server. Same caveat as the padded login test: on web the browser strips it
     // too, so this cannot fail on its own if the schema's `.trim()` is dropped.
-    await page.getByRole("button", { name: "Sign out" }).click();
-    await expect(page.getByText("Welcome back.")).toBeVisible();
+    await signOutToLogin(page);
 
     await fillLoginForm(page, email, NEW_USER_PASSWORD);
     await page.getByRole("button", { name: "Log in" }).click();
@@ -227,8 +212,7 @@ test.describe("signing up", () => {
     await page.getByRole("button", { name: "Sign up" }).click();
     await expect(page.getByText("Signed in.")).toBeVisible();
 
-    await page.getByRole("button", { name: "Sign out" }).click();
-    await expect(page.getByText("Welcome back.")).toBeVisible();
+    await signOutToLogin(page);
 
     // The trimmed form is a different passphrase, deliberately: only the email
     // is trimmed, because padding can be part of a real password.
@@ -288,11 +272,13 @@ test.describe("signing up", () => {
 });
 
 test.describe("session and route guards", () => {
-  test("sends an unauthenticated visitor from the app to the login screen", async ({ page }) => {
+  test("sends an unauthenticated visitor from the app to the splash screen", async ({ page }) => {
     await page.goto("/");
 
-    await expect(page).toHaveURL(/\/login$/);
-    await expect(page.getByText("Welcome back.")).toBeVisible();
+    // `splash` is registered first in the signed-out group, which makes it that
+    // group's fallback — so an unauthenticated visitor settles there, not on the form.
+    await expect(page).toHaveURL(/\/splash$/);
+    await expect(page.getByText(SPLASH_TAGLINE)).toBeVisible();
   });
 
   test("keeps the session across a page reload", async ({ page }) => {
@@ -322,17 +308,17 @@ test.describe("session and route guards", () => {
     await expect(page.getByText("Signed in.")).toBeVisible();
   });
 
-  test("signing out returns to login and survives a reload", async ({ page }) => {
+  test("signing out returns to the splash screen and survives a reload", async ({ page }) => {
     await logInAsSeededUser(page);
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await expect(page).toHaveURL(/\/login$/);
-    await expect(page.getByText("Welcome back.")).toBeVisible();
+    await expect(page).toHaveURL(/\/splash$/);
+    await expect(page.getByText(SPLASH_TAGLINE)).toBeVisible();
 
     // A reload proves the session was actually cleared and not just navigated away from.
     await page.reload();
-    await expect(page).toHaveURL(/\/login$/);
-    await expect(page.getByText("Welcome back.")).toBeVisible();
+    await expect(page).toHaveURL(/\/splash$/);
+    await expect(page.getByText(SPLASH_TAGLINE)).toBeVisible();
   });
 });
 
