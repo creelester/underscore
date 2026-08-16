@@ -25,7 +25,7 @@ a{color:var(--primary)}a:hover{color:var(--orange-400)}
 @keyframes us-pulse{0%,100%{opacity:.45}50%{opacity:1}}
 @keyframes us-rise{from{transform:translateY(100%)}to{transform:none}}
 </style>
-<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#150A1E"/><stop offset="0.55" stop-color="#C0007A"/><stop offset="1" stop-color="#FF8820"/></linearGradient></defs><rect width="100" height="100" fill="url(#g)"/><g stroke="#FFF8EF" stroke-width="4" stroke-linecap="round"><path d="M32 50h4"/><path d="M44 38v24"/><path d="M56 44v12"/><path d="M68 34v32"/></g></svg></template>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#150A1E"></stop><stop offset="0.55" stop-color="#C0007A"></stop><stop offset="1" stop-color="#FF8820"></stop></linearGradient></defs><rect width="100" height="100" fill="url(#g)"></rect><g stroke="#FFF8EF" stroke-width="4" stroke-linecap="round"><path d="M32 50h4"></path><path d="M44 38v24"></path><path d="M56 44v12"></path><path d="M68 34v32"></path></g></svg></template>
 </helmet>
 
 <div style="min-height:100vh;display:flex;align-items:flex-start;justify-content:center;gap:56px;padding:56px 40px;background:radial-gradient(120% 80% at 50% 0%,#1A0722 0%,#08030C 70%)">
@@ -35,7 +35,10 @@ a{color:var(--primary)}a:hover{color:var(--orange-400)}
 <div class="us-scroll" style="width:100%;height:100%;border-radius:49px;overflow:hidden;background:{{ appBg }};color:var(--ink);--btn-secondary-fill:{{ secFill }};--btn-tertiary-fill:#2B0F3D;--btn-tertiary-ink:#FFF8EF;font:var(--text-body);display:flex;flex-direction:column;position:relative">
 
 <sc-if value="{{ isSplash }}" hint-placeholder-val="{{ true }}">
-<div style="position:absolute;inset:-8%;filter:blur(26px) saturate(1.5) contrast(1.06);background:{{ splashWash }};pointer-events:none"></div>
+<div style="position:absolute;inset:0;background:{{ splashGround }};pointer-events:none"></div>
+<div style="position:absolute;left:-30%;right:-30%;top:-12%;height:64%;background:var(--grad-hero);opacity:{{ hazeOpacity }};-webkit-mask-image:linear-gradient(180deg,#000 0%,#000 44%,rgba(0,0,0,.4) 72%,transparent 100%);mask-image:linear-gradient(180deg,#000 0%,#000 44%,rgba(0,0,0,.4) 72%,transparent 100%);filter:blur(36px);pointer-events:none"></div>
+<div style="position:absolute;left:50%;bottom:-270px;width:540px;height:540px;margin-left:-270px;border-radius:50%;background:{{ discFill }};pointer-events:none"></div>
+<div style="position:absolute;left:50%;bottom:-270px;width:540px;height:540px;margin-left:-270px;border-radius:50%;background:{{ discGrooves }};pointer-events:none"></div>
 </sc-if>
 <div style="height:52px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 30px 8px;font:600 13px var(--font-mono);color:{{ statusInk }};z-index:5">
 <span>9:41</span>
@@ -46,16 +49,19 @@ a{color:var(--primary)}a:hover{color:var(--orange-400)}
 <div style="flex:1;min-height:0;display:flex;flex-direction:column;justify-content:space-between;padding:0 26px 34px;position:relative;overflow:hidden">
 
 <div style="position: relative; display: flex; flex-direction: column; gap: 172px; padding-top: 44px; align-items: center; height: 498px; width: 329px; justify-content: space-between">
-<div style="display: flex; flex-direction: column; gap: 0px; align-items: center; width: 100%; height: 100%; margin-top: 69px">
-<div style="font:400 66px/1.04 var(--font-logo),var(--font-display);letter-spacing:-.01em;text-align:center;padding:0 12px;background:{{ lockFill }};-webkit-background-clip:text;background-clip:text;color:transparent">under</div>
-<div style="width:210px;height:52px;background:{{ lockFill }};-webkit-mask:url(assets/wave.svg) no-repeat center/contain;mask:url(assets/wave.svg) no-repeat center/contain"></div>
-<div style="font:400 66px/1.04 var(--font-logo-rough),var(--font-display);letter-spacing:-.01em;text-align:center;padding:0 12px;background:{{ lockFill }};-webkit-background-clip:text;background-clip:text;color:transparent">score</div>
-</div><h1 style="margin: 0; font: 600 34px/1.12 var(--font-display); letter-spacing: -.02em; max-width: 310px; text-align: center; font-size: 24px; font-style: normal; font-weight: 400; color: #2B103D; width: 338px; height: 56px">find the perfect soundscape to all your stories</h1>
-
+<div style="display: flex; flex-direction: column; gap: 0px; align-items: center; justify-content: flex-start; width: 100%; height: 100%; margin-top: 69px">
+<sc-if value="{{ isDarkTheme }}" hint-placeholder-val="{{ true }}">
+<img src="assets/under-score-logo-lilac.svg" alt="Under Score" style="width:242px;height:241px;display:block">
+</sc-if>
+<sc-if value="{{ isLightTheme }}" hint-placeholder-val="{{ false }}">
+<img src="assets/under-score-logo-plum.svg" alt="Under Score" style="width:242px;height:241px;display:block">
+</sc-if>
+<p style="margin: 18px 0 0; font: 400 22px/1.35 var(--font-display); letter-spacing: -.01em; text-align: center; color: {{ taglineInk }}; max-width: 300px; font-size: 16px">a soundtrack to all your stories</p>
+</div>
 
 </div>
 <div style="position:relative;display:flex;flex-direction:column;gap:12px">
-<x-import component-from-global-scope="UnderScoreDesignSystem_cd4dff.Button" variant="tertiary" size="lg" on-click="{{ goHow }}" style="width:100%" dc-props="{{ ctaStyle }}" hint-size="100%,56px">Get started →</x-import>
+<x-import component-from-global-scope="UnderScoreDesignSystem_cd4dff.Button" variant="{{ splashCtaVariant }}" size="lg" on-click="{{ goHow }}" style="width:100%" dc-props="{{ ctaStyle }}" hint-size="100%,56px">Get started →</x-import>
 <x-import component-from-global-scope="UnderScoreDesignSystem_cd4dff.Button" variant="secondary" size="lg" on-click="{{ goSearch }}" style="width:100%" dc-props="{{ ctaStyle }}" hint-size="100%,56px">I already have an account</x-import>
 </div>
 </div>
@@ -651,16 +657,23 @@ class Component extends DCLogic {
         : s.screen === 'splash' ? (s.theme === 'light' ? '#2B0F3D' : '#F8F1FB')
         : 'var(--ink)',
       homeInk: s.screen === 'splash' ? '#2B0F3D' : 'var(--ink)',
-      splashWash: s.theme === 'light'
-        ? 'radial-gradient(76% 44% at 16% 96%,#FF0084 0%,rgba(255,0,132,0) 68%),radial-gradient(70% 42% at 86% 82%,#FF5341 0%,rgba(255,83,65,0) 70%),radial-gradient(88% 46% at 30% 66%,#FFA200 0%,rgba(255,162,0,0) 72%),radial-gradient(90% 44% at 78% 34%,#F6BA00 0%,rgba(246,186,0,0) 74%),linear-gradient(165deg,#FAF26F 0%,#F6BA00 24%,#FFA200 48%,#FF5341 74%,#FF0084 100%)'
-        : 'radial-gradient(80% 48% at 12% 98%,#FFA200 0%,#FF5341 44%,rgba(255,83,65,0) 72%),radial-gradient(70% 44% at 88% 86%,#FF0084 0%,rgba(255,0,132,0) 70%),radial-gradient(88% 46% at 34% 74%,#EA0C5F 0%,rgba(234,12,95,0) 72%),radial-gradient(62% 36% at 94% 56%,#D653A9 0%,rgba(214,83,169,0) 74%),radial-gradient(90% 42% at 20% 48%,#3A1E66 0%,rgba(58,30,102,0) 76%),linear-gradient(148deg,#150A1E 0%,#1F0F2A 34%,#3A1E66 62%,#C0007A 86%,#FF0084 100%)',
+      splashGround: s.theme === 'light' ? '#FDEFE0' : '#1F0F2A',
+      hazeOpacity: s.theme === 'light' ? .5 : .78,
+      discFill: s.theme === 'light' ? '#E4CFF0' : '#3A1E66',
+      discGrooves: s.theme === 'light'
+        ? 'repeating-radial-gradient(circle at center,transparent 0px,transparent 16px,rgba(43,15,61,.14) 16px,rgba(43,15,61,.14) 17px)'
+        : 'repeating-radial-gradient(circle at center,transparent 0px,transparent 16px,rgba(11,4,16,.32) 16px,rgba(11,4,16,.32) 17px)',
+      splashCtaVariant: s.theme === 'light' ? 'tertiary' : 'primary',
       appBg: s.theme === 'light'
         ? 'radial-gradient(66% 32% at 6% 2%,rgba(246,186,0,.28) 0%,rgba(246,186,0,0) 70%),radial-gradient(60% 28% at 98% 16%,rgba(255,0,132,.20) 0%,rgba(255,0,132,0) 72%),radial-gradient(76% 36% at 14% 60%,rgba(255,83,65,.16) 0%,rgba(255,83,65,0) 74%),radial-gradient(68% 32% at 94% 86%,rgba(214,83,169,.22) 0%,rgba(214,83,169,0) 76%),#FFF8EF'
         : 'radial-gradient(64% 30% at 6% 2%,rgba(58,30,102,.85) 0%,rgba(58,30,102,0) 70%),radial-gradient(58% 26% at 98% 18%,rgba(192,0,122,.24) 0%,rgba(192,0,122,0) 72%),radial-gradient(74% 34% at 14% 62%,rgba(90,42,140,.4) 0%,rgba(90,42,140,0) 74%),radial-gradient(66% 30% at 92% 88%,rgba(58,30,102,.55) 0%,rgba(58,30,102,0) 76%),#150A1E',
       secFill: s.theme === 'light' ? 'rgba(43,15,61,.10)' : 'rgba(255,255,255,.12)',
       themeLabel: s.theme === 'light' ? 'Light' : 'Dark',
       themeLabelColor: s.theme === 'light' ? '#F6BA00' : '#C6B4D4',
-      lockFill: s.theme === 'light' ? '#2B0F3D' : 'var(--grad-warm)',
+      lockFill: s.theme === 'light' ? 'linear-gradient(120deg,#3A1E66 0%,#D653A9 100%)' : 'var(--grad-warm)',
+      taglineInk: s.theme === 'light' ? 'var(--plum-600)' : 'var(--lilac-200)',
+      isLightTheme: s.theme === 'light',
+      isDarkTheme: s.theme !== 'light',
       splashSubInk: s.theme === 'light' ? 'rgba(43,15,61,.84)' : 'rgba(248,241,251,.92)',
       ctaStyle: { style: { justifyContent: 'center', width: '100%' } },
 

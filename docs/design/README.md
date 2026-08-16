@@ -182,9 +182,10 @@ Press state: `scale(.96)`. No hover colour shifts — glow and gradient carry em
 ### The one-gradient rule
 
 **Two gradients must never overlap.** This governs several decisions:
-- On the splash, the background is a gradient, so both buttons are solid (tertiary + secondary).
+- On the splash, the haze dies just above the CTAs: in dark the primary sits on flat plum and
+  takes the warm gradient; in light it stays solid plum (tertiary).
 - On the playlist header, the band is a gradient, so its controls are flat translucent pills.
-- The logo lockup keeps its gradient fill only because the area directly behind it is flat.
+- The splash lockup is a solid fill in both themes (see Splash) — never a gradient over the haze.
 
 ### MoodChip — selected state
 
@@ -209,39 +210,30 @@ Twelve screens. Order below follows the flows.
 ### 1. Splash
 
 - **Purpose:** state the promise, start the flow.
-- **Layout:** full-bleed wash behind everything including the status bar (it is a child of the
-  phone shell, *not* of the content column — otherwise it clips under the status bar). Content
-  column: 26px side padding, 44px top, centred, 40px gap between lockup and headline, `space-between`
-  to pin the CTAs to the bottom (34px from the edge).
-- **Wash (dark):** blurred mesh — `blur(26px) saturate(1.5) contrast(1.06)`, `inset:-8%`, over
-  ```
-  radial-gradient(80% 48% at 12% 98%, #FFA200 0%, #FF5341 44%, transparent 72%),
-  radial-gradient(70% 44% at 88% 86%, #FF0084 0%, transparent 70%),
-  radial-gradient(88% 46% at 34% 74%, #EA0C5F 0%, transparent 72%),
-  radial-gradient(62% 36% at 94% 56%, #D653A9 0%, transparent 74%),
-  radial-gradient(90% 42% at 20% 48%, #3A1E66 0%, transparent 76%),
-  linear-gradient(148deg, #150A1E 0%, #1F0F2A 34%, #3A1E66 62%, #C0007A 86%, #FF0084 100%)
-  ```
-  Dark purple at the top where the logo sits, running purple → pink → orange toward the buttons.
-- **Wash (light):** same blur/saturate treatment over
-  ```
-  radial-gradient(76% 44% at 16% 96%, #FF0084 0%, transparent 68%),
-  radial-gradient(70% 42% at 86% 82%, #FF5341 0%, transparent 70%),
-  radial-gradient(88% 46% at 30% 66%, #FFA200 0%, transparent 72%),
-  radial-gradient(90% 44% at 78% 34%, #F6BA00 0%, transparent 74%),
-  linear-gradient(165deg, #FAF26F 0%, #F6BA00 24%, #FFA200 48%, #FF5341 74%, #FF0084 100%)
-  ```
-- **Logo lockup (final, approved):** three stacked, centred, 2px gaps —
-  `under` (66px `--font-logo`) / **wave mark** (`assets/wave.svg`, 210 × 52, colour-filled via CSS
-  mask) / `score` (66px `--font-logo-rough`). Fill is `--grad-warm` in dark, solid `#2B0F3D` in
-  light. The wave sits *between* the two words; this is the canonical formation.
-- **Headline / subhead:** the live prototype is the source of truth for splash copy (it has been
-  edited directly since this doc was drafted — read it out of `prototypes/Under Score App.dc.html`).
-  Specs: headline 600 34px/1.12, `-.02em`, centred, max 310px; subhead `--text-body`, centred,
-  max 296px, ink `rgba(248,241,251,.92)` dark / `rgba(43,15,61,.84)` light.
-- **CTAs:** `Get started →` (tertiary, solid plum) then `I already have an account` (secondary),
+- **Background — three stacked layers** (children of the phone shell, behind the status bar and
+  content, all `pointer-events:none`). This replaced the earlier blurred-mesh wash:
+  1. **Ground** — flat `#1F0F2A` dark / `#FDEFE0` light (a warm cream, deliberately deeper than `--bg`).
+  2. **Haze** — `--grad-hero`, `blur(36px)`, box `left/right:-30% · top:-12% · height:64%`,
+     opacity `.78` dark / `.50` light, faded with
+     `mask-image: linear-gradient(180deg, #000 0%, #000 44%, rgba(0,0,0,.4) 72%, transparent 100%)`
+     so it dies just above the CTAs.
+  3. **Record** — a 540 × 540 circle centred horizontally at `bottom:-270px`, so only its top half
+     is on screen. Fill `#3A1E66` dark / `#E4CFF0` light; grooves are
+     `repeating-radial-gradient(circle at center, transparent 0 16px, L 16px 17px)` with
+     `L = rgba(11,4,16,.32)` dark / `rgba(43,15,61,.14)` light. The CTAs sit on the record.
+- **Logo lockup:** solid single-colour SVGs, 242px, centred —
+  `assets/under-score-logo-lilac.svg` (lilac `--lilac-200`, dark theme — matches the tagline) /
+  `assets/under-score-logo-plum.svg` (plum, light theme). **The gradient-filled mark is retired on the splash** — the lockup is
+  always one solid colour. Tagline beneath: "a soundtrack to all your stories" (16px display,
+  `--lilac-200` dark / `--plum-600` light) — same colour as the lockup in each theme.
+- **Copy:** the live prototype is the source of truth for splash copy — read it out of
+  `prototypes/Under Score App.dc.html`.
+- **CTAs:** `Get started →` — **primary (warm gradient)** in dark, where the footing under it is
+  flat plum; **tertiary (solid plum)** in light. Then `I already have an account` (secondary),
   12px gap.
 - **Status-bar ink** flips with theme: `#F8F1FB` dark, `#2B0F3D` light.
+- Chosen from explorations `9c` (dark) and `10a` (light) in
+  `prototypes/Under Score Splash Options.dc.html`.
 
 ### 2. How it works
 
@@ -525,6 +517,9 @@ Selecting a book seeds `moods`/`pacing` from that book's inferred values and res
 - `assets/wave.svg` — the soundwave mark. Used as a **CSS mask** so it can take a gradient or solid
   fill; on native, use a template/tintable image. 244 × 67 source, drawn at 210 × 52.
 - `assets/logo.svg` — full vector logo lockup.
+- `assets/under-score-logo-lilac.svg` / `assets/under-score-logo-plum.svg` — solid-fill lockups
+  used on the splash (lilac `#E4CFF0` on dark, plum `#3A1E66` on light; the dark lockup matches
+  the tagline colour). `assets/under-score-logo-cream.svg` is the earlier cream variant, unused.
 - Logo fonts `JayaGiri-Sans.otf` / `JayaGiri-Sans-Rough.otf` live in the design-system project at
   `assets/fonts/` — licensed files from the team; request them before building the splash.
 - Book covers and track artwork are **placeholders** (mood gradients). Wire to real provider imagery.
@@ -538,9 +533,9 @@ Selecting a book seeds `moods`/`pacing` from that book's inferred values and res
 plus four light-theme screens (12–15):
 splash, mood, playlist and now. They are reference captures — the prototype is authoritative.
 
-**Known capture artifact:** the wave mark in the logo lockup renders as a **solid rectangle** in
-these PNGs. That is a limitation of the screenshot renderer (it does not support CSS `mask`), not
-the design. Open the standalone prototype to see the real lockup.
+**Known capture artifact:** captures include the prototype's right-hand rail and may crop the
+lower half of the phone. The prototype is authoritative — open the standalone file to see any
+screen in full.
 
 ## Files in this bundle
 
@@ -550,7 +545,7 @@ prototypes/
   Under Score App — standalone.html   ← self-contained, opens offline. Start here.
   Under Score App.dc.html             ← source of the hi-fi prototype (all 12 screens, both themes)
   Under Score Wireframes.dc.html      ← flow map + annotated wireframes + rejected options
-  Under Score Splash Options.dc.html  ← splash explorations; 5a (dark) and 4e (light) were chosen
+  Under Score Splash Options.dc.html  ← splash explorations; 9c (dark) and 10a (light) are current
 design-system/
   styles.css, tokens/                 ← the real token files; import these
 assets/
