@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useColorScheme } from 'nativewind';
-import { StyleSheet, View } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import Svg, { Circle, Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 import { GRAD_HERO } from '@/lib/gradients';
 import { SPLASH } from '@/lib/theme';
@@ -16,17 +16,43 @@ export const LOCKUP_TOP = 113;
 const RECORD_SIZE = 540;
 const RECORD_RADIUS = RECORD_SIZE / 2;
 
+/** The haze box starts this far above the screen, as a fraction of screen height. */
+const HAZE_OVERSHOOT = 0.12;
+
+/** Clearance between the record's edge and where the haze has fully faded out. */
+const HAZE_RECORD_GAP = 30;
+
+/** Radius at which the fade is solid ground, and how far out it takes to clear —
+ *  the latter as a fraction of screen height, so the ramp scales with the device. */
+const FADE_INNER = RECORD_RADIUS + HAZE_RECORD_GAP;
+const FADE_BAND = 0.45;
+
 /** Grooves repeat every 17px from 16px out, per the prototype's repeating-radial-gradient. */
 const GROOVE_RADII = Array.from(
   { length: Math.floor((RECORD_RADIUS - 16.5) / 17) + 1 },
   (_, i) => 16.5 + i * 17
 );
 
-/** `#RRGGBB` at a given alpha. Fading to `transparent` instead would darken the ramp,
- *  because `transparent` is rgba(0,0,0,0) and iOS interpolates through the black. */
-function withAlpha(hex: string, alpha: number) {
-  const n = parseInt(hex.slice(1), 16);
-  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
+/**
+ * The fade sampled as a smoothstep across the band, ground at `t = 0` and clear at
+ * `t = 1`. A gradient interpolates linearly between its stops, and a straight alpha
+ * ramp arrives at the ground colour at full speed — the eye reads that corner in the
+ * ramp as an edge. Easing in and out of it removes the line.
+ */
+const FADE = Array.from({ length: 9 }, (_, i) => {
+  const t = i / 8;
+  return { t, alpha: 1 - t * t * (3 - 2 * t) };
+});
+
+/** The ramp above, as gradient stops, preceded by the solid disc it starts from. */
+function fadeStops(outer: number) {
+  return [
+    { offset: 0, alpha: 1 },
+    ...FADE.map(({ t, alpha }) => ({
+      offset: (FADE_INNER + t * (outer - FADE_INNER)) / outer,
+      alpha,
+    })),
+  ];
 }
 
 /**
@@ -39,32 +65,66 @@ function withAlpha(hex: string, alpha: number) {
  * the inverse stops is pixel-equivalent. It is a sibling of the haze rather than a
  * child so the haze's own opacity does not dim the fade short of the ground colour.
  *
+ * That overlay is radial, centred on the record: the haze ends on an arc concentric
+ * with the disc rather than on a horizontal line, so it wraps the record's shoulders
+ * instead of cutting across them. The record's centre is exactly the bottom edge of
+ * the screen — `bottom: -RECORD_RADIUS` — which is what makes the two share a centre.
+ *
  * The design's `blur(36px)` on the haze is dropped: blurring an already-smooth linear
  * gradient only softens its box edges, and those sit off-screen or under the fade.
  */
 export function SplashBackdrop() {
   const { colorScheme } = useColorScheme();
   const splash = SPLASH[colorScheme === 'light' ? 'light' : 'dark'];
+  const { width, height } = useWindowDimensions();
+
+  const fadeOuter = FADE_INNER + FADE_BAND * height;
+
+  // The haze box has to run to the bottom of the screen for the arc to have anything
+  // to cut out of, but the hero gradient's axis is expressed as fractions of that box,
+  // so growing it would drag the colours down with it. Squashing the axis endpoints by
+  // the same factor pins the ramp to the pixels it covered when the box stopped above
+  // the record — every point in the taller box then gets the colour the shorter box's
+  // gradient would have had there, and the added strip is its natural continuation.
+  const boxHeight = height * (1 + HAZE_OVERSHOOT);
+  const axisScale = (boxHeight - FADE_INNER) / boxHeight;
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
       <View style={[StyleSheet.absoluteFill, { backgroundColor: splash.ground }]} />
 
       <View style={[styles.haze, { opacity: splash.hazeOpacity }]}>
-        <LinearGradient {...GRAD_HERO} style={StyleSheet.absoluteFill} />
+        <LinearGradient
+          {...GRAD_HERO}
+          start={{ x: GRAD_HERO.start.x, y: GRAD_HERO.start.y * axisScale }}
+          end={{ x: GRAD_HERO.end.x, y: GRAD_HERO.end.y * axisScale }}
+          style={StyleSheet.absoluteFill}
+        />
       </View>
-      <LinearGradient
-        colors={[
-          withAlpha(splash.ground, 0),
-          withAlpha(splash.ground, 0),
-          withAlpha(splash.ground, 0.6),
-          splash.ground,
-        ]}
-        locations={[0, 0.44, 0.72, 1]}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-        style={styles.haze}
-      />
+
+      <Svg style={StyleSheet.absoluteFill} width={width} height={height}>
+        <Defs>
+          {/* Fading to `transparent` instead of to the ground colour at zero alpha
+              would darken the ramp: `transparent` is rgba(0,0,0,0), and the
+              interpolation runs through the black. */}
+          <RadialGradient
+            id="haze-fade"
+            gradientUnits="userSpaceOnUse"
+            cx={width / 2}
+            cy={height}
+            r={fadeOuter}>
+            {fadeStops(fadeOuter).map(({ offset, alpha }) => (
+              <Stop
+                key={offset}
+                offset={offset}
+                stopColor={splash.ground}
+                stopOpacity={alpha}
+              />
+            ))}
+          </RadialGradient>
+        </Defs>
+        <Rect width={width} height={height} fill="url(#haze-fade)" />
+      </Svg>
 
       <View style={styles.record}>
         <Svg width={RECORD_SIZE} height={RECORD_SIZE}>
@@ -96,8 +156,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: '-30%',
     right: '-30%',
-    top: '-12%',
-    height: '64%',
+    top: `-${HAZE_OVERSHOOT * 100}%`,
+    bottom: 0,
   },
   record: {
     position: 'absolute',
