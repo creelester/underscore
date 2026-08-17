@@ -9,7 +9,6 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LogoLockup } from '@/components/logo-lockup';
@@ -18,15 +17,22 @@ import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 
 /**
- * The record's growth to full-viewport cover, and the column's exit ahead of it.
+ * The record's growth to full-viewport cover, the column's exit ahead of it, and when
+ * the push goes in.
+ *
+ * `PUSH_AT_MS` lands well short of `ZOOM_MS` on purpose: the pushed screen's own fade
+ * then starts while the disc is still growing underneath it, rather than after the
+ * growth has stopped and the frame has gone still. The disc keeps expanding through the
+ * cross-fade, so the two motions overlap instead of queueing.
  *
  * The zoom is the one transition that does not take the handoff's `--ease-standard`
  * (`MOTION.easeStandard`): that curve spends most of its travel in its first quarter,
  * which over a ~3.5× growth arrives as a cut rather than a zoom. An ease-in-out is slow
  * enough at both ends for the eye to follow the disc all the way out.
  */
-const ZOOM_MS = 520;
-const COLUMN_FADE_MS = 160;
+const ZOOM_MS = 460;
+const COLUMN_FADE_MS = 110;
+const PUSH_AT_MS = 260;
 
 type Destination = '/sign-up' | '/login';
 
@@ -52,6 +58,7 @@ export default function SplashScreen() {
   const zoom = useSharedValue(0);
   const column = useSharedValue(1);
   const leaving = useRef(false);
+  const pushTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // `get`/`set` rather than `.value` throughout: the React Compiler treats a value
   // passed to a hook as immutable, and the eslint rule that enforces that is on.
@@ -66,14 +73,19 @@ export default function SplashScreen() {
       leaving.current = false;
       zoom.set(0);
       column.set(1);
+
+      // Runs on blur — after the push it has nothing left to cancel, but a screen torn
+      // down mid-transition would otherwise navigate from under whatever replaced it.
+      return () => {
+        if (pushTimer.current) clearTimeout(pushTimer.current);
+      };
     }, [zoom, column])
   );
 
   /**
    * Falls into the record: the column clears, the disc grows until it is the whole
    * viewport, and the pushed screen fades in over it (`animation: 'fade'` on both
-   * targets in `_layout.tsx`). The push waits for the zoom so the form does not
-   * arrive over a half-grown disc.
+   * targets in `_layout.tsx`), starting while the disc is still on its way out.
    */
   const leave = (href: Destination) => {
     if (leaving.current) return;
@@ -85,16 +97,8 @@ export default function SplashScreen() {
     }
 
     column.set(withTiming(0, { duration: COLUMN_FADE_MS }));
-    zoom.set(
-      withTiming(
-        1,
-        { duration: ZOOM_MS, easing: Easing.inOut(Easing.quad) },
-        (finished) => {
-          'worklet';
-          if (finished) scheduleOnRN(navigate, href);
-        }
-      )
-    );
+    zoom.set(withTiming(1, { duration: ZOOM_MS, easing: Easing.inOut(Easing.quad) }));
+    pushTimer.current = setTimeout(() => navigate(href), PUSH_AT_MS);
   };
 
   // Insets are applied by hand rather than through `<SafeAreaView>`, which writes its

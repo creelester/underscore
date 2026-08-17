@@ -100,11 +100,6 @@ export const SHADOWS = {
  *
  * `ground` is deliberately deeper than `background` in both themes — the haze and the
  * record are read against it, not against the app surface.
- *
- * `sheen` is the band of light the record's spin carries around: the disc is otherwise
- * rotationally symmetric, so without it the rotation is invisible. It flips sense with
- * the theme — a highlight on the deep plum disc, a shadow-side on the pale lilac one,
- * where a white highlight would have nothing to lift.
  */
 export const SPLASH = {
   light: {
@@ -112,16 +107,12 @@ export const SPLASH = {
     hazeOpacity: 0.5,
     record: '#E4CFF0',
     groove: 'rgba(43,15,61,0.14)',
-    sheen: '#2B0F3D',
-    sheenOpacity: 0.05,
   },
   dark: {
     ground: '#1F0F2A',
     hazeOpacity: 0.78,
     record: '#3A1E66',
     groove: 'rgba(11,4,16,0.32)',
-    sheen: '#FFFFFF',
-    sheenOpacity: 0.06,
   },
 } as const;
 
