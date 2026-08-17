@@ -1,4 +1,4 @@
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, type Href } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { useCallback, useRef } from 'react';
 import { View } from 'react-native';
@@ -34,11 +34,6 @@ const ZOOM_MS = 460;
 const COLUMN_FADE_MS = 110;
 const PUSH_AT_MS = 260;
 
-type Destination = '/sign-up' | '/login';
-
-/** Wrapped rather than passed as `router.push`, which `scheduleOnRN` would call bare. */
-const navigate = (href: Destination) => router.push(href);
-
 /**
  * The unauthenticated landing screen — registered first in the signed-out group in
  * `_layout.tsx`, which is what makes `/` and a sign-out settle here.
@@ -58,6 +53,10 @@ export default function SplashScreen() {
   const zoom = useSharedValue(0);
   const column = useSharedValue(1);
   const leaving = useRef(false);
+
+  // Fires the navigation part-way through the zoom, which is what makes the next screen
+  // begin fading in while the disc is still growing. A ref because the focus cleanup has
+  // to be able to cancel it if the screen goes away before it fires.
   const pushTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // `get`/`set` rather than `.value` throughout: the React Compiler treats a value
@@ -86,21 +85,38 @@ export default function SplashScreen() {
    * Falls into the record: the column clears, the disc grows until it is the whole
    * viewport, and the pushed screen fades in over it (`animation: 'fade'` on both
    * targets in `_layout.tsx`), starting while the disc is still on its way out.
+   *
+   * `Href` is expo-router's own route type, generated from the files under `app/` —
+   * `typedRoutes` is on in app.json, so a target that is not a real route is a type
+   * error here, which a hand-written union of path strings could not tell you.
    */
-  const leave = (href: Destination) => {
+  const leave = (href: Href) => {
     if (leaving.current) return;
     leaving.current = true;
 
     if (reduceMotion) {
-      navigate(href);
+      router.push(href);
       return;
     }
 
     column.set(withTiming(0, { duration: COLUMN_FADE_MS }));
     zoom.set(withTiming(1, { duration: ZOOM_MS, easing: Easing.inOut(Easing.quad) }));
-    pushTimer.current = setTimeout(() => navigate(href), PUSH_AT_MS);
+
+    // The push is what starts the next screen's fade, so it is scheduled part-way into
+    // the zoom rather than at its end — see PUSH_AT_MS above. Held in a ref only so the
+    // cleanup below can cancel it.
+    pushTimer.current = setTimeout(() => router.push(href), PUSH_AT_MS);
   };
 
+  // Layout is NativeWind classes; `style` carries only the three things a class cannot.
+  //
+  //  - the insets, which are runtime values read from the device;
+  //  - `LOCKUP_TOP`, which splash-backdrop.tsx exports and the boot overlay uses too, so
+  //    it has to stay one number rather than become a literal in an arbitrary-value
+  //    class here and another there;
+  //  - `columnStyle`, which a shared value drives on the UI thread — NativeWind resolves
+  //    classes on the JS thread, so an animated class cannot exist.
+  //
   // Insets are applied by hand rather than through `<SafeAreaView>`, which writes its
   // own padding and would silently drop the design's 34px bottom gap. That 34px is the
   // designer's stand-in for the home indicator, so on a device the inset replaces it.
