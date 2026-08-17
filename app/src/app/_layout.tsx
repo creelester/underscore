@@ -93,11 +93,15 @@ export default function RootLayout() {
 
               {/* `splash` is first, which makes it this group's fallback: `/` and a
                   sign-out both settle there, and the forms are reached from its CTAs.
-                  Reordering these silently changes where signed-out visitors land. */}
+                  Reordering these silently changes where signed-out visitors land.
+
+                  Both forms fade rather than slide: the splash grows its record to fill
+                  the viewport before it pushes (app/splash.tsx), and a slide would carry
+                  the form in across that frame instead of out of it. */}
               <Stack.Protected guard={!session}>
                 <Stack.Screen name="splash" />
-                <Stack.Screen name="login" />
-                <Stack.Screen name="sign-up" />
+                <Stack.Screen name="login" options={{ animation: 'fade' }} />
+                <Stack.Screen name="sign-up" options={{ animation: 'fade' }} />
               </Stack.Protected>
             </Stack>
           )}

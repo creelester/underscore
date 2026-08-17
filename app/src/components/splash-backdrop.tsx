@@ -1,7 +1,26 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useColorScheme } from 'nativewind';
+import { useEffect } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
-import Svg, { Circle, Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
+import Animated, {
+  Easing,
+  cancelAnimation,
+  interpolate,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+  type SharedValue,
+} from 'react-native-reanimated';
+import Svg, {
+  Circle,
+  Defs,
+  LinearGradient as SvgLinearGradient,
+  RadialGradient,
+  Rect,
+  Stop,
+} from 'react-native-svg';
 
 import { GRAD_HERO } from '@/lib/gradients';
 import { SPLASH } from '@/lib/theme';
@@ -32,6 +51,39 @@ const GROOVE_RADII = Array.from(
   { length: Math.floor((RECORD_RADIUS - 16.5) / 17) + 1 },
   (_, i) => 16.5 + i * 17
 );
+
+/**
+ * One revolution, in ms. Ambient rather than turntable speed — the record is background
+ * to the CTAs, and this is the register the handoff's 14–16s `us-drift` already sets.
+ */
+const SPIN_MS = 18000;
+
+/**
+ * The wobble: a warped record's sway, in screen-space pixels. The two axes run on
+ * deliberately non-commensurate periods, so they drift in and out of phase instead of
+ * tracing the same closed path every few seconds, which reads as a metronome.
+ */
+const WOBBLE = {
+  x: { amplitude: 3, duration: 5500 },
+  y: { amplitude: 2, duration: 7300 },
+} as const;
+
+/** Clearance on the zoom's cover scale, for the wobble offset and rounding. */
+const COVER_MARGIN = 1.04;
+
+/**
+ * The sheen, as gradient stops across the disc: a band of light, brightest just past the
+ * leading edge and falling off to nothing at both ends. The extra shoulder stops on
+ * either side of the peak are what keep it a wedge of light rather than a linear wash
+ * with a visible axis.
+ */
+const SHEEN_STOPS = [
+  { offset: 0, alpha: 0 },
+  { offset: 0.22, alpha: 0.28 },
+  { offset: 0.45, alpha: 1 },
+  { offset: 0.68, alpha: 0.24 },
+  { offset: 1, alpha: 0 },
+];
 
 /**
  * The fade sampled as a smoothstep across the band, ground at `t = 0` and clear at
@@ -72,8 +124,12 @@ function fadeStops(outer: number) {
  *
  * The design's `blur(36px)` on the haze is dropped: blurring an already-smooth linear
  * gradient only softens its box edges, and those sit off-screen or under the fade.
+ *
+ * The record turns and sways; see `SpinningRecord` below. `zoom` is an optional 0→1
+ * progress the caller drives to grow the disc until it covers the viewport — the splash
+ * hands it one on the way out, the boot overlay does not.
  */
-export function SplashBackdrop() {
+export function SplashBackdrop({ zoom }: { zoom?: SharedValue<number> }) {
   const { colorScheme } = useColorScheme();
   const splash = SPLASH[colorScheme === 'light' ? 'light' : 'dark'];
   const { width, height } = useWindowDimensions();
@@ -126,8 +182,115 @@ export function SplashBackdrop() {
         <Rect width={width} height={height} fill="url(#haze-fade)" />
       </Svg>
 
-      <View style={styles.record}>
+      <SpinningRecord splash={splash} zoom={zoom} width={width} height={height} />
+    </View>
+  );
+}
+
+/**
+ * The record itself, and everything that moves it.
+ *
+ * Two nested wrappers rather than one: the outer carries the wobble and the zoom, the
+ * inner carries the rotation. Putting the wobble inside the rotation would spin the
+ * direction of the sway along with the disc, turning a sideways drift into an orbit.
+ * Within the outer wrapper's own transform the order matters too. Transforms compose
+ * left to right, so a point passes through the list in reverse: putting the translations
+ * ahead of the scale means the point is scaled first and shifted after, and a 3px wobble
+ * stays 3px on screen instead of being multiplied by however far the zoom has grown.
+ *
+ * The wrapper's 540px box is centred on the disc, so scaling it is concentric: the disc
+ * grows out of the bottom edge it already sits on rather than drifting as it goes.
+ */
+function SpinningRecord({
+  splash,
+  zoom,
+  width,
+  height,
+}: {
+  splash: (typeof SPLASH)['light' | 'dark'];
+  zoom?: SharedValue<number>;
+  width: number;
+  height: number;
+}) {
+  const reduceMotion = useReducedMotion();
+
+  const spin = useSharedValue(0);
+  const wobbleX = useSharedValue(0);
+  const wobbleY = useSharedValue(0);
+
+  // Stands in for the prop when the caller has no zoom of its own — the boot overlay,
+  // which draws the same artwork but never grows it — so the worklet below can read one
+  // shared value unconditionally.
+  const ownZoom = useSharedValue(0);
+  const zoomProgress = zoom ?? ownZoom;
+
+  useEffect(() => {
+    if (reduceMotion) return;
+
+    // A linear ramp to a full turn: the value it lands on is the one it restarts from,
+    // so the repeat is seamless. Easing anything here would show up as a pulse.
+    spin.set(withRepeat(withTiming(360, { duration: SPIN_MS, easing: Easing.linear }), -1));
+    wobbleX.set(
+      withRepeat(
+        withTiming(1, { duration: WOBBLE.x.duration, easing: Easing.inOut(Easing.sin) }),
+        -1,
+        true
+      )
+    );
+    wobbleY.set(
+      withRepeat(
+        withTiming(1, { duration: WOBBLE.y.duration, easing: Easing.inOut(Easing.sin) }),
+        -1,
+        true
+      )
+    );
+
+    return () => {
+      cancelAnimation(spin);
+      cancelAnimation(wobbleX);
+      cancelAnimation(wobbleY);
+    };
+  }, [reduceMotion, spin, wobbleX, wobbleY]);
+
+  // What the disc has to reach to cover the viewport: its centre is the middle of the
+  // bottom edge, so the farthest pixel from it is a top corner.
+  const coverScale = (Math.hypot(width / 2, height) / RECORD_RADIUS) * COVER_MARGIN;
+
+  // `get`/`set` rather than `.value` throughout: the React Compiler treats a value
+  // passed to a hook as immutable, and the eslint rule that enforces that is on.
+  const frameStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: interpolate(wobbleX.get(), [0, 1], [-WOBBLE.x.amplitude, WOBBLE.x.amplitude]) },
+      { translateY: interpolate(wobbleY.get(), [0, 1], [WOBBLE.y.amplitude, -WOBBLE.y.amplitude]) },
+      { scale: interpolate(zoomProgress.get(), [0, 1], [1, coverScale]) },
+    ],
+  }));
+
+  const spinStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${spin.get()}deg` }],
+  }));
+
+  return (
+    <Animated.View style={[styles.record, frameStyle]}>
+      <Animated.View style={spinStyle}>
         <Svg width={RECORD_SIZE} height={RECORD_SIZE}>
+          <Defs>
+            {/* Corner to corner, so the band crosses the disc rather than clipping a
+                sliver of it. react-native-svg has no conic gradient — a linear band
+                held inside the circle is how a lit side gets expressed, and rotating
+                it is what reads as the sweep. */}
+            <SvgLinearGradient id="record-sheen" x1="0" y1="0" x2="1" y2="1">
+              {SHEEN_STOPS.map(({ offset, alpha }) => (
+                <Stop
+                  key={offset}
+                  offset={offset}
+                  stopColor={splash.sheen}
+                  stopOpacity={alpha * splash.sheenOpacity}
+                />
+              ))}
+            </SvgLinearGradient>
+          </Defs>
+
           <Circle
             cx={RECORD_RADIUS}
             cy={RECORD_RADIUS}
@@ -145,9 +308,16 @@ export function SplashBackdrop() {
               strokeWidth={1}
             />
           ))}
+          {/* Over the grooves: the light falls on them, not under them. */}
+          <Circle
+            cx={RECORD_RADIUS}
+            cy={RECORD_RADIUS}
+            r={RECORD_RADIUS}
+            fill="url(#record-sheen)"
+          />
         </Svg>
-      </View>
-    </View>
+      </Animated.View>
+    </Animated.View>
   );
 }
 

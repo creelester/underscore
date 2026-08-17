@@ -221,6 +221,10 @@ Twelve screens. Order below follows the flows.
      is on screen. Fill `#3A1E66` dark / `#E4CFF0` light; grooves are
      `repeating-radial-gradient(circle at center, transparent 0 16px, L 16px 17px)` with
      `L = rgba(11,4,16,.32)` dark / `rgba(43,15,61,.14)` light. The CTAs sit on the record.
+     Over the grooves, a **sheen** — a soft band of light across the disc, peaking just past its
+     leading edge: `#FFFFFF` at `.06` dark, `#2B0F3D` at `.05` light (on the pale disc a
+     shadow-side reads where a white highlight would not). The disc is otherwise rotationally
+     symmetric, so the sheen is what its spin has to carry — see Animation.
 - **Logo lockup:** solid single-colour SVGs, 242px, centred —
   `assets/under-score-logo-lilac.svg` (lilac `--lilac-200`, dark theme — matches the tagline) /
   `assets/under-score-logo-plum.svg` (plum, light theme). **The gradient-filled mark is retired on the splash** — the lockup is
@@ -447,6 +451,17 @@ threshold) — see the wireframe file if you need that context.
 **Animation.**
 - `us-fade` — screen enter: 220ms, `opacity 0→1` + `translateY(8px→0)`.
 - `us-drift` — gradient panels: 14–16s infinite ease-in-out, `scale(1.04→1.12)` with ±2% translate.
+- `us-spin` — the splash record: 18s infinite linear rotation, carrying the sheen once around per
+  turn, under a wobble of ±3px x / ±2px y on 5.5s and 7.3s ease-in-out cycles. The two wobble
+  periods are deliberately not multiples of each other, so the sway does not repeat a closed path.
+  The wobble is applied outside the rotation, in screen space — inside it, a sideways sway becomes
+  an orbit.
+- `us-fall` — the splash CTAs: the content column fades out over 120–160ms while the record grows
+  about its own centre to cover the viewport (~520ms, ease-in-out quad); the pushed screen then
+  fades in over the full-bleed disc. This is the one transition that does **not** take
+  `--ease-standard`: that curve spends 60% of its travel in its first quarter, which on a 3.5×
+  growth reads as a cut rather than a zoom. Reduced motion drops all three of these and navigates
+  flat.
 - `us-rise` — bottom sheet: 240ms `--ease-standard`, `translateY(100%→0)`.
 - Chip/pill toggles and gradient cross-fades: `--dur-med` `--ease-standard`.
 - Press: `scale(.96)`.
