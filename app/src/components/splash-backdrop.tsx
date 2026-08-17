@@ -1,6 +1,12 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useColorScheme } from 'nativewind';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import Animated, {
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  type SharedValue,
+} from 'react-native-reanimated';
 import Svg, { Circle, Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 import { GRAD_HERO } from '@/lib/gradients';
@@ -32,6 +38,9 @@ const GROOVE_RADII = Array.from(
   { length: Math.floor((RECORD_RADIUS - 16.5) / 17) + 1 },
   (_, i) => 16.5 + i * 17
 );
+
+/** Clearance on the zoom's cover scale, for rounding. */
+const COVER_MARGIN = 1.04;
 
 /**
  * The fade sampled as a smoothstep across the band, ground at `t = 0` and clear at
@@ -72,13 +81,37 @@ function fadeStops(outer: number) {
  *
  * The design's `blur(36px)` on the haze is dropped: blurring an already-smooth linear
  * gradient only softens its box edges, and those sit off-screen or under the fade.
+ *
+ * `zoom` is an optional 0→1 progress the caller drives to grow the record until it covers
+ * the viewport — the splash hands it one on the way out, the boot overlay does not. The
+ * disc is otherwise still: it is a flat field of concentric circles, so rotating it shows
+ * nothing, and the sheen that would have carried a spin was not worth the addition to an
+ * artwork the design draws flat.
  */
-export function SplashBackdrop() {
+export function SplashBackdrop({ zoom }: { zoom?: SharedValue<number> }) {
   const { colorScheme } = useColorScheme();
   const splash = SPLASH[colorScheme === 'light' ? 'light' : 'dark'];
   const { width, height } = useWindowDimensions();
 
   const fadeOuter = FADE_INNER + FADE_BAND * height;
+
+  // Stands in for the prop when the caller has no zoom of its own — the boot overlay,
+  // which draws the same artwork but never grows it — so the worklet below can read one
+  // shared value unconditionally.
+  const ownZoom = useSharedValue(0);
+  const zoomProgress = zoom ?? ownZoom;
+
+  // What the disc has to reach to cover the viewport: its centre is the middle of the
+  // bottom edge, so the farthest pixel from it is a top corner. The 540px wrapper is
+  // centred on that same point, so scaling it is concentric — the disc grows out of the
+  // bottom edge it already sits on rather than drifting as it goes.
+  const coverScale = (Math.hypot(width / 2, height) / RECORD_RADIUS) * COVER_MARGIN;
+
+  // `get` rather than `.value`: the React Compiler treats a value passed to a hook as
+  // immutable, and the eslint rule that enforces that is on.
+  const zoomStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: interpolate(zoomProgress.get(), [0, 1], [1, coverScale]) }],
+  }));
 
   // The haze box has to run to the bottom of the screen for the arc to have anything
   // to cut out of, but the hero gradient's axis is expressed as fractions of that box,
@@ -126,7 +159,7 @@ export function SplashBackdrop() {
         <Rect width={width} height={height} fill="url(#haze-fade)" />
       </Svg>
 
-      <View style={styles.record}>
+      <Animated.View style={[styles.record, zoomStyle]}>
         <Svg width={RECORD_SIZE} height={RECORD_SIZE}>
           <Circle
             cx={RECORD_RADIUS}
@@ -146,7 +179,7 @@ export function SplashBackdrop() {
             />
           ))}
         </Svg>
-      </View>
+      </Animated.View>
     </View>
   );
 }

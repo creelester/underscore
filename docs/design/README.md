@@ -221,6 +221,10 @@ Twelve screens. Order below follows the flows.
      is on screen. Fill `#3A1E66` dark / `#E4CFF0` light; grooves are
      `repeating-radial-gradient(circle at center, transparent 0 16px, L 16px 17px)` with
      `L = rgba(11,4,16,.32)` dark / `rgba(43,15,61,.14)` light. The CTAs sit on the record.
+     The disc is flat and still — it only ever moves on the way out, see `us-fall` under
+     Animation. Spinning it was tried and dropped: concentric circles have no rotational
+     asymmetry, so a turn reads as nothing at all, and the sheen that would have carried one is
+     an addition to artwork the design draws flat.
 - **Logo lockup:** solid single-colour SVGs, 242px, centred —
   `assets/under-score-logo-lilac.svg` (lilac `--lilac-200`, dark theme — matches the tagline) /
   `assets/under-score-logo-plum.svg` (plum, light theme). **The gradient-filled mark is retired on the splash** — the lockup is
@@ -447,6 +451,12 @@ threshold) — see the wireframe file if you need that context.
 **Animation.**
 - `us-fade` — screen enter: 220ms, `opacity 0→1` + `translateY(8px→0)`.
 - `us-drift` — gradient panels: 14–16s infinite ease-in-out, `scale(1.04→1.12)` with ±2% translate.
+- `us-fall` — the splash CTAs: the content column fades out over ~110ms while the record grows
+  about its own centre to cover the viewport (~460ms, ease-in-out quad). The push goes in at
+  ~260ms, so the next screen's fade starts while the disc is still growing under it and the two
+  motions overlap rather than queue. This is the one transition that does **not** take
+  `--ease-standard`: that curve spends 60% of its travel in its first quarter, which on a 3.5×
+  growth reads as a cut rather than a zoom. Reduced motion drops all of it and navigates flat.
 - `us-rise` — bottom sheet: 240ms `--ease-standard`, `translateY(100%→0)`.
 - Chip/pill toggles and gradient cross-fades: `--dur-med` `--ease-standard`.
 - Press: `scale(.96)`.
