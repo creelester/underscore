@@ -1,5 +1,4 @@
 import { router, useFocusEffect, type Href } from 'expo-router';
-import { useColorScheme } from 'nativewind';
 import { useCallback, useRef } from 'react';
 import { View } from 'react-native';
 import Animated, {
@@ -15,6 +14,7 @@ import { LogoLockup } from '@/components/logo-lockup';
 import { LOCKUP_TOP, SplashBackdrop } from '@/components/splash-backdrop';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
+import { useTheme } from '@/lib/use-theme';
 
 /**
  * The record's growth to full-viewport cover, the column's exit ahead of it, and when
@@ -38,15 +38,15 @@ const PUSH_AT_MS = 260;
  * The unauthenticated landing screen — registered first in the signed-out group in
  * `_layout.tsx`, which is what makes `/` and a sign-out settle here.
  *
- * `Get started →` goes straight to sign-up only until the handoff's "How it works"
- * flow (screen 2) exists; that flow is what it points at in the prototype.
+ * `Get started →` opens the handoff's "How it works" flow (screen 2), as in the
+ * prototype; `I already have an account` skips the onboarding entirely.
  *
  * The primary CTA changes variant by theme: the haze dies just above the buttons, so
  * in dark the warm gradient sits on flat plum, while in light the ground is close
  * enough to the gradient that the solid-plum tertiary is used instead.
  */
 export default function SplashScreen() {
-  const { colorScheme } = useColorScheme();
+  const { isLight } = useTheme();
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
 
@@ -144,8 +144,8 @@ export default function SplashScreen() {
         <View className="gap-3">
           <Button
             size="lg"
-            variant={colorScheme === 'light' ? 'tertiary' : 'primary'}
-            onPress={() => leave('/sign-up')}>
+            variant={isLight ? 'tertiary' : 'primary'}
+            onPress={() => leave('/how-it-works')}>
             <Text>Get started →</Text>
           </Button>
           <Button size="lg" variant="secondary" onPress={() => leave('/login')}>

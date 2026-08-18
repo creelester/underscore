@@ -5,9 +5,8 @@ import { Platform, Pressable, StyleSheet } from 'react-native';
 
 import { TextClassContext } from '@/components/ui/text';
 import { GRAD_WARM } from '@/lib/gradients';
-import { SHADOWS } from '@/lib/theme';
+import { useTheme } from '@/lib/use-theme';
 import { cn } from '@/lib/utils';
-import { useColorScheme } from 'nativewind';
 
 /**
  * Under Score's button, per docs/design/README.md.
@@ -82,8 +81,7 @@ type ButtonProps = Omit<React.ComponentProps<typeof Pressable>, 'children'> &
   };
 
 function Button({ className, variant = 'primary', size, style, children, ...props }: ButtonProps) {
-  const { colorScheme } = useColorScheme();
-  const shadows = SHADOWS[colorScheme === 'light' ? 'light' : 'dark'];
+  const { shadows } = useTheme();
 
   const boxShadow =
     variant === 'primary' ? shadows.glow : variant === 'tertiary' ? shadows.tertiary : undefined;

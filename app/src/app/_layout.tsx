@@ -16,7 +16,7 @@ import {
 import { Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { colorScheme, useColorScheme } from 'nativewind';
+import { colorScheme } from 'nativewind';
 import { useEffect } from 'react';
 import { Appearance, Platform, type ColorSchemeName } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -25,6 +25,7 @@ import { AnimatedSplashOverlay } from '@/components/splash-overlay';
 import { useSession } from '@/lib/auth-client';
 import { queryClient } from '@/lib/query-client';
 import { NAV_THEME } from '@/lib/theme';
+import { useTheme } from '@/lib/use-theme';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -64,7 +65,7 @@ function useDeviceColorScheme() {
 export default function RootLayout() {
   useDeviceColorScheme();
 
-  const { colorScheme: scheme } = useColorScheme();
+  const { scheme, isLight } = useTheme();
   const { data: session, isPending } = useSession();
   const [fontsLoaded] = useFonts({
     Quicksand_500Medium,
@@ -75,15 +76,13 @@ export default function RootLayout() {
     Inter_600SemiBold,
   });
 
-  const theme = scheme === 'light' ? 'light' : 'dark';
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       {/* Above ThemeProvider so the cache outlives any theme remount, and above
           the fonts/session gate below so no screen can mount without it. */}
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider value={NAV_THEME[theme]}>
-          <StatusBar style={theme === 'light' ? 'dark' : 'light'} />
+        <ThemeProvider value={NAV_THEME[scheme]}>
+          <StatusBar style={isLight ? 'dark' : 'light'} />
           <AnimatedSplashOverlay />
           {!isPending && fontsLoaded && (
             <Stack screenOptions={{ headerShown: false }}>
@@ -100,6 +99,8 @@ export default function RootLayout() {
                   the form in across that frame instead of out of it. */}
               <Stack.Protected guard={!session}>
                 <Stack.Screen name="splash" />
+                <Stack.Screen name="how-it-works" options={{ animation: 'fade' }} />
+                <Stack.Screen name="connect-music" options={{ animation: 'fade' }} />
                 <Stack.Screen name="login" options={{ animation: 'fade' }} />
                 <Stack.Screen name="sign-up" options={{ animation: 'fade' }} />
               </Stack.Protected>
