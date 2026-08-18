@@ -1,7 +1,6 @@
-import { useColorScheme } from 'nativewind';
-
 import LockupLilac from '@/assets/images/under-score-logo-lilac.svg';
 import LockupPlum from '@/assets/images/under-score-logo-plum.svg';
+import { useTheme } from '@/lib/use-theme';
 
 /**
  * The logo lockup — the word "under", the wave mark and the word "score" locked into
@@ -13,8 +12,8 @@ import LockupPlum from '@/assets/images/under-score-logo-plum.svg';
  * this must never be tinted (docs/design/README.md, Splash).
  */
 export function LogoLockup({ size = 242 }: { size?: number }) {
-  const { colorScheme } = useColorScheme();
-  const Lockup = colorScheme === 'light' ? LockupPlum : LockupLilac;
+  const { isLight } = useTheme();
+  const Lockup = isLight ? LockupPlum : LockupLilac;
 
   return <Lockup width={size} height={size} accessibilityLabel="Under Score" />;
 }

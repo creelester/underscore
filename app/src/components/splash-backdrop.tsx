@@ -1,5 +1,4 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useColorScheme } from 'nativewind';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
   interpolate,
@@ -11,6 +10,7 @@ import Svg, { Circle, Defs, RadialGradient, Rect, Stop } from 'react-native-svg'
 
 import { GRAD_HERO } from '@/lib/gradients';
 import { SPLASH } from '@/lib/theme';
+import { useTheme } from '@/lib/use-theme';
 
 /**
  * Distance from below the status bar to the top of the lockup: the prototype's 44px
@@ -89,8 +89,8 @@ function fadeStops(outer: number) {
  * artwork the design draws flat.
  */
 export function SplashBackdrop({ zoom }: { zoom?: SharedValue<number> }) {
-  const { colorScheme } = useColorScheme();
-  const splash = SPLASH[colorScheme === 'light' ? 'light' : 'dark'];
+  const { scheme } = useTheme();
+  const splash = SPLASH[scheme];
   const { width, height } = useWindowDimensions();
 
   const fadeOuter = FADE_INNER + FADE_BAND * height;
