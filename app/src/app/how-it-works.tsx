@@ -15,7 +15,6 @@ import { Button } from '@/components/ui/button';
 import { ProgressDots } from '@/components/ui/progress-dots';
 import { Text } from '@/components/ui/text';
 import { moodGradient, type Mood } from '@/lib/gradients';
-import { useOpenedDirectly } from '@/lib/use-opened-directly';
 import { useTheme } from '@/lib/use-theme';
 
 /**
@@ -54,7 +53,13 @@ export default function HowItWorksScreen() {
   const insets = useSafeAreaInsets();
   const { shadows } = useTheme();
   const { width } = useWindowDimensions();
-  const openedDirectly = useOpenedDirectly();
+
+  // Every file under app/ is an addressable route, so a reload, a restored URL or a deep
+  // link can open this screen directly instead of the splash's `Get started →`. Arriving
+  // from the splash always leaves something to go back to; arriving directly never does,
+  // because the anchor paints without being pushed. Read once at mount: it is a fact about
+  // how the screen was entered, not a value that changes while it is open.
+  const [openedDirectly] = useState(() => !router.canGoBack());
 
   const [page, setPage] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
@@ -78,10 +83,9 @@ export default function HowItWorksScreen() {
     scrollRef.current?.scrollTo({ x: (page + 1) * width, animated: true });
   };
 
-  // The flow starts at the splash's `Get started →`, so a direct arrival here — a reload,
-  // a restored URL, `underscore://how-it-works` — goes back there rather than opening
-  // onboarding on its own.
-  if (openedDirectly) return <Redirect href="/splash" />;
+  // The flow starts at the splash, so a direct arrival goes back there rather than
+  // opening onboarding on its own.
+  if (openedDirectly) return <Redirect href='/splash' />;
 
   return (
     <View

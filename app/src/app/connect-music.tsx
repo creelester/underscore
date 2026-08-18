@@ -1,12 +1,12 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Redirect, router } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { moodGradient } from '@/lib/gradients';
-import { useOpenedDirectly } from '@/lib/use-opened-directly';
 
 /**
  * Onboarding step 4 — the handoff's "Connect music" (screen 3). Frontend only
@@ -17,9 +17,11 @@ import { useOpenedDirectly } from '@/lib/use-opened-directly';
  */
 export default function ConnectMusicScreen() {
   const insets = useSafeAreaInsets();
-  const openedDirectly = useOpenedDirectly();
 
-  // Step 4 of a flow that starts at the splash — see the same guard in how-it-works.tsx.
+  // Step 4 of a flow that starts at the splash, so an arrival that skipped it — a reload,
+  // a restored URL, a deep link — goes back there. See how-it-works.tsx for why nothing
+  // to go back to is the signal.
+  const [openedDirectly] = useState(() => !router.canGoBack());
   if (openedDirectly) return <Redirect href="/splash" />;
 
   return (
