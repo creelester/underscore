@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AppBackdrop } from '@/components/app-backdrop';
 import { Button } from '@/components/ui/button';
 import { ProgressDots } from '@/components/ui/progress-dots';
 import { Text } from '@/components/ui/text';
@@ -89,12 +90,14 @@ export default function HowItWorksScreen() {
 
   return (
     <View
-      className='bg-background flex-1'
+      className='flex-1'
       style={{
         paddingTop: insets.top + 6,
         paddingBottom: Math.max(insets.bottom, 34),
       }}
     >
+      <AppBackdrop />
+
       <ScrollView
         ref={scrollRef}
         horizontal
@@ -115,8 +118,7 @@ export default function HowItWorksScreen() {
                 {eyebrow}
               </Text>
               <Button
-                variant='secondary'
-                size='sm'
+                variant='text'
                 onPress={() => router.push('/connect-music')}
               >
                 <Text>Skip</Text>
