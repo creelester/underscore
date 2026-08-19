@@ -35,6 +35,8 @@ const buttonVariants = cva(
         primary: '',
         secondary: 'bg-secondary',
         tertiary: 'bg-[#2B0F3D]',
+        // no fill and no shadow — the label is the whole control
+        text: '',
         destructive: 'bg-destructive',
       },
       size: {
@@ -44,6 +46,10 @@ const buttonVariants = cva(
         icon: 'h-11 w-11 px-0',
       },
     },
+    // After the size classes, so this wins the padding: a text button's label is the whole
+    // control, so it sits flush with the screen's content margin instead of inside a
+    // pill's padding. The size still sets the height, which keeps the tap target.
+    compoundVariants: [{ variant: 'text', class: 'px-0' }],
     defaultVariants: {
       variant: 'primary',
       size: 'default',
@@ -57,6 +63,7 @@ const buttonTextVariants = cva('text-center font-body-medium text-base tracking-
       primary: 'text-primary-foreground',
       secondary: 'text-foreground',
       tertiary: 'text-[#FFF8EF]',
+      text: 'text-ink-muted',
       destructive: 'text-destructive-foreground',
     },
     size: {
