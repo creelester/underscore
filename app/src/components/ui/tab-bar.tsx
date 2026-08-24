@@ -77,7 +77,7 @@ export const TabBarButton = forwardRef<
   );
 });
 
-/** 22 × 22 at stroke 1.8, per the prototype's inline SVGs. */
+/** Per the prototype's inline SVGs. */
 const ICON_SIZE = 22;
 const ICON_STROKE = 1.8;
 

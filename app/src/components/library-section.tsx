@@ -47,7 +47,6 @@ export function LibraryRow({
       style={(state) => (state.pressed ? { transform: [{ scale: 0.96 }] } : null)}>
       {cover}
 
-      {/* `min-w-0` is what lets the two lines truncate instead of pushing the row wide. */}
       <View className="min-w-0 flex-1">
         <Text numberOfLines={1} className="text-foreground font-display text-base">
           {title}

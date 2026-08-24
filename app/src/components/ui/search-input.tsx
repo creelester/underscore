@@ -39,19 +39,15 @@ function SearchInput({
           // `var(--text-body)`, whose line height is 25px rather than Tailwind's
           // default 24px at this size.
           'text-foreground font-body text-body flex-1',
-          // Keeps the text from running under the clear button, which overlays
-          // the field's right edge rather than taking space in the row.
+          // The clear button overlays the field rather than sitting in the row.
           clearable && 'pr-9',
           Platform.select({
             web: 'placeholder:text-ink-faint selection:bg-primary selection:text-primary-foreground outline-none',
             native: 'placeholder:text-ink-faint',
           })
         )}
-        // The row centres its children, so the field has to size to its own text
-        // to sit on the dot's centre line. Stretching it to the row's full height
-        // instead hands vertical placement to the platform, which on iOS lands the
-        // text low. `paddingVertical: 0` removes the default padding that would
-        // otherwise reintroduce the same offset.
+        // Without this, the platform's default padding lands the text low on iOS,
+        // off the dot's centre line.
         style={{ paddingVertical: 0 }}
         {...props}
       />

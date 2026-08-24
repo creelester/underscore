@@ -34,30 +34,22 @@ import { useTheme } from '@/lib/use-theme';
 /** The handoff's debounce before a query leaves the device for Google Books. */
 const GOOGLE_DEBOUNCE_MS = 700;
 
-/** 48 × 70 with a 6px radius, per the row spec. */
+/** Per the handoff's row spec. */
 const COVER_WIDTH = 48;
 const COVER_HEIGHT = 70;
 
 /**
- * How many saved playlists match the current query. Hard-coded until
- * `GET /api/bookshelf` exists; typed `number` so the rules below are the real
- * ones rather than expressions TypeScript can fold away.
- *
- * When the bookshelf lands this becomes the hook's filtered count, the `RECENT`
- * section slots in above the one below, and nothing else here has to change:
- * Google is already gated on the shelf coming back empty.
+ * Hard-coded until `GET /api/bookshelf` exists. Typed rather than left literal so
+ * the gating below stays a real rule instead of an expression TypeScript folds
+ * away; when the bookshelf lands this becomes the hook's filtered count and
+ * nothing else here changes.
  */
 const savedMatchCount: number = 0;
 
 /**
- * Whether the shelf has nothing on it at all. Distinct from `savedMatchCount`,
- * which is how many saved playlists match the *current query* — a shelf with
- * books on it that none of them match is a search miss, not an empty library,
- * and the two states say different things.
- *
- * Hard-coded alongside the count above until `GET /api/bookshelf` exists, and
- * typed `boolean` for the same reason: so the gating below stays a real rule
- * rather than an expression TypeScript folds away.
+ * Distinct from `savedMatchCount`: a shelf with books that none of them match is
+ * a search miss, not an empty library, and the two say different things. Same
+ * hard-coding, same reason for the explicit type.
  */
 const libraryEmpty: boolean = true;
 
@@ -76,14 +68,10 @@ export default function LibraryScreen() {
   const search = useBookSearch(fallbackActive ? settled : '');
   const googleHits = fallbackActive ? (search.data ?? []) : [];
 
-  // Both halves of the wait read as "searching": the debounce not yet caught up
-  // with what has been typed, and the request itself in flight.
-  //
-  // Gated on any non-empty query rather than on `longEnough`, so a single
-  // character still shows the labelled searching state the prototype shows —
-  // which gates on a non-empty query throughout. `MIN_QUERY_LENGTH` stays on the
-  // request itself: one character is still not worth a round trip, so the screen
-  // says it is searching while it waits for a second character.
+  // Gated on any non-empty query rather than on `longEnough`, matching the
+  // prototype: one character shows the searching state while `MIN_QUERY_LENGTH`
+  // still holds the request back, so the screen says it is searching as it waits
+  // for a second character.
   const searching =
     !!trimmed && savedMatchCount === 0 && (!longEnough || settled !== trimmed || search.isFetching);
   const failed = fallbackActive && !search.isFetching && search.isError;
@@ -102,12 +90,10 @@ export default function LibraryScreen() {
             ? 'New · from Google Books'
             : 'No results';
 
-  // A section with nothing in it hides, label included.
   const showSection = savedMatchCount > 0 || !!trimmed;
 
-  // `libraryEmpty && !q` in the prototype: the shelf is bare *and* nothing has
-  // been typed. A query replaces this with the search's own states, so the two
-  // can never be on screen together.
+  // `libraryEmpty && !q` in the prototype — a query replaces this with the
+  // search's own states, so the two are never on screen together.
   const showEmptyLibrary = libraryEmpty && !trimmed;
 
   return (
@@ -115,9 +101,8 @@ export default function LibraryScreen() {
       className="flex-1"
       style={{
         paddingTop: insets.top + 6,
-        // A flat 20px, per the screen's own `6px 22px 20px`. The safe-area inset
-        // belongs to the tab bar below this screen, which already applies it —
-        // taking it here too would reserve the home indicator's space twice.
+        // No safe-area inset: the tab bar below already applies it, and taking it
+        // here too would reserve the home indicator's space twice.
         paddingBottom: 20,
       }}>
       <AppBackdrop />
@@ -139,9 +124,6 @@ export default function LibraryScreen() {
 
           <ScrollView
             className="flex-1"
-            // `flexGrow` so the empty state can take the full scroll area and
-            // distribute itself down it, the way the prototype's `height:100%`
-            // block does. Without it the container collapses to its content.
             contentContainerStyle={{ gap: 20, flexGrow: 1 }}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}>
@@ -203,8 +185,6 @@ export default function LibraryScreen() {
             by-hand button sat below the list on every state of the screen. */}
           {noResults && (
             <Button variant="secondary" size="lg" onPress={() => router.push('/score-by-hand')}>
-              {/* The prototype gives the glyph its own 8px margin on top of the
-                  button's 8px gap, so the label sits 16px off it. */}
               <Plus size={16} strokeWidth={2.2} color={theme.ink} style={styles.plus} />
               <Text>Add manually</Text>
             </Button>
