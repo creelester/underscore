@@ -86,6 +86,13 @@ export default function RootLayout() {
           <AnimatedSplashOverlay />
           {!isPending && fontsLoaded && (
             <Stack screenOptions={{ headerShown: false }}>
+              {/* One entry guards every signed-in screen, because `(app)` is the auth
+                  boundary as a directory rather than as a list: anything under it is
+                  protected by existing, so a new screen cannot ship reachable by
+                  forgetting to name it here. `(app)` is Expo Router's own name for this
+                  group — see its authentication guide — which is why the path stutters:
+                  `app/` the workspace, `src/app/` the routes directory, `(app)/` the
+                  guarded group. Three different meanings, none of them free to rename. */}
               <Stack.Protected guard={!!session}>
                 <Stack.Screen name="(app)" />
               </Stack.Protected>
