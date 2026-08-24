@@ -9,7 +9,7 @@ import { useTheme } from '@/lib/use-theme';
 import { cn } from '@/lib/utils';
 
 /**
- * Under Score's button, per docs/design/README.md.
+ * Under Score's button, per the design handoff README.
  *
  * Three variants, one shared label spec (16px / 500 / uppercase / .05em tracking).
  * `primary` carries the warm gradient; `tertiary` is the solid-plum alternative used
@@ -57,27 +57,33 @@ const buttonVariants = cva(
   }
 );
 
-const buttonTextVariants = cva('text-center font-body-medium text-base tracking-label uppercase', {
-  variants: {
-    variant: {
-      primary: 'text-primary-foreground',
-      secondary: 'text-foreground',
-      tertiary: 'text-[#FFF8EF]',
-      text: 'text-ink-muted',
-      destructive: 'text-destructive-foreground',
+// `font-display` (Quicksand), not body: the bundle's shared label spec is
+// `500 16px var(--font-display)`, and the README assigns display to buttons
+// alongside headings and labels.
+const buttonTextVariants = cva(
+  'text-center font-display-medium text-base tracking-label uppercase',
+  {
+    variants: {
+      variant: {
+        primary: 'text-primary-foreground',
+        secondary: 'text-foreground',
+        tertiary: 'text-[#FFF8EF]',
+        text: 'text-ink-muted',
+        destructive: 'text-destructive-foreground',
+      },
+      size: {
+        default: '',
+        lg: '',
+        sm: 'text-sm',
+        icon: '',
+      },
     },
-    size: {
-      default: '',
-      lg: '',
-      sm: 'text-sm',
-      icon: '',
+    defaultVariants: {
+      variant: 'primary',
+      size: 'default',
     },
-  },
-  defaultVariants: {
-    variant: 'primary',
-    size: 'default',
-  },
-});
+  }
+);
 
 type ButtonProps = Omit<React.ComponentProps<typeof Pressable>, 'children'> &
   React.RefAttributes<typeof Pressable> &

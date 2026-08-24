@@ -9,13 +9,28 @@ const bookKeys = {
 };
 
 /** A single character matches most of the catalog — not worth a round trip. */
-const MIN_QUERY_LENGTH = 2;
+export const MIN_QUERY_LENGTH = 2;
+
+/**
+ * The server hands back up to 20 volumes.
+ *
+ * This is a product rule, not a design one. The current handoff dropped the old
+ * screen's explicit "max 8 results, no infinite scroll" line without replacing
+ * it, and the prototype caps nothing — but its fixture set is only six books, so
+ * a cap could never have shown up there either. The design is silent rather than
+ * contradictory, and eight rows is about what fits before the list stops reading
+ * as a shortlist and starts reading as a dump.
+ *
+ * Open with the designer: get the number written back into the handoff README so
+ * it stops living only here.
+ */
+const MAX_RESULTS = 8;
 
 async function searchBooks(query: string): Promise<BookCandidate[]> {
   const { data } = await apiClient.get('/api/books/search', { params: { q: query } });
   // Parse rather than cast: the response crosses a network boundary, and a
   // server we have not redeployed yet is exactly when the shape disagrees.
-  return BookSearchResponseSchema.parse(data).results;
+  return BookSearchResponseSchema.parse(data).results.slice(0, MAX_RESULTS);
 }
 
 /**
