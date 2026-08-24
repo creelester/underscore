@@ -75,7 +75,7 @@ reseeds `e2e@underscore.test` / `e2e-password-1234`.
 
 Reseeding happens once per *run*, not per test, and workers run in parallel, so a
 test that mutates state must create its own account with a unique email rather
-than touching the seeded one. See `uniqueEmail()` in `auth.spec.ts`.
+than touching the seeded one. See `uniqueEmail()` in `helpers.ts`.
 
 Auth rate limiting is off here: it is gated to `NODE_ENV === "production"` in
 `server/src/lib/auth.ts`, and the e2e API runs as `test`. Tests can make as many
@@ -91,8 +91,9 @@ await page.goto("/login");
 ```
 
 Fixtures shared across specs — `SEEDED_USER`, `uniqueEmail()`,
-`logInAsSeededUser()`, `signOutToLogin()` — live in `helpers.ts`. It is not a
-`*.spec.ts`, so Playwright's default `testMatch` never collects it as a suite.
+`logInAsSeededUser()`, `expectSignedInApp()`, `signOut()`, `signOutToLogin()` —
+live in `helpers.ts`. It is not a `*.spec.ts`, so Playwright's default
+`testMatch` never collects it as a suite.
 
 Both projects (`chromium` desktop, `mobile-chrome` Pixel 7) run every file.
 Scope a test to one with `test.skip(({ browserName }) => ...)` or a `testMatch`
@@ -103,7 +104,17 @@ first in the signed-out group in `app/src/app/_layout.tsx`, which makes it that
 group's fallback, so both `/` and a sign-out settle there. The forms are still
 reachable directly by URL, but a sign-out / sign-in round trip has to go through
 the splash's `I already have an account` CTA — that is what `signOutToLogin()`
-does.
+does. Sign-out itself is on the Profile tab, so getting to it is a tab switch
+first; `signOut()` wraps that.
+
+Signed-in visitors do **not** land on `/`. `app/src/app/(app)/index.tsx`
+redirects the app root into the tab group, so a successful sign-in settles on a
+tab URL (`/library` today). Assert that with `expectSignedInApp()` rather than a
+literal URL or a screen's copy: it anchors on the tab bar, which every signed-in
+route renders and no signed-out one does, so it survives both the landing tab
+moving and the half-built tabs' headings churning. The exact landing tab is
+pinned in exactly one test — "sends the app root to the tab a session opens on"
+in `auth.spec.ts` — which is the one to update if it changes.
 
 The app follows the device colour scheme, and Playwright's default is
 `colorScheme: "light"` — which is not the app's own default. Keep specs

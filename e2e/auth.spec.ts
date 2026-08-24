@@ -4,8 +4,10 @@ import {
   NEW_USER_PASSWORD,
   SEEDED_USER,
   SPLASH_TAGLINE,
+  expectSignedInApp,
   fillLoginForm,
   logInAsSeededUser,
+  signOut,
   signOutToLogin,
   uniqueEmail,
 } from "./helpers";
@@ -23,6 +25,10 @@ import {
  * coverage lives in splash.spec.ts; here it only shows up as where `/` and a
  * sign-out settle. The forms themselves are still reached directly by URL.
  *
+ * Signed-in visitors land on a *tab*, not on `/`: the app root redirects into the
+ * tab group. `expectSignedInApp()` is what asserts that, anchored on the tab bar
+ * rather than on a tab's copy — see helpers.ts for why.
+ *
  * Social sign-in is deliberately uncovered: it would leave localhost for Google's
  * and Spotify's consent screens.
  */
@@ -33,8 +39,7 @@ test.describe("logging in", () => {
     await fillLoginForm(page, SEEDED_USER.email, SEEDED_USER.password);
     await page.getByRole("button", { name: "Log in" }).click();
 
-    await expect(page).toHaveURL("/");
-    await expect(page.getByText("Signed in.")).toBeVisible();
+    await expectSignedInApp(page);
   });
 
   test("matches the account whatever the email casing", async ({ page }) => {
@@ -42,7 +47,7 @@ test.describe("logging in", () => {
     await fillLoginForm(page, SEEDED_USER.email.toUpperCase(), SEEDED_USER.password);
     await page.getByRole("button", { name: "Log in" }).click();
 
-    await expect(page.getByText("Signed in.")).toBeVisible();
+    await expectSignedInApp(page);
   });
 
   test("matches the account when the email is padded with whitespace", async ({ page }) => {
@@ -57,7 +62,7 @@ test.describe("logging in", () => {
     // "email-address" to that type), so on the web surface the padding is gone
     // before zod runs — this pins the user-visible behaviour, not the schema.
     // Only a unit test on loginSchema can guard the `.trim()` itself.
-    await expect(page.getByText("Signed in.")).toBeVisible();
+    await expectSignedInApp(page);
   });
 
   test("reports a whitespace-only email as missing, not malformed", async ({ page }) => {
@@ -145,7 +150,7 @@ test.describe("logging in", () => {
     await expect(submit).toBeDisabled();
 
     releaseSignIn();
-    await expect(page.getByText("Signed in.")).toBeVisible();
+    await expectSignedInApp(page);
   });
 });
 
@@ -157,8 +162,7 @@ test.describe("signing up", () => {
     await page.getByPlaceholder("Password").fill(NEW_USER_PASSWORD);
     await page.getByRole("button", { name: "Sign up" }).click();
 
-    await expect(page).toHaveURL("/");
-    await expect(page.getByText("Signed in.")).toBeVisible();
+    await expectSignedInApp(page);
   });
 
   test("a new account can sign out and sign back in", async ({ page }) => {
@@ -169,13 +173,13 @@ test.describe("signing up", () => {
     await page.getByPlaceholder("Email").fill(email);
     await page.getByPlaceholder("Password").fill(NEW_USER_PASSWORD);
     await page.getByRole("button", { name: "Sign up" }).click();
-    await expect(page.getByText("Signed in.")).toBeVisible();
+    await expectSignedInApp(page);
 
     await signOutToLogin(page);
 
     await fillLoginForm(page, email, NEW_USER_PASSWORD);
     await page.getByRole("button", { name: "Log in" }).click();
-    await expect(page.getByText("Signed in.")).toBeVisible();
+    await expectSignedInApp(page);
   });
 
   test("creates the account under the trimmed address when the email is padded", async ({
@@ -188,8 +192,7 @@ test.describe("signing up", () => {
     await page.getByPlaceholder("Email").fill(`  ${email}  `);
     await page.getByPlaceholder("Password").fill(NEW_USER_PASSWORD);
     await page.getByRole("button", { name: "Sign up" }).click();
-    await expect(page).toHaveURL("/");
-    await expect(page.getByText("Signed in.")).toBeVisible();
+    await expectSignedInApp(page);
 
     // Logging back in with the bare address proves the padding never reached the
     // server. Same caveat as the padded login test: on web the browser strips it
@@ -198,7 +201,7 @@ test.describe("signing up", () => {
 
     await fillLoginForm(page, email, NEW_USER_PASSWORD);
     await page.getByRole("button", { name: "Log in" }).click();
-    await expect(page.getByText("Signed in.")).toBeVisible();
+    await expectSignedInApp(page);
   });
 
   test("keeps whitespace in the password, which is never trimmed", async ({ page }) => {
@@ -210,7 +213,7 @@ test.describe("signing up", () => {
     await page.getByPlaceholder("Email").fill(email);
     await page.getByPlaceholder("Password").fill(paddedPassword);
     await page.getByRole("button", { name: "Sign up" }).click();
-    await expect(page.getByText("Signed in.")).toBeVisible();
+    await expectSignedInApp(page);
 
     await signOutToLogin(page);
 
@@ -222,7 +225,7 @@ test.describe("signing up", () => {
 
     await fillLoginForm(page, email, paddedPassword);
     await page.getByRole("button", { name: "Log in" }).click();
-    await expect(page.getByText("Signed in.")).toBeVisible();
+    await expectSignedInApp(page);
   });
 
   test("refuses an email that already has an account", async ({ page }) => {
@@ -281,13 +284,27 @@ test.describe("session and route guards", () => {
     await expect(page.getByText(SPLASH_TAGLINE)).toBeVisible();
   });
 
+  test("sends the app root to the tab a session opens on", async ({ page }) => {
+    await logInAsSeededUser(page);
+
+    await page.goto("/");
+
+    // The one place the landing tab is pinned. app/src/app/(app)/index.tsx
+    // redirects `/` to Library rather than to the handoff's tab 0 (Now), which
+    // has nothing to show until a book has been scored — and redirects rather
+    // than claiming `/` for a tab, so the three tabs keep honest URLs. Every
+    // other test here only asserts that *some* tab was reached
+    // (`expectSignedInApp`), so moving the landing tab is a one-line change.
+    await expect(page).toHaveURL(/\/library$/);
+    await expect(page.getByRole("tab", { name: "Library" })).toBeVisible();
+  });
+
   test("keeps the session across a page reload", async ({ page }) => {
     await logInAsSeededUser(page);
 
     await page.reload();
 
-    await expect(page).toHaveURL("/");
-    await expect(page.getByText("Signed in.")).toBeVisible();
+    await expectSignedInApp(page);
   });
 
   test("sends a signed-in visitor away from the login screen", async ({ page }) => {
@@ -295,8 +312,7 @@ test.describe("session and route guards", () => {
 
     await page.goto("/login");
 
-    await expect(page).toHaveURL("/");
-    await expect(page.getByText("Signed in.")).toBeVisible();
+    await expectSignedInApp(page);
   });
 
   test("sends a signed-in visitor away from the sign-up screen", async ({ page }) => {
@@ -304,14 +320,13 @@ test.describe("session and route guards", () => {
 
     await page.goto("/sign-up");
 
-    await expect(page).toHaveURL("/");
-    await expect(page.getByText("Signed in.")).toBeVisible();
+    await expectSignedInApp(page);
   });
 
   test("signing out returns to the splash screen and survives a reload", async ({ page }) => {
     await logInAsSeededUser(page);
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOut(page);
     await expect(page).toHaveURL(/\/splash$/);
     await expect(page.getByText(SPLASH_TAGLINE)).toBeVisible();
 

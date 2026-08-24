@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { SPLASH_TAGLINE, logInAsSeededUser } from "./helpers";
+import { SPLASH_TAGLINE, expectSignedInApp, logInAsSeededUser } from "./helpers";
 
 /**
  * The splash screen: where signed-out visitors land, and the two CTAs that lead off
@@ -46,15 +46,19 @@ test.describe("the splash screen", () => {
     await expect(lockup).toBeVisible();
   });
 
-  test("sends 'Get started' to the sign-up form", async ({ page }) => {
+  test("sends 'Get started' into the how-it-works flow", async ({ page }) => {
     await page.goto("/splash");
 
     await page.getByRole("button", { name: "Get started →" }).click();
 
-    await expect(page).toHaveURL(/\/sign-up$/);
+    // `Get started →` opens onboarding, not the sign-up form: sign-up is the far
+    // end of that flow, two screens later (app/src/app/splash.tsx). `I already
+    // have an account`, below, is the CTA that skips onboarding. The walk from
+    // here through to sign-up is onboarding.spec.ts.
+    await expect(page).toHaveURL(/\/how-it-works$/);
     // The splash stays mounted underneath the pushed screen, so this asserts on
-    // something only sign-up renders.
-    await expect(page.getByPlaceholder("Name")).toBeVisible();
+    // something only how-it-works renders.
+    await expect(page.getByRole("button", { name: "Next →" })).toBeVisible();
   });
 
   test("sends 'I already have an account' to the login form", async ({ page }) => {
@@ -71,7 +75,6 @@ test.describe("the splash screen", () => {
 
     await page.goto("/splash");
 
-    await expect(page).toHaveURL("/");
-    await expect(page.getByText("Signed in.")).toBeVisible();
+    await expectSignedInApp(page);
   });
 });
