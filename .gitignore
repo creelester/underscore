@@ -17,6 +17,8 @@ playwright/.cache/
 blob-report/
 # Production web export the suite serves — a build artifact, rebuilt per run.
 app/dist-e2e/
+# Design handoff
+docs/design/
 
 # Prisma
 server/prisma/migrations/dev.db

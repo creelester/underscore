@@ -9,7 +9,7 @@ import { useTheme } from '@/lib/use-theme';
  * There is one file per theme rather than one file recoloured at runtime because the
  * fill is baked onto a `<g>` inside the artwork. Lilac on dark and plum on light are
  * the handoff's pairings; the gradient-filled variant is retired on the splash, so
- * this must never be tinted (docs/design/README.md, Splash).
+ * this must never be tinted (the design handoff README, Splash).
  */
 export function LogoLockup({ size = 242 }: { size?: number }) {
   const { isLight } = useTheme();
