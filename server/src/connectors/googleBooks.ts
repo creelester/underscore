@@ -22,6 +22,7 @@ const VolumeSchema = z.object({
       authors: z.array(z.string()).optional(),
       description: z.string().optional(),
       categories: z.array(z.string()).optional(),
+      publishedDate: z.string().optional(),
       pageCount: z.number().optional(),
       imageLinks: z.object({ thumbnail: z.string().optional() }).optional(),
     })
@@ -55,7 +56,19 @@ function toCandidate(volume: Volume): BookCandidate | null {
     // BookSchema requires a positive integer.
     pageCount: info.pageCount && info.pageCount > 0 ? info.pageCount : null,
     thumbnailUrl: normalizeThumbnail(info.imageLinks?.thumbnail),
+    publishedYear: parseYear(info.publishedDate),
   };
+}
+
+/**
+ * `publishedDate` is whatever precision Google happens to hold — "2020",
+ * "2020-09" or "2020-09-15" — and occasionally something else entirely. The
+ * search row only ever shows a year, so take the leading four digits and give up
+ * rather than guess on anything that does not start with one.
+ */
+function parseYear(publishedDate: string | undefined): number | null {
+  const year = publishedDate?.match(/^\d{4}/)?.[0];
+  return year ? Number(year) : null;
 }
 
 /**
