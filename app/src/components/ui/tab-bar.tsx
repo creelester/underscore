@@ -7,7 +7,7 @@ import { Text } from '@/components/ui/text';
 import { useTheme } from '@/lib/use-theme';
 
 /**
- * The handoff's tab bar — Now / Library / Profile.
+ * The design's tab bar — Now / Library / Profile.
  *
  * The bar itself is `components/navigation/TabBar.jsx` in `_ds_bundle.js`: a
  * hairline top rule over `--surface`, with the safe-area inset owned here rather
@@ -67,7 +67,7 @@ export const TabBarButton = forwardRef<
 
   return (
     <Pressable ref={ref} role="tab" aria-selected={isFocused} {...props} style={styles.item}>
-      <Icon size={ICON_SIZE} strokeWidth={ICON_STROKE} color={color} />
+      <Icon size={22} strokeWidth={1.8} color={color} />
       <Text
         style={{ color }}
         className={isFocused ? 'font-display text-[12px]' : 'font-body text-[12px]'}>
@@ -77,9 +77,6 @@ export const TabBarButton = forwardRef<
   );
 });
 
-/** Per the prototype's inline SVGs. */
-const ICON_SIZE = 22;
-const ICON_STROKE = 1.8;
 
 const styles = StyleSheet.create({
   bar: {

@@ -5,7 +5,7 @@ import Animated, { Easing, FadeInDown } from 'react-native-reanimated';
 import { MOTION } from '@/lib/theme';
 
 /**
- * The handoff's `us-fade` — the screen enter every non-splash screen uses:
+ * The design's `us-fade` — the screen enter every non-splash screen uses:
  * 220ms, `opacity 0→1` with `translateY(8px→0)`, on the standard ease.
  *
  * `FadeInDown` is the right preset but starts 25px out, so the distance is

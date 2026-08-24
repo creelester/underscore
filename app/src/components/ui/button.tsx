@@ -9,7 +9,7 @@ import { useTheme } from '@/lib/use-theme';
 import { cn } from '@/lib/utils';
 
 /**
- * Under Score's button, per the design handoff README.
+ * Under Score's button, per the design spec.
  *
  * Three variants, one shared label spec (16px / 500 / uppercase / .05em tracking).
  * `primary` carries the warm gradient; `tertiary` is the solid-plum alternative used
@@ -17,8 +17,8 @@ import { cn } from '@/lib/utils';
  * overlap. Emphasis comes from fill and glow, never from a hover/press colour shift —
  * press feedback is scale(.96) only.
  *
- * `destructive` is the one variant the handoff does not specify; it exists because
- * destructive actions need to read as such. Anything the handoff calls "ghost" —
+ * `destructive` is the one variant the design does not specify; it exists because
+ * destructive actions need to read as such. Anything the design calls "ghost" —
  * `← Back`, `Skip`, `Done`, `Sign out` — is `secondary`.
  */
 const buttonVariants = cva(

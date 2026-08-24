@@ -10,7 +10,7 @@ import { MOTION } from '@/lib/theme';
 import { useTheme } from '@/lib/use-theme';
 
 /**
- * Onboarding step indicator, per the design handoff README: the active dot elongates
+ * Onboarding step indicator, per the design spec: the active dot elongates
  * into a `--primary` pill; the rest are 8px ink-faint circles.
  */
 const DOT = 8;

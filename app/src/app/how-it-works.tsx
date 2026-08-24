@@ -19,10 +19,10 @@ import { moodGradient, type Mood } from '@/lib/gradients';
 import { useTheme } from '@/lib/use-theme';
 
 /**
- * Onboarding screen 2 — the handoff's "How it works": three swipeable pages,
+ * Onboarding screen 2 — the design's "How it works": three swipeable pages,
  * always skippable, each a heading, a line of body copy and a mood-gradient
  * panel standing in for artwork. Copy and moods come from the prototype
- * (the design handoff README §2); the connect screen is onboarding step 4.
+ * (the design spec §2); the connect screen is onboarding step 4.
  */
 const PAGES: readonly {
   eyebrow: string;

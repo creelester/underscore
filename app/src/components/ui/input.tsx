@@ -3,7 +3,7 @@ import { Platform, TextInput } from 'react-native';
 import { cn } from '@/lib/utils';
 
 /**
- * The handoff's pill field: 52px tall, `--radius-pill`, `--surface` fill,
+ * The design's pill field: 52px tall, `--radius-pill`, `--surface` fill,
  * 1px `--border`, 20px horizontal padding.
  */
 function Input({

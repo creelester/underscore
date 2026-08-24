@@ -14,14 +14,14 @@ export const MIN_QUERY_LENGTH = 2;
 /**
  * The server hands back up to 20 volumes.
  *
- * This is a product rule, not a design one. The current handoff dropped the old
+ * This is a product rule, not a design one. The current design dropped the old
  * screen's explicit "max 8 results, no infinite scroll" line without replacing
  * it, and the prototype caps nothing — but its fixture set is only six books, so
  * a cap could never have shown up there either. The design is silent rather than
  * contradictory, and eight rows is about what fits before the list stops reading
  * as a shortlist and starts reading as a dump.
  *
- * Open with the designer: get the number written back into the handoff README so
+ * Open with the designer: get the number written back into the design README so
  * it stops living only here.
  */
 const MAX_RESULTS = 8;

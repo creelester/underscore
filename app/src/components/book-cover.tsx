@@ -10,7 +10,7 @@ import { useTheme } from '@/lib/use-theme';
 /**
  * A book's artwork, or the mood swatch that stands in for it.
  *
- * The handoff draws every cover as a mood gradient and marks that a placeholder
+ * The design draws every cover as a mood gradient and marks that a placeholder
  * to be wired to real imagery, so a volume with a Google thumbnail shows it and
  * everything else falls back to `coverMood`'s deterministic swatch. The gradient
  * sits underneath rather than beside the image, which also covers the gap while

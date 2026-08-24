@@ -8,7 +8,7 @@ export { MOODS, type Mood };
  * NativeWind has no native gradient support, so gradients are data rather than classes.
  * Every value here feeds `<LinearGradient>` from expo-linear-gradient.
  *
- * Source of truth: the design handoff's design-system/tokens/colors.css
+ * Source of truth: the design system's colour tokens.
  */
 
 export type GradientSpec = {
@@ -57,7 +57,7 @@ export const GRAD_HERO: GradientSpec = {
  * Each mood is two stops; they stand in for artwork everywhere. `Record<Mood, …>` keeps this in
  * lockstep with `MOODS` in @underscore/shared — a mood without a pair is a type error.
  *
- * The first six are the handoff's; the last four extend the vocabulary to cover romance, comedy,
+ * The first six are the design's; the last four extend the vocabulary to cover romance, comedy,
  * adventure and horror, reusing PALETTE colours rather than introducing tokens.
  */
 export const MOOD_STOPS: Record<Mood, readonly [string, string]> = {
@@ -82,7 +82,7 @@ const MOOD_ANGLE = 160;
  *
  * Single mood: `linear-gradient(160deg, a[0], a[1])`.
  * Two moods: `linear-gradient(160deg, a[0] 0%, a[1] 46%, b[1] 100%)` — the composite
- * rule from the handoff, so a pair reads as one gradient rather than two stacked.
+ * rule from the design, so a pair reads as one gradient rather than two stacked.
  */
 export function moodGradient(moods: readonly Mood[]): GradientSpec {
   const [first = DEFAULT_MOOD, second] = moods;

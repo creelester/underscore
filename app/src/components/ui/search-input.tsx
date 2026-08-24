@@ -4,13 +4,13 @@ import { Text } from '@/components/ui/text';
 import { cn } from '@/lib/utils';
 
 /**
- * The handoff's `SearchInput` — a pill field that uses a solid dot where a
+ * The design's `SearchInput` — a pill field that uses a solid dot where a
  * magnifier would go.
  *
  * Its own component rather than a variant of `ui/input.tsx`: the design system's
  * implementation is a styled row *containing* a borderless input, and it sits on
  * `--surface-2` where the plain field sits on `--surface`. Values come from
- * `components/forms/SearchInput.jsx` in the handoff's `_ds_bundle.js`.
+ * `components/forms/SearchInput.jsx` in the design's `_ds_bundle.js`.
  *
  * `onClear` adds the prototype's ghost `✕` at the field's right edge, shown only
  * once there is something to clear.
@@ -23,7 +23,7 @@ function SearchInput({
   React.RefAttributes<TextInput> & {
     onClear?: () => void;
   }) {
-  const clearable = !!onClear && !!props.value;
+  const isClearable = !!onClear && !!props.value;
 
   return (
     <View
@@ -40,7 +40,7 @@ function SearchInput({
           // default 24px at this size.
           'text-foreground font-body text-body flex-1',
           // The clear button overlays the field rather than sitting in the row.
-          clearable && 'pr-9',
+          isClearable && 'pr-9',
           Platform.select({
             web: 'placeholder:text-ink-faint selection:bg-primary selection:text-primary-foreground outline-none',
             native: 'placeholder:text-ink-faint',
@@ -52,7 +52,7 @@ function SearchInput({
         {...props}
       />
 
-      {clearable && (
+      {isClearable && (
         <Pressable
           onPress={onClear}
           role="button"

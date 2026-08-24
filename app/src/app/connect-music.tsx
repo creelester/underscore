@@ -10,7 +10,7 @@ import { Text } from '@/components/ui/text';
 import { moodGradient } from '@/lib/gradients';
 
 /**
- * Onboarding step 4 — the handoff's "Connect music" (screen 3). Frontend only
+ * Onboarding step 4 — the design's "Connect music" (screen 3). Frontend only
  * for now: the Spotify row and "Connect later" both land on sign-up. When the
  * Spotify connector ships, the row kicks off its OAuth instead.
  *
