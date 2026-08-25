@@ -8,7 +8,7 @@ import { useTheme } from '@/lib/use-theme';
 /**
  * The background every screen outside the splash sits on: a flat ground with four soft
  * blotches across it, purple in dark and warm in light. See "App background (all
- * non-splash screens)" in docs/design/README.md — the design is explicit that this is
+ * non-splash screens)" in the design spec — the design is explicit that this is
  * not flat near-black.
  *
  * Drawn rather than declared, because the blotches are CSS radial gradients: NativeWind

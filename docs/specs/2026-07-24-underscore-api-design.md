@@ -33,8 +33,9 @@ A search hit, which is **not** persisted. `GET /api/books/search` writes nothing
 | `categories`    | `string[]`       | As on `Book`                                                                   |
 | `pageCount`     | `number \| null` | Null when Google reports 0 (unknown length)                                    |
 | `thumbnailUrl`  | `string \| null` | Rewritten to `https://` — Google serves `http://`, which iOS ATS blocks        |
+| `publishedYear` | `number \| null` | Leading four digits of Google's `publishedDate`; null when absent or unparseable |
 
-`BookCandidateSchema` in `/packages/shared` derives from `BookSchema` (minus `id` and `source`) so the two cannot drift.
+`BookCandidateSchema` in `/packages/shared` derives from `BookSchema` (minus `id` and `source`) so the two cannot drift. `publishedYear` is the one field it adds rather than inherits: the library home's Google rows read `Author · Year · Genre`, but a year is never persisted, so `Book` and the `book` table have no column for it.
 
 ### `MoodProfile`
 

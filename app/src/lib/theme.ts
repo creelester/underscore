@@ -5,7 +5,7 @@ import { DarkTheme, DefaultTheme, type Theme } from 'expo-router';
  * colour value is required (gradients, status bar, navigation theme, SVG fills) and
  * Tailwind classes everywhere else — the two must stay in sync.
  *
- * Source of truth: docs/design/design-system/tokens/
+ * Source of truth: the design system's colour tokens.
  */
 export const THEME = {
   light: {
@@ -69,7 +69,7 @@ export const PALETTE = {
 
 export const RADIUS = { sm: 10, card: 20, lg: 28, pill: 999 } as const;
 
-/** Motion tokens. `EASE_STANDARD` is the handoff's cubic-bezier(.32,.72,0,1). */
+/** Motion tokens. `EASE_STANDARD` is the design's cubic-bezier(.32,.72,0,1). */
 export const MOTION = {
   easeStandard: [0.32, 0.72, 0, 1] as const,
   durFast: 120,
@@ -77,7 +77,7 @@ export const MOTION = {
 } as const;
 
 /**
- * Shadows are RN `boxShadow` strings so the handoff's negative-spread values survive
+ * Shadows are RN `boxShadow` strings so the design's negative-spread values survive
  * intact — RN's legacy shadowOffset/shadowRadius props cannot express them.
  */
 export const SHADOWS = {
@@ -96,7 +96,7 @@ export const SHADOWS = {
 /**
  * The splash is the one surface that does not sit on `THEME.background`: it stacks a
  * flat ground, a faded hero haze and a half-visible record. See the Splash section of
- * docs/design/README.md; the values come from the prototype's computed styles.
+ * the design spec; the values come from the prototype's computed styles.
  *
  * `ground` is deliberately deeper than `background` in both themes — the haze and the
  * record are read against it, not against the app surface.
@@ -118,7 +118,7 @@ export const SPLASH = {
 
 /**
  * The blotchy field every screen outside the splash sits on, from "App background (all
- * non-splash screens)" in docs/design/README.md. `AppBackdrop` draws it.
+ * non-splash screens)" in the design spec. `AppBackdrop` draws it.
  *
  * One entry per CSS layer, in the order the design lists them — `radial-gradient(rx ry at
  * x y, color alpha 0%, transparent fade)` — with the lengths kept as fractions of the

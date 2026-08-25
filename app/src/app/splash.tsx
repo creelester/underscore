@@ -25,7 +25,7 @@ import { useTheme } from '@/lib/use-theme';
  * growth has stopped and the frame has gone still. The disc keeps expanding through the
  * cross-fade, so the two motions overlap instead of queueing.
  *
- * The zoom is the one transition that does not take the handoff's `--ease-standard`
+ * The zoom is the one transition that does not take the design's `--ease-standard`
  * (`MOTION.easeStandard`): that curve spends most of its travel in its first quarter,
  * which over a ~3.5× growth arrives as a cut rather than a zoom. An ease-in-out is slow
  * enough at both ends for the eye to follow the disc all the way out.
@@ -38,7 +38,7 @@ const PUSH_AT_MS = 260;
  * The unauthenticated landing screen — registered first in the signed-out group in
  * `_layout.tsx`, which is what makes `/` and a sign-out settle here.
  *
- * `Get started →` opens the handoff's "How it works" flow (screen 2), as in the
+ * `Get started →` opens the design's "How it works" flow (screen 2), as in the
  * prototype; `I already have an account` skips the onboarding entirely.
  *
  * The primary CTA changes variant by theme: the haze dies just above the buttons, so

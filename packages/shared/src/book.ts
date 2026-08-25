@@ -29,5 +29,10 @@ export const BookCandidateSchema = BookSchema.omit({
   source: true,
 }).extend({
   googleBooksId: z.string(),
+  // Display metadata for a search row (`Author · Year · Genre`), not a property of
+  // a book we keep: it is never persisted, so it lives here rather than on
+  // `BookSchema`, and the Prisma `book` table has no column for it. Null whenever
+  // Google omits `publishedDate` or reports something we cannot read a year out of.
+  publishedYear: z.number().int().nullable(),
 });
 export type BookCandidate = z.infer<typeof BookCandidateSchema>;

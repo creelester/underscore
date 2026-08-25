@@ -1,9 +1,12 @@
-import { Router } from "express";
-import { BookSearchQuerySchema, BookSearchResponseSchema } from "@underscore/shared";
-import { searchVolumes } from "../connectors/googleBooks";
-import { ApiError } from "../lib/apiError";
-import { asyncHandler } from "../lib/asyncHandler";
-import { requireSession } from "../middleware/requireSession";
+import { Router } from 'express';
+import {
+  BookSearchQuerySchema,
+  BookSearchResponseSchema,
+} from '@underscore/shared';
+import { searchVolumes } from '../connectors/googleBooks';
+import { ApiError } from '../lib/apiError';
+import { asyncHandler } from '../lib/asyncHandler';
+import { requireSession } from '../middleware/requireSession';
 
 export const booksRouter = Router();
 
@@ -15,12 +18,14 @@ export const booksRouter = Router();
  * actually generated from it. See the Books section of the API design doc.
  */
 booksRouter.get(
-  "/search",
+  '/search',
   requireSession,
   asyncHandler(async (req, res) => {
     const query = BookSearchQuerySchema.safeParse(req.query);
     if (!query.success) {
-      throw ApiError.invalidInput(query.error.issues[0]?.message ?? "Invalid search query");
+      throw ApiError.invalidInput(
+        query.error.issues[0]?.message ?? 'Invalid search query',
+      );
     }
 
     const results = await searchVolumes(query.data.q);

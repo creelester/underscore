@@ -67,7 +67,7 @@ function fadeStops(outer: number) {
 /**
  * The splash's three stacked layers: flat ground, hero haze, and the record whose top
  * half crests the bottom edge. Shared by the boot overlay and the splash screen so the
- * handoff between them has no seam. See docs/design/README.md, Splash.
+ * handoff between them has no seam. See the design README, Splash.
  *
  * The haze's `mask-image` fade has no React Native equivalent, but the ground beneath
  * it is flat and opaque, so an overlay running from transparent to the ground colour at
