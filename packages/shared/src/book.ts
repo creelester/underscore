@@ -53,8 +53,71 @@ export const BookDetailSchema = BookCandidateSchema.extend({
   publishedDate: z.string().nullable(),
   /** BCP-47, usually a bare ISO-639-1 code like "en". */
   language: z.string().nullable(),
-  isbn13: z.string().nullable(),
   averageRating: z.number().nullable(),
   ratingsCount: z.number().int().nullable(),
 });
 export type BookDetail = z.infer<typeof BookDetailSchema>;
+
+/**
+ * The genre of a book, taken from Google's own subject categories.
+ *
+ * This is the *product* rule, not a display helper: when a book is scored, the
+ * `MoodProfile.genre` on the resulting playlist comes from here rather than from
+ * Claude. Google already classifies the volume, so asking the model to re-derive
+ * something the catalogue states is a round trip that can only introduce
+ * disagreement — and the two paths now line up, since the by-hand fallback also
+ * takes its genres from the user rather than inferring them.
+ *
+ * Lives in shared because the server writes it onto the profile and the app
+ * renders it, and a rule applied differently on the two sides is a bug waiting
+ * to happen.
+ */
+
+/** Google files categories as taxonomy paths — `"Fiction / Fantasy / General"`. */
+const CATEGORY_SEPARATOR = "/";
+
+/**
+ * Path segments that classify nothing. Google uses them as leaves constantly,
+ * and `"General"` as a genre says less than the parent it hangs off.
+ */
+const FILLER_SEGMENTS = new Set(["general", "other", "nonclassifiable"]);
+
+/** What the by-hand path lets the user pick, so both paths cap the same way. */
+export const MAX_GENRES = 3;
+
+/**
+ * The useful genre in one category path: the last segment that isn't filler, so
+ * `"Fiction / Fantasy / General"` reads `"Fantasy"` and a bare `"Fiction"` stays
+ * `"Fiction"`.
+ */
+function leafGenre(category: string): string | null {
+  const segments = category
+    .split(CATEGORY_SEPARATOR)
+    .map((segment) => segment.trim())
+    .filter((segment) => segment && !FILLER_SEGMENTS.has(segment.toLowerCase()));
+
+  return segments.at(-1) ?? null;
+}
+
+/**
+ * Normalized genres for a volume, most representative first — Google orders its
+ * categories that way and the profile's `genre` is documented in the same order.
+ *
+ * Deduplicated case-insensitively, because a volume routinely carries several
+ * paths that bottom out on the same word.
+ */
+export function genresFromCategories(categories: readonly string[]): string[] {
+  const genres: string[] = [];
+  const seen = new Set<string>();
+
+  for (const category of categories) {
+    const genre = leafGenre(category);
+    if (!genre || seen.has(genre.toLowerCase())) continue;
+
+    seen.add(genre.toLowerCase());
+    genres.push(genre);
+    if (genres.length === MAX_GENRES) break;
+  }
+
+  return genres;
+}

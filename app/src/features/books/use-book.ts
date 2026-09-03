@@ -8,7 +8,6 @@ const NO_CATALOGUE_FACTS = {
   publisher: null,
   publishedDate: null,
   language: null,
-  isbn13: null,
   averageRating: null,
   ratingsCount: null,
 } as const;

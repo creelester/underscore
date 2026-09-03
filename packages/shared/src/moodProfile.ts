@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAX_GENRES } from "./book";
 
 /**
  * The closed mood vocabulary. Each mood is a two-stop gradient that stands in for artwork
@@ -25,7 +26,12 @@ export type Mood = (typeof MOODS)[number];
 export const DEFAULT_MOOD: Mood = "melancholy";
 
 export const MoodProfileSchema = z.object({
-  genre: z.array(z.string()),
+  /**
+   * Not Claude's output. On the Google path this is `genresFromCategories(book.categories)`;
+   * on the manual path it is what the user picked. The model is asked for mood and pacing,
+   * never for a genre the catalogue already states.
+   */
+  genre: z.array(z.string()).max(MAX_GENRES),
   /** Empty on the manual-genre path; capped at two, which is what the design lets the user pick. */
   mood: z.array(z.enum(MOODS)).max(2),
   pacing: z.enum(["slow", "steady", "fast"]),

@@ -28,9 +28,6 @@ const VolumeSchema = z.object({
       // Book detail's facts table only; a search row shows none of these.
       publisher: z.string().optional(),
       language: z.string().optional(),
-      industryIdentifiers: z
-        .array(z.object({ type: z.string(), identifier: z.string() }))
-        .optional(),
       averageRating: z.number().optional(),
       ratingsCount: z.number().optional(),
     })
@@ -83,8 +80,6 @@ function toDetail(volume: Volume): BookDetail | null {
     publisher: info?.publisher ?? null,
     publishedDate: info?.publishedDate ?? null,
     language: info?.language ?? null,
-    isbn13:
-      info?.industryIdentifiers?.find((id) => id.type === "ISBN_13")?.identifier ?? null,
     // Guarded together: Google reports a rating of 0 with no ratings behind it,
     // and "0.0 · 0 ratings" is worse than no row at all.
     averageRating: info?.ratingsCount ? (info.averageRating ?? null) : null,

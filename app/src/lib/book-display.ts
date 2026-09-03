@@ -1,30 +1,33 @@
-import { MOODS, type BookCandidate, type BookDetail, type Mood } from '@underscore/shared';
+import {
+  genresFromCategories,
+  MOODS,
+  type BookCandidate,
+  type BookDetail,
+  type Mood,
+} from '@underscore/shared';
 
 /**
- * Turning a `BookCandidate` into the strings and swatch the library home's rows
- * show. Display only — nothing here is persisted or sent back to the server.
+ * Turning a book into the strings and swatch the library rows and book detail
+ * show. Nothing here is sent back to the server.
+ *
+ * Formatting only, with one exception worth knowing about: `displayGenre` is a
+ * view onto `genresFromCategories`, which is a product rule living in shared
+ * because the scored playlist's `MoodProfile.genre` is built from it. The genre
+ * on screen and the genre on the profile are the same string by construction.
  */
 
 /** The design chains descriptors with an interpunct. */
 const SEPARATOR = ' · ';
 
 /**
- * Google files categories as taxonomy paths — `"Fiction / Fantasy / General"` —
- * where the useful word is usually the last one that isn't the filler `General`.
- * A bare `["Fiction"]` therefore stays `"Fiction"`, and the path above reads
- * `"Fantasy"`.
+ * The one genre a row or eyebrow has space for.
  *
- * This is the *display* genre and nothing more. `MoodProfile.genre` is Claude's
- * normalized output and does not exist yet at search time, which is why the row
- * cannot use it.
+ * Thin wrapper over `genresFromCategories`, which is shared because it is the
+ * rule the scored playlist's `MoodProfile.genre` is built from too — the label
+ * here and the genre stored on the profile are deliberately the same string.
  */
 export function displayGenre(categories: readonly string[]): string | null {
-  const segments = categories[0]
-    ?.split('/')
-    .map((segment) => segment.trim())
-    .filter((segment) => segment && segment.toLowerCase() !== 'general');
-
-  return segments?.at(-1) ?? null;
+  return genresFromCategories(categories)[0] ?? null;
 }
 
 /**
@@ -109,7 +112,6 @@ export function bookFacts(book: BookDetail): { label: string; value: string }[] 
     { label: 'Length', value: book.pageCount ? `${book.pageCount} pages` : null },
     { label: 'Categories', value: book.categories[0] ?? null },
     { label: 'Language', value: formatLanguage(book.language) },
-    { label: 'ISBN-13', value: book.isbn13 },
     { label: 'Rating', value: formatRating(book.averageRating, book.ratingsCount) },
   ];
 
