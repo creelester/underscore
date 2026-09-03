@@ -5,7 +5,6 @@ import { ScrollView, View } from 'react-native';
 import { BookCover } from '@/components/book-cover';
 import { ExpandableText } from '@/components/expandable-text';
 import { OptionGroup } from '@/components/option-group';
-import { ProgressSlider } from '@/components/progress-slider';
 import { ScoringScreen } from '@/components/scoring-screen';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -14,22 +13,31 @@ import { useBook } from '@/features/books/use-book';
 import { isApiError } from '@/lib/api-client';
 import { bookDetailMetaLine, plainText } from '@/lib/book-display';
 import {
+  BOOK_FORMATS,
+  ERA_LABEL,
+  ERA_OTHER_PLACEHOLDER,
+  ERAS,
   FORMAT_LABEL,
+  LYRICS_DESCRIPTION,
   LYRICS_LABEL,
-  READING_FORMATS,
+  SECTION_SUBTITLE,
+  SECTION_TITLE,
   SETTING_LABEL,
+  SETTING_OTHER_PLACEHOLDER,
   SETTINGS,
-  type ReadingFormat,
+  SOMETHING_ELSE,
+  type BookFormat,
+  type Era,
   type Setting,
 } from '@/lib/reading-details';
 
 /**
  * Book detail — the first step of the scoring flow, reached from a search row on
- * the library home. Cover, blurb and the reading position, then into the mood
- * step.
+ * the library home. The book, then the optional context that sharpens the score.
  *
- * Progress is a slider and never a chapter number: the design is explicit that
- * casual readers don't track those, and the caption says roughly is fine.
+ * Nothing here is required. The design's governing constraint is that the happy
+ * path asks for no input beyond naming the book, so every group starts
+ * unanswered and `Analyze →` is live from the moment the screen is.
  */
 
 const COVER_WIDTH = 108;
@@ -46,16 +54,16 @@ const CONTENT_GAP = 18;
  */
 const BLURB_LINES = 5;
 
-/** A book being started, not resumed — the honest default for a first score. */
-const INITIAL_PROGRESS = 0;
-
 export default function BookDetailScreen() {
   const { googleBooksId } = useLocalSearchParams<{ googleBooksId: string }>();
   const { data: book, error } = useBook(googleBooksId);
-  const [progress, setProgress] = useState(INITIAL_PROGRESS);
-  const [format, setFormat] = useState<ReadingFormat | null>(null);
-  const [setting, setSetting] = useState<Setting | null>(null);
+
   const [isLyricsWelcome, setIsLyricsWelcome] = useState(false);
+  const [format, setFormat] = useState<BookFormat | null>(null);
+  const [setting, setSetting] = useState<Setting | null>(null);
+  const [settingOther, setSettingOther] = useState('');
+  const [era, setEra] = useState<Era | null>(null);
+  const [eraOther, setEraOther] = useState('');
 
   if (error) {
     // A volume Google no longer knows is not a retry — say so, rather than
@@ -85,11 +93,22 @@ export default function BookDetailScreen() {
   const author = book.authors.join(', ');
   const meta = bookDetailMetaLine(book);
 
+  /** Free text only travels with the chip that opened its field. */
+  const answered = {
+    ...(isLyricsWelcome && { lyrics: 'true' }),
+    ...(format && { format }),
+    ...(setting && { setting }),
+    ...(setting === SOMETHING_ELSE && settingOther && { settingOther }),
+    ...(era && { era }),
+    ...(era === SOMETHING_ELSE && eraOther && { eraOther }),
+  };
+
   return (
     <ScoringScreen contentGap={CONTENT_GAP}>
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ gap: CONTENT_GAP }}
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
         <View className="flex-row items-start gap-[18px]">
           <BookCover
@@ -104,9 +123,7 @@ export default function BookDetailScreen() {
           <View className="min-w-0 flex-1 gap-2">
             <Text className="text-foreground font-display text-title">{book.title}</Text>
 
-            {!!author && (
-              <Text className="text-ink-muted font-body text-body-sm">{author}</Text>
-            )}
+            {!!author && <Text className="text-ink-muted font-body text-body-sm">{author}</Text>}
 
             {/* Mixed case, unlike the app's other eyebrows — see `bookDetailMetaLine`. */}
             {!!meta && (
@@ -126,51 +143,51 @@ export default function BookDetailScreen() {
         <View className="bg-border h-px" />
 
         <View className="gap-[14px]">
-          <Text className="text-ink-faint font-mono text-eyebrow tracking-eyebrow font-bold uppercase">
-            Where are you?
-          </Text>
-
-          <View className="flex-row items-center gap-4">
-            <ProgressSlider
-              value={progress}
-              onValueChange={setProgress}
-              accessibilityLabel="Where are you in the book?"
-            />
-            <Text className="text-foreground font-mono min-w-[44px] text-right text-[15px] font-semibold">
-              {progress}%
-            </Text>
+          <View className="gap-1">
+            <Text className="text-foreground font-display text-[17px]">{SECTION_TITLE}</Text>
+            <Text className="text-ink-muted font-body text-body-sm">{SECTION_SUBTITLE}</Text>
           </View>
 
-          <Text className="text-ink-faint font-body text-body-sm">
-            Roughly is fine. It decides which part of the story gets scored.
-          </Text>
-        </View>
+          <View className="gap-4">
+            <View className="flex-row items-center justify-between gap-4">
+              <View className="gap-1">
+                <Text className="text-ink-faint font-mono text-eyebrow tracking-eyebrow font-bold uppercase">
+                  {LYRICS_LABEL}
+                </Text>
+                <Text className="text-ink-muted font-body text-body-sm">{LYRICS_DESCRIPTION}</Text>
+              </View>
+              <Switch
+                checked={isLyricsWelcome}
+                onCheckedChange={setIsLyricsWelcome}
+                accessibilityLabel="Lyrics welcome"
+              />
+            </View>
 
-        <View className="bg-border h-px" />
+            <OptionGroup
+              label={FORMAT_LABEL}
+              options={BOOK_FORMATS}
+              value={format}
+              onChange={setFormat}
+            />
 
-        <View className="gap-4">
-          <OptionGroup
-            label={FORMAT_LABEL}
-            options={READING_FORMATS}
-            value={format}
-            onChange={setFormat}
-          />
+            <OptionGroup
+              label={SETTING_LABEL}
+              options={SETTINGS}
+              value={setting}
+              onChange={setSetting}
+              otherValue={settingOther}
+              onOtherChange={setSettingOther}
+              otherPlaceholder={SETTING_OTHER_PLACEHOLDER}
+            />
 
-          <OptionGroup
-            label={SETTING_LABEL}
-            options={SETTINGS}
-            value={setting}
-            onChange={setSetting}
-          />
-
-          <View className="flex-row items-center justify-between gap-4">
-            <Text className="text-ink-faint font-mono text-eyebrow tracking-eyebrow font-bold uppercase">
-              {LYRICS_LABEL}
-            </Text>
-            <Switch
-              checked={isLyricsWelcome}
-              onCheckedChange={setIsLyricsWelcome}
-              accessibilityLabel="Lyrics welcome"
+            <OptionGroup
+              label={ERA_LABEL}
+              options={ERAS}
+              value={era}
+              onChange={setEra}
+              otherValue={eraOther}
+              onOtherChange={setEraOther}
+              otherPlaceholder={ERA_OTHER_PLACEHOLDER}
             />
           </View>
         </View>
@@ -182,13 +199,7 @@ export default function BookDetailScreen() {
           onPress={() =>
             router.push({
               pathname: '/mood',
-              params: {
-                googleBooksId: book.googleBooksId,
-                progress: String(progress),
-                ...(format && { format }),
-                ...(setting && { setting }),
-                ...(isLyricsWelcome && { lyrics: 'true' }),
-              },
+              params: { googleBooksId: book.googleBooksId, ...answered },
             })
           }>
           <Text>Analyze →</Text>
