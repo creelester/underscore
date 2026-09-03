@@ -19,6 +19,22 @@ import { Text } from '@/components/ui/text';
  * `contentGap` is the space under `← Back`, which the design sets per screen
  * rather than globally — 18px on book detail, 14px on mood and by-hand.
  */
+
+/**
+ * Where `← Back` goes when there is no history to pop.
+ *
+ * These screens are deep-linkable — `/book/<id>` is a real URL, and on web a
+ * reload re-enters the route cold — and in that state `router.back()` is a
+ * silent no-op, so the control looks broken. The design gives book detail's back
+ * an explicit destination rather than a history pop (`goSearch` in the
+ * prototype), and the library home is where a score begins, so it is also the
+ * right place to land from a cold entry.
+ *
+ * `replace`, not `push`: the route being left had nothing behind it, and pushing
+ * would build a history that runs backwards.
+ */
+const BACK_FALLBACK = '/library';
+
 export function ScoringScreen({
   children,
   contentGap = 16,
@@ -41,7 +57,12 @@ export function ScoringScreen({
       <AppBackdrop />
 
       <View className="flex-row">
-        <Button variant="text" size="sm" onPress={() => router.back()}>
+        <Button
+          variant="text"
+          size="sm"
+          onPress={() =>
+            router.canGoBack() ? router.back() : router.replace(BACK_FALLBACK)
+          }>
           <Text>← Back</Text>
         </Button>
       </View>
