@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { GRAD_WARM } from '@/lib/gradients';
 import { useTheme } from '@/lib/use-theme';
+import { pressedStyle } from '@/lib/pressed';
 
 /**
  * The design's `MoodChip` — a selectable pill that is **gradient-bordered, not
@@ -43,9 +44,9 @@ export function Chip({
       onPress={onPress}
       className="rounded-pill overflow-hidden"
       style={(state) => [
-        { padding: BORDER_WIDTH },
+        styles.border,
         !isSelected && { backgroundColor: theme.border },
-        state.pressed && { transform: [{ scale: 0.96 }] },
+        state.pressed && pressedStyle,
       ]}>
       {isSelected && <LinearGradient {...GRAD_WARM} style={StyleSheet.absoluteFill} />}
 
@@ -57,3 +58,7 @@ export function Chip({
     </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  border: { padding: BORDER_WIDTH },
+});

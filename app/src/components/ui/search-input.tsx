@@ -1,7 +1,8 @@
-import { Platform, Pressable, TextInput, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { Text } from '@/components/ui/text';
 import { cn } from '@/lib/utils';
+import { pressed } from '@/lib/pressed';
 
 /**
  * The design's `SearchInput` — a pill field that uses a solid dot where a
@@ -46,9 +47,7 @@ function SearchInput({
             native: 'placeholder:text-ink-faint',
           })
         )}
-        // Without this, the platform's default padding lands the text low on iOS,
-        // off the dot's centre line.
-        style={{ paddingVertical: 0 }}
+        style={styles.input}
         {...props}
       />
 
@@ -58,7 +57,7 @@ function SearchInput({
           role="button"
           accessibilityLabel="Clear search"
           className="rounded-pill absolute right-2 h-[38px] w-[38px] items-center justify-center"
-          style={(state) => (state.pressed ? { transform: [{ scale: 0.96 }] } : null)}>
+          style={pressed}>
           <Text className="text-ink-faint font-display text-[17px]">✕</Text>
         </Pressable>
       )}
@@ -67,3 +66,9 @@ function SearchInput({
 }
 
 export { SearchInput };
+
+const styles = StyleSheet.create({
+  // Without this the platform's own padding lands the text low on iOS, off the
+  // dot's centre line.
+  input: { paddingVertical: 0 },
+});

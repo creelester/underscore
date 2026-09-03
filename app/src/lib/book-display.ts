@@ -161,7 +161,11 @@ export function formatLanguage(language: string | null): string | null {
   return ISO6391.getName(code) || language;
 }
 
-/** The design's `4.2 · 1,204 ratings`. */
+/**
+ * `4.2 · 1204 ratings`. The design's mock groups the count, but the separator
+ * was not worth the machinery it needed on this runtime, and the number reads
+ * fine without one at the magnitudes Google returns.
+ */
 export function formatRating(
   averageRating: number | null,
   ratingsCount: number | null,
@@ -169,5 +173,5 @@ export function formatRating(
   if (!averageRating || !ratingsCount) return null;
 
   const plural = ratingsCount === 1 ? 'rating' : 'ratings';
-  return `${averageRating.toFixed(1)}${SEPARATOR}${ratingsCount.toLocaleString('en-US')} ${plural}`;
+  return `${averageRating.toFixed(1)}${SEPARATOR}${ratingsCount} ${plural}`;
 }

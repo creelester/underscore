@@ -1,6 +1,6 @@
 import { router, useFocusEffect, type Href } from 'expo-router';
 import { useCallback, useRef } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -134,7 +134,7 @@ export default function SplashScreen() {
           columnStyle,
         ]}>
         {/* The tagline takes the lockup's colour in each theme. */}
-        <View className="items-center" style={{ paddingTop: LOCKUP_TOP }}>
+        <View className="items-center" style={styles.lockup}>
           <LogoLockup />
           <Text className="text-plum-600 dark:text-lilac-200 font-display-medium text-body mt-[18px] text-center">
             a soundtrack to all your stories
@@ -156,3 +156,7 @@ export default function SplashScreen() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  lockup: { paddingTop: LOCKUP_TOP },
+});

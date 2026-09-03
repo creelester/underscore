@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { Text } from '@/components/ui/text';
+import { pressed } from '@/lib/pressed';
 
 /**
  * Body copy shown a few lines at a time, with a control to open it out — the
@@ -52,7 +53,7 @@ export function ExpandableText({
           role="button"
           onPress={() => setIsExpanded((expanded) => !expanded)}
           hitSlop={10}
-          style={(state) => (state.pressed ? { opacity: 0.6 } : null)}>
+          style={pressed}>
           <Text className="text-primary font-display text-sm">
             {isExpanded ? LESS_LABEL : MORE_LABEL}
           </Text>

@@ -7,6 +7,7 @@ import { TextClassContext } from '@/components/ui/text';
 import { GRAD_WARM } from '@/lib/gradients';
 import { useTheme } from '@/lib/use-theme';
 import { cn } from '@/lib/utils';
+import { pressedStyle } from '@/lib/pressed';
 
 /**
  * Under Score's button, per the design spec.
@@ -106,7 +107,7 @@ function Button({ className, variant = 'primary', size, style, children, ...prop
         role="button"
         style={(state) => [
           boxShadow ? { boxShadow } : null,
-          state.pressed && { transform: [{ scale: 0.96 }] },
+          state.pressed && pressedStyle,
           typeof style === 'function' ? style(state) : style,
         ]}
         {...props}>

@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { Text } from '@/components/ui/text';
+import { pressed } from '@/lib/pressed';
 
 /**
  * The library home's list primitives, from `Under Score App.dc.html`.
@@ -44,7 +45,7 @@ export function LibraryRow({
       role="button"
       onPress={onPress}
       className="border-border flex-row items-center gap-[14px] border-b px-1 py-3"
-      style={(state) => (state.pressed ? { transform: [{ scale: 0.96 }] } : null)}>
+      style={pressed}>
       {cover}
 
       <View className="min-w-0 flex-1">
