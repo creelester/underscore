@@ -15,14 +15,26 @@ import { Text } from '@/components/ui/text';
  * siblings under `(app)`. Giving them a layout would mean wrapping them in a
  * route group of their own purely to hang it on, which buys a directory and
  * changes nothing about what renders.
+ *
+ * `contentGap` is the space under `← Back`, which the design sets per screen
+ * rather than globally — 18px on book detail, 14px on mood and by-hand.
  */
-export function ScoringScreen({ children }: { children: ReactNode }) {
+export function ScoringScreen({
+  children,
+  contentGap = 16,
+}: {
+  // Optional so a screen still waiting on its data can render the shell alone,
+  // which is what book detail does instead of flashing a spinner.
+  children?: ReactNode;
+  contentGap?: number;
+}) {
   const insets = useSafeAreaInsets();
 
   return (
     <View
-      className="px-screen flex-1 gap-4"
+      className="px-screen flex-1"
       style={{
+        gap: contentGap,
         paddingTop: insets.top + 6,
         paddingBottom: Math.max(insets.bottom, 34),
       }}>

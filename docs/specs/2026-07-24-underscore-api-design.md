@@ -129,8 +129,11 @@ Example bodies — `POST /api/auth/sign-up/email`:
 | Endpoint                | Auth             | Request                           | Response (200)                                               | Errors                                                 |
 | ----------------------- | ---------------- | --------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------ |
 | `GET /api/books/search` | session-required | query: `q: string` (title/author) | `{ results: BookCandidate[] }` (empty array = no match, not an error) | `400 INVALID_INPUT` (blank `q`), `502 UPSTREAM_UNAVAILABLE` (Google Books down/timeout) |
+| `GET /api/books/:googleBooksId` | session-required | path: `googleBooksId` | `{ book: BookCandidate }` | `404 BOOK_NOT_FOUND` (Google does not know the id), `502 UPSTREAM_UNAVAILABLE` (Google Books down/timeout) |
 
 `GOOGLE_BOOKS_BASE_URL` overrides the upstream root, defaulting to the real endpoint. It exists so the e2e stack can point at a local fixture server — the suite must never reach a live third-party API. The key (`GOOGLE_BOOKS_API_KEY`) is optional: the volumes endpoint is public, though keyless requests are rate-limited hard enough to 429 in practice.
+
+The detail endpoint exists because search results are never persisted, so the book detail screen has nothing to read back from when it is reached by deep link or after a reload. It is registered after `/search`, which Express resolves in declaration order — reversing them would let the param route swallow the literal.
 
 Read-only: search performs no database writes. Persisting every hit would write ~20 `Book` rows per query for books nobody selects, so the row is deferred to `POST /api/playlists/generate`, which re-fetches the volume by id. That keeps the `book` table meaning "books someone scored" and means book metadata is never client-supplied.
 

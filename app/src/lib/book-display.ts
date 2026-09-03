@@ -38,6 +38,44 @@ export function bookMetaLine(book: BookCandidate): string {
 }
 
 /**
+ * `Genre · Year` — the book detail eyebrow.
+ *
+ * Deliberately not `bookMetaLine`: detail names the author on its own line, so
+ * repeating it in the eyebrow would say the same thing twice.
+ *
+ * Mixed case, unlike every other eyebrow in the app. The design's eyebrow token
+ * is a font shorthand and carries no `text-transform` — the uppercase ones are
+ * typed that way, and the playlist header uppercases its book title in code,
+ * which is what settles it. So this reads `Fantasy · 2020`.
+ */
+export function bookDetailMetaLine(book: BookCandidate): string {
+  return [displayGenre(book.categories), book.publishedYear?.toString()]
+    .filter((part): part is string => !!part)
+    .join(SEPARATOR);
+}
+
+/**
+ * Google files descriptions as HTML — `<p>`, `<br>`, `<i>` and the odd entity —
+ * which a React Native `Text` renders as literal angle brackets rather than as
+ * markup. The detail screen shows the blurb as one paragraph, so tags become
+ * whitespace and the run is collapsed.
+ */
+export function plainText(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    // Last, so an escaped entity (`&amp;lt;`) decodes to the text `&lt;` rather
+    // than being unescaped twice into a `<`.
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
  * Which mood swatch stands in when a volume has no cover art.
  *
  * A search hit has no mood — that is Claude's read, and it happens later — so the
