@@ -13,10 +13,16 @@ import { Text } from '@/components/ui/text';
  * sentence and gradient re-rendering live on every change.
  */
 export default function MoodScreen() {
-  const { googleBooksId, progress } = useLocalSearchParams<{
+  const { googleBooksId, progress, format, setting, lyrics } = useLocalSearchParams<{
     googleBooksId: string;
     progress: string;
+    format?: string;
+    setting?: string;
+    lyrics?: string;
   }>();
+
+  // Book detail's optional answers, echoed until the mood engine consumes them.
+  const details = [format, setting, lyrics === 'true' ? 'Lyrics welcome' : null].filter(Boolean);
 
   return (
     <ScoringScreen contentGap={14}>
@@ -27,7 +33,7 @@ export default function MoodScreen() {
         The mood, the pacing and the chips to correct them land here.
       </Text>
       <Text className="text-ink-faint font-mono text-eyebrow tracking-eyebrow">
-        {googleBooksId} · {progress}%
+        {[googleBooksId, `${progress}%`, ...details].join(' · ')}
       </Text>
     </ScoringScreen>
   );

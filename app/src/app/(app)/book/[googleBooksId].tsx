@@ -3,13 +3,25 @@ import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 
 import { BookCover } from '@/components/book-cover';
+import { ExpandableText } from '@/components/expandable-text';
+import { OptionGroup } from '@/components/option-group';
 import { ProgressSlider } from '@/components/progress-slider';
 import { ScoringScreen } from '@/components/scoring-screen';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { useBook } from '@/features/books/use-book';
 import { isApiError } from '@/lib/api-client';
 import { bookDetailMetaLine, plainText } from '@/lib/book-display';
+import {
+  FORMAT_LABEL,
+  LYRICS_LABEL,
+  READING_FORMATS,
+  SETTING_LABEL,
+  SETTINGS,
+  type ReadingFormat,
+  type Setting,
+} from '@/lib/reading-details';
 
 /**
  * Book detail — the first step of the scoring flow, reached from a search row on
@@ -28,15 +40,11 @@ const COVER_RADIUS = 8;
 const CONTENT_GAP = 18;
 
 /**
- * The design's blurbs are hand-written single sentences; Google's are the whole
- * jacket — press quotes, awards and several hundred words. Unclamped, that
- * pushes "Where are you?" a screen and a half down, so the one control the
- * screen exists for lands below the fold.
- *
- * Eight lines is what the design's 393 × 852 reference frame leaves between the
- * cover row and the slider, so the layout still resolves the way it was drawn.
+ * How much of the blurb shows before it has to be opened out. Enough to read
+ * past Google's award-and-press preamble into the actual description, without
+ * the jacket copy burying the controls underneath it.
  */
-const BLURB_LINES = 8;
+const BLURB_LINES = 5;
 
 /** A book being started, not resumed — the honest default for a first score. */
 const INITIAL_PROGRESS = 0;
@@ -45,6 +53,9 @@ export default function BookDetailScreen() {
   const { googleBooksId } = useLocalSearchParams<{ googleBooksId: string }>();
   const { data: book, error } = useBook(googleBooksId);
   const [progress, setProgress] = useState(INITIAL_PROGRESS);
+  const [format, setFormat] = useState<ReadingFormat | null>(null);
+  const [setting, setSetting] = useState<Setting | null>(null);
+  const [isLyricsWelcome, setIsLyricsWelcome] = useState(false);
 
   if (error) {
     // A volume Google no longer knows is not a retry — say so, rather than
@@ -107,9 +118,9 @@ export default function BookDetailScreen() {
         </View>
 
         {!!book.description && (
-          <Text numberOfLines={BLURB_LINES} className="text-ink-muted font-body text-body">
+          <ExpandableText collapsedLines={BLURB_LINES}>
             {plainText(book.description)}
-          </Text>
+          </ExpandableText>
         )}
 
         <View className="bg-border h-px" />
@@ -134,22 +145,54 @@ export default function BookDetailScreen() {
             Roughly is fine. It decides which part of the story gets scored.
           </Text>
         </View>
+
+        <View className="bg-border h-px" />
+
+        <View className="gap-4">
+          <OptionGroup
+            label={FORMAT_LABEL}
+            options={READING_FORMATS}
+            value={format}
+            onChange={setFormat}
+          />
+
+          <OptionGroup
+            label={SETTING_LABEL}
+            options={SETTINGS}
+            value={setting}
+            onChange={setSetting}
+          />
+
+          <View className="flex-row items-center justify-between gap-4">
+            <Text className="text-ink-faint font-mono text-eyebrow tracking-eyebrow font-bold uppercase">
+              {LYRICS_LABEL}
+            </Text>
+            <Switch
+              checked={isLyricsWelcome}
+              onCheckedChange={setIsLyricsWelcome}
+              accessibilityLabel="Lyrics welcome"
+            />
+          </View>
+        </View>
       </ScrollView>
 
-      <View className="gap-[10px] pt-4">
+      <View className="pt-4">
         <Button
           size="lg"
           onPress={() =>
             router.push({
               pathname: '/mood',
-              params: { googleBooksId: book.googleBooksId, progress: String(progress) },
+              params: {
+                googleBooksId: book.googleBooksId,
+                progress: String(progress),
+                ...(format && { format }),
+                ...(setting && { setting }),
+                ...(isLyricsWelcome && { lyrics: 'true' }),
+              },
             })
           }>
           <Text>Analyze →</Text>
         </Button>
-        <Text className="text-ink-faint font-body text-body-sm text-center">
-          Takes about ten seconds.
-        </Text>
       </View>
     </ScoringScreen>
   );
