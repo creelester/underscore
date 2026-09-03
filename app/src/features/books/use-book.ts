@@ -2,6 +2,7 @@ import { bookKeys } from '@/features/books/keys';
 import { apiClient } from '@/lib/api-client';
 import { BookDetailResponseSchema, type BookCandidate, type BookDetail } from '@underscore/shared';
 import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
 /** What a search hit is missing relative to a detail read. */
 const NO_CATALOGUE_FACTS = {
@@ -25,6 +26,11 @@ async function fetchBook(googleBooksId: string): Promise<BookDetail> {
  *
  * Scanned across every cached search rather than looked up by key, because the
  * key carries the query string the user typed and the screen does not know it.
+ *
+ * The scan is bounded and small — `MAX_RESULTS` caps each search at 8 hits, and
+ * only searches the user actually ran are in the cache — but it is memoised
+ * anyway, because it feeds two options that React Query would otherwise each
+ * call on every render.
  */
 function cachedCandidate(
   queryClient: QueryClient,
@@ -62,13 +68,20 @@ function cachedCandidate(
  */
 export function useBook(googleBooksId: string) {
   const queryClient = useQueryClient();
+  const seed = useMemo(
+    () => cachedCandidate(queryClient, googleBooksId),
+    [queryClient, googleBooksId],
+  );
 
   return useQuery({
     queryKey: bookKeys.detail(googleBooksId),
     queryFn: () => fetchBook(googleBooksId),
     enabled: !!googleBooksId,
-    initialData: () => cachedCandidate(queryClient, googleBooksId)?.book,
-    initialDataUpdatedAt: () => cachedCandidate(queryClient, googleBooksId)?.updatedAt,
+    initialData: seed?.book,
+    // Paired with `initialData`: without the real timestamp React Query treats a
+    // cache hit as fresh right now, and a search from ten minutes ago would sit
+    // past its `staleTime` without ever refetching.
+    initialDataUpdatedAt: seed?.updatedAt,
     // A volume's metadata does not move; keep it across a back-navigation, as
     // search does with its results.
     staleTime: 5 * 60_000,

@@ -1,3 +1,6 @@
+import { format, parseISO } from 'date-fns';
+import ISO6391 from 'iso-639-1';
+
 import {
   genresFromCategories,
   MOODS,
@@ -121,97 +124,41 @@ export function bookFacts(book: BookDetail): { label: string; value: string }[] 
 /**
  * Google's `publishedDate` carries whatever precision it holds — "2020",
  * "2020-09" or "2020-09-15" — so the output follows the input rather than
- * inventing a day the catalogue never claimed.
+ * inventing a day the catalogue never claimed. The precision is read off the
+ * string; only the formatting is date-fns' job.
  *
- * Parsed by hand rather than through `Date`, which reads a bare "2020-09-15" as
- * UTC midnight and then renders it in the device's zone — a day early for
- * anyone west of Greenwich.
+ * `parseISO` rather than `new Date`, which reads a date-only string as UTC
+ * midnight and then renders it in the device's zone — a day early for anyone
+ * west of Greenwich. date-fns parses it as local, which is what a publication
+ * date means.
  */
 export function formatPublishedDate(publishedDate: string | null): string | null {
   if (!publishedDate) return null;
 
-  const [, year, month, day] =
-    publishedDate.match(/^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?/) ?? [];
+  const [, year, month, day] = publishedDate.match(/^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?/) ?? [];
   if (!year) return publishedDate;
   if (!month) return year;
 
-  const monthName = MONTHS[Number(month) - 1];
-  if (!monthName) return year;
+  const parsed = parseISO(day ? `${year}-${month}-${day}` : `${year}-${month}-01`);
+  if (Number.isNaN(parsed.getTime())) return year;
 
-  return day ? `${monthName} ${Number(day)}, ${year}` : `${monthName} ${year}`;
+  return format(parsed, day ? 'MMMM d, yyyy' : 'MMMM yyyy');
 }
 
-const MONTHS = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
-
 /**
- * The languages Google Books actually returns for this catalogue, by ISO-639-1
- * code. Not exhaustive on purpose — an unknown code falls through to itself.
+ * "en" → "English", and "en-GB" → "English" — Google sends BCP-47 and the region
+ * adds nothing to a one-line fact.
  *
- * A table rather than `Intl.DisplayNames`, which is the obvious tool and does
- * not work here: Hermes ships the constructor but resolves it against a trimmed
- * ICU, so it returned the bare code "en" on device while doing the right thing
- * on web. A wrong answer that never throws is worse than no answer, so the
- * lookup is explicit.
+ * `Intl.DisplayNames` is the obvious tool and is simply absent from Hermes: the
+ * constructor does not exist on device, though it works in the web build. So the
+ * lookup comes from `iso-639-1`, which is a table rather than an ICU binding and
+ * therefore behaves the same on both.
  */
-const LANGUAGE_NAMES: Record<string, string> = {
-  ar: 'Arabic',
-  cs: 'Czech',
-  da: 'Danish',
-  de: 'German',
-  el: 'Greek',
-  en: 'English',
-  es: 'Spanish',
-  fi: 'Finnish',
-  fr: 'French',
-  he: 'Hebrew',
-  hi: 'Hindi',
-  hu: 'Hungarian',
-  id: 'Indonesian',
-  it: 'Italian',
-  ja: 'Japanese',
-  ko: 'Korean',
-  nl: 'Dutch',
-  no: 'Norwegian',
-  pl: 'Polish',
-  pt: 'Portuguese',
-  ro: 'Romanian',
-  ru: 'Russian',
-  sv: 'Swedish',
-  th: 'Thai',
-  tr: 'Turkish',
-  uk: 'Ukrainian',
-  vi: 'Vietnamese',
-  zh: 'Chinese',
-};
-
-/** "en" → "English", and "en-GB" → "English" — the region adds nothing here. */
 export function formatLanguage(language: string | null): string | null {
   if (!language) return null;
 
-  const base = language.toLowerCase().split('-')[0];
-  return LANGUAGE_NAMES[base] ?? language;
-}
-
-/**
- * Thousands separators, done by hand for the same reason `LANGUAGE_NAMES` is a
- * table: Hermes resolves `toLocaleString` against a trimmed ICU, so a grouped
- * number is not something to assume on device.
- */
-function group(count: number): string {
-  return count.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const code = language.toLowerCase().split('-')[0];
+  return ISO6391.getName(code) || language;
 }
 
 /** The design's `4.2 · 1,204 ratings`. */
@@ -222,5 +169,5 @@ export function formatRating(
   if (!averageRating || !ratingsCount) return null;
 
   const plural = ratingsCount === 1 ? 'rating' : 'ratings';
-  return `${averageRating.toFixed(1)}${SEPARATOR}${group(ratingsCount)} ${plural}`;
+  return `${averageRating.toFixed(1)}${SEPARATOR}${ratingsCount.toLocaleString('en-US')} ${plural}`;
 }
