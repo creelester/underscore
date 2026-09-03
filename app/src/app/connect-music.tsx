@@ -8,6 +8,7 @@ import { AppBackdrop } from '@/components/app-backdrop';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { moodGradient } from '@/lib/gradients';
+import { pressedStyle } from '@/lib/pressed';
 
 /**
  * Onboarding step 4 — the design's "Connect music" (screen 3). Frontend only
@@ -54,7 +55,7 @@ export default function ConnectMusicScreen() {
             onPress={() => router.push('/sign-up')}
             className='rounded-sm border-border bg-surface flex-row items-center gap-[14px] border p-4'
             style={(state) =>
-              state.pressed ? { transform: [{ scale: 0.96 }] } : null
+              state.pressed ? pressedStyle : null
             }
           >
             <View className='rounded-pill h-[38px] w-[38px] overflow-hidden'>

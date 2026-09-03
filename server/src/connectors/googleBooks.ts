@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { BookCandidate } from "@underscore/shared";
+import type { BookCandidate, BookDetail } from "@underscore/shared";
 import { env } from "../config/env";
 import { ApiError } from "../lib/apiError";
 import { createHttpClient } from "../lib/http";
@@ -25,6 +25,11 @@ const VolumeSchema = z.object({
       publishedDate: z.string().optional(),
       pageCount: z.number().optional(),
       imageLinks: z.object({ thumbnail: z.string().optional() }).optional(),
+      // Book detail's facts table only; a search row shows none of these.
+      publisher: z.string().optional(),
+      language: z.string().optional(),
+      averageRating: z.number().optional(),
+      ratingsCount: z.number().optional(),
     })
     .optional(),
 });
@@ -57,6 +62,28 @@ function toCandidate(volume: Volume): BookCandidate | null {
     pageCount: info.pageCount && info.pageCount > 0 ? info.pageCount : null,
     thumbnailUrl: normalizeThumbnail(info.imageLinks?.thumbnail),
     publishedYear: parseYear(info.publishedDate),
+  };
+}
+
+/**
+ * The extra catalogue metadata the book detail screen lists. Built on top of
+ * `toCandidate` rather than beside it, so the two can never disagree about the
+ * fields they share.
+ */
+function toDetail(volume: Volume): BookDetail | null {
+  const candidate = toCandidate(volume);
+  if (!candidate) return null;
+
+  const info = volume.volumeInfo;
+  return {
+    ...candidate,
+    publisher: info?.publisher ?? null,
+    publishedDate: info?.publishedDate ?? null,
+    language: info?.language ?? null,
+    // Guarded together: Google reports a rating of 0 with no ratings behind it,
+    // and "0.0 · 0 ratings" is worse than no row at all.
+    averageRating: info?.ratingsCount ? (info.averageRating ?? null) : null,
+    ratingsCount: info?.ratingsCount ?? null,
   };
 }
 
@@ -106,7 +133,7 @@ export async function searchVolumes(q: string): Promise<BookCandidate[]> {
  * Single volume by id. Returns null when Google does not know the id, which is
  * what the generation endpoints will turn into BOOK_NOT_FOUND.
  */
-export async function fetchVolume(googleBooksId: string): Promise<BookCandidate | null> {
+export async function fetchVolume(googleBooksId: string): Promise<BookDetail | null> {
   const response = await client.get(`/volumes/${encodeURIComponent(googleBooksId)}`, {
     params: apiKeyParam,
   });
@@ -119,5 +146,5 @@ export async function fetchVolume(googleBooksId: string): Promise<BookCandidate 
       parsed.error,
     );
   }
-  return toCandidate(parsed.data);
+  return toDetail(parsed.data);
 }

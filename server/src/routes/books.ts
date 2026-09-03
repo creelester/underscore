@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import {
+  BookDetailResponseSchema,
   BookSearchQuerySchema,
   BookSearchResponseSchema,
 } from '@underscore/shared';
-import { searchVolumes } from '../connectors/googleBooks';
+import { fetchVolume, searchVolumes } from '../connectors/googleBooks';
 import { ApiError } from '../lib/apiError';
 import { asyncHandler } from '../lib/asyncHandler';
 import { requireSession } from '../middleware/requireSession';
@@ -34,5 +35,27 @@ booksRouter.get(
     // is built against — a connector change that breaks the shape fails here
     // rather than in the client.
     res.json(BookSearchResponseSchema.parse({ results }));
+  }),
+);
+
+/**
+ * GET /api/books/:googleBooksId
+ *
+ * The book detail screen's read. Registered after `/search` so the literal path
+ * keeps winning — Express matches in declaration order, and a param route here
+ * would otherwise swallow it.
+ *
+ * Read-only for the same reason search is: the `Book` row is minted by
+ * `POST /api/playlists/generate`, which re-fetches the volume itself. Nothing a
+ * client sends here is ever persisted.
+ */
+booksRouter.get(
+  '/:googleBooksId',
+  requireSession,
+  asyncHandler(async (req, res) => {
+    const book = await fetchVolume(req.params.googleBooksId);
+    if (!book) throw ApiError.bookNotFound();
+
+    res.json(BookDetailResponseSchema.parse({ book }));
   }),
 );

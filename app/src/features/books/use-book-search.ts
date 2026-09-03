@@ -1,12 +1,7 @@
+import { bookKeys } from '@/features/books/keys';
 import { apiClient } from '@/lib/api-client';
 import { BookSearchResponseSchema, type BookCandidate } from '@underscore/shared';
 import { useQuery } from '@tanstack/react-query';
-
-/** Query keys for anything book-shaped, so invalidations are never stringly-typed. */
-const bookKeys = {
-  all: ['books'] as const,
-  search: (query: string) => [...bookKeys.all, 'search', query] as const,
-};
 
 /** A single character matches most of the catalog — not worth a round trip. */
 export const MIN_QUERY_LENGTH = 2;

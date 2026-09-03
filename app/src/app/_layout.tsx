@@ -18,7 +18,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { colorScheme } from 'nativewind';
 import { useEffect } from 'react';
-import { Appearance, Platform, type ColorSchemeName } from 'react-native';
+import { Appearance, Platform, StyleSheet, type ColorSchemeName } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AnimatedSplashOverlay } from '@/components/splash-overlay';
@@ -77,7 +77,7 @@ export default function RootLayout() {
   });
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={styles.root}>
       {/* Above ThemeProvider so the cache outlives any theme remount, and above
           the fonts/session gate below so no screen can mount without it. */}
       <QueryClientProvider client={queryClient}>
@@ -119,3 +119,7 @@ export default function RootLayout() {
     </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+});
