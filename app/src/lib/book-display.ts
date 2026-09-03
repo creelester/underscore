@@ -1,4 +1,4 @@
-import { MOODS, type BookCandidate, type Mood } from '@underscore/shared';
+import { MOODS, type BookCandidate, type BookDetail, type Mood } from '@underscore/shared';
 
 /**
  * Turning a `BookCandidate` into the strings and swatch the library home's rows
@@ -92,4 +92,133 @@ export function coverMood(googleBooksId: string): Mood {
     hash = (hash * 31 + character.charCodeAt(0)) | 0;
   }
   return MOODS[Math.abs(hash) % MOODS.length];
+}
+
+/**
+ * The catalogue facts book detail lists under the blurb, as label/value pairs in
+ * the design's order.
+ *
+ * A row is dropped rather than shown empty whenever Google has nothing: half
+ * these fields are missing on any given volume, and a table of "—" reads as
+ * broken rather than as sparse.
+ */
+export function bookFacts(book: BookDetail): { label: string; value: string }[] {
+  const facts: { label: string; value: string | null }[] = [
+    { label: 'Publisher', value: book.publisher },
+    { label: 'Published', value: formatPublishedDate(book.publishedDate) },
+    { label: 'Length', value: book.pageCount ? `${book.pageCount} pages` : null },
+    { label: 'Categories', value: book.categories[0] ?? null },
+    { label: 'Language', value: formatLanguage(book.language) },
+    { label: 'ISBN-13', value: book.isbn13 },
+    { label: 'Rating', value: formatRating(book.averageRating, book.ratingsCount) },
+  ];
+
+  return facts.filter((fact): fact is { label: string; value: string } => !!fact.value);
+}
+
+/**
+ * Google's `publishedDate` carries whatever precision it holds — "2020",
+ * "2020-09" or "2020-09-15" — so the output follows the input rather than
+ * inventing a day the catalogue never claimed.
+ *
+ * Parsed by hand rather than through `Date`, which reads a bare "2020-09-15" as
+ * UTC midnight and then renders it in the device's zone — a day early for
+ * anyone west of Greenwich.
+ */
+export function formatPublishedDate(publishedDate: string | null): string | null {
+  if (!publishedDate) return null;
+
+  const [, year, month, day] =
+    publishedDate.match(/^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?/) ?? [];
+  if (!year) return publishedDate;
+  if (!month) return year;
+
+  const monthName = MONTHS[Number(month) - 1];
+  if (!monthName) return year;
+
+  return day ? `${monthName} ${Number(day)}, ${year}` : `${monthName} ${year}`;
+}
+
+const MONTHS = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
+/**
+ * The languages Google Books actually returns for this catalogue, by ISO-639-1
+ * code. Not exhaustive on purpose — an unknown code falls through to itself.
+ *
+ * A table rather than `Intl.DisplayNames`, which is the obvious tool and does
+ * not work here: Hermes ships the constructor but resolves it against a trimmed
+ * ICU, so it returned the bare code "en" on device while doing the right thing
+ * on web. A wrong answer that never throws is worse than no answer, so the
+ * lookup is explicit.
+ */
+const LANGUAGE_NAMES: Record<string, string> = {
+  ar: 'Arabic',
+  cs: 'Czech',
+  da: 'Danish',
+  de: 'German',
+  el: 'Greek',
+  en: 'English',
+  es: 'Spanish',
+  fi: 'Finnish',
+  fr: 'French',
+  he: 'Hebrew',
+  hi: 'Hindi',
+  hu: 'Hungarian',
+  id: 'Indonesian',
+  it: 'Italian',
+  ja: 'Japanese',
+  ko: 'Korean',
+  nl: 'Dutch',
+  no: 'Norwegian',
+  pl: 'Polish',
+  pt: 'Portuguese',
+  ro: 'Romanian',
+  ru: 'Russian',
+  sv: 'Swedish',
+  th: 'Thai',
+  tr: 'Turkish',
+  uk: 'Ukrainian',
+  vi: 'Vietnamese',
+  zh: 'Chinese',
+};
+
+/** "en" → "English", and "en-GB" → "English" — the region adds nothing here. */
+export function formatLanguage(language: string | null): string | null {
+  if (!language) return null;
+
+  const base = language.toLowerCase().split('-')[0];
+  return LANGUAGE_NAMES[base] ?? language;
+}
+
+/**
+ * Thousands separators, done by hand for the same reason `LANGUAGE_NAMES` is a
+ * table: Hermes resolves `toLocaleString` against a trimmed ICU, so a grouped
+ * number is not something to assume on device.
+ */
+function group(count: number): string {
+  return count.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+/** The design's `4.2 · 1,204 ratings`. */
+export function formatRating(
+  averageRating: number | null,
+  ratingsCount: number | null,
+): string | null {
+  if (!averageRating || !ratingsCount) return null;
+
+  const plural = ratingsCount === 1 ? 'rating' : 'ratings';
+  return `${averageRating.toFixed(1)}${SEPARATOR}${group(ratingsCount)} ${plural}`;
 }

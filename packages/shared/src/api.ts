@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { BookCandidateSchema } from "./book";
+import { BookCandidateSchema, BookDetailSchema } from "./book";
 import { PlaylistSchema } from "./playlist";
 import { MoodProfileSchema } from "./moodProfile";
 
@@ -14,12 +14,12 @@ export const BookSearchResponseSchema = z.object({
 export type BookSearchResponse = z.infer<typeof BookSearchResponseSchema>;
 
 /**
- * A single volume, for the book detail screen. Same `BookCandidate` search
- * returns and equally unpersisted — the screen has to be reachable by deep link
- * and after a reload, when no search result is in memory to read from.
+ * A single volume, for the book detail screen. Unpersisted like search — the
+ * screen has to be reachable by deep link and after a reload, when no search
+ * result is in memory to read from.
  */
 export const BookDetailResponseSchema = z.object({
-  book: BookCandidateSchema,
+  book: BookDetailSchema,
 });
 export type BookDetailResponse = z.infer<typeof BookDetailResponseSchema>;
 

@@ -36,3 +36,25 @@ export const BookCandidateSchema = BookSchema.omit({
   publishedYear: z.number().int().nullable(),
 });
 export type BookCandidate = z.infer<typeof BookCandidateSchema>;
+
+/**
+ * A candidate plus the catalogue metadata the book detail screen lists as facts —
+ * publisher, full publication date, language, ISBN and the community rating.
+ *
+ * Separate from `BookCandidate` rather than folded into it because a search row
+ * shows none of this: carrying it would mean ~20 volumes' worth of fields per
+ * keystroke to render `Author · Year · Genre`. Every field is nullable because
+ * Google omits rather than nulls, and a book with no ISBN is ordinary, not an
+ * error — the screen drops the row instead.
+ */
+export const BookDetailSchema = BookCandidateSchema.extend({
+  publisher: z.string().nullable(),
+  /** Whatever precision Google holds: "2020", "2020-09" or "2020-09-15". */
+  publishedDate: z.string().nullable(),
+  /** BCP-47, usually a bare ISO-639-1 code like "en". */
+  language: z.string().nullable(),
+  isbn13: z.string().nullable(),
+  averageRating: z.number().nullable(),
+  ratingsCount: z.number().int().nullable(),
+});
+export type BookDetail = z.infer<typeof BookDetailSchema>;

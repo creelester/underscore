@@ -4,21 +4,16 @@ import { Pressable, View } from 'react-native';
 import { Text } from '@/components/ui/text';
 
 /**
- * Body copy shown a few lines at a time, with a control to open it out.
- *
- * The design's blurbs are hand-written single sentences, so the prototype prints
- * them whole. Google's are the entire book jacket — press quotes, awards, several
- * hundred words — which pushes everything below it off the screen. Clamping alone
- * would hide most of the text with no way to reach it, so the clamp comes with a
- * way out.
+ * Body copy shown a few lines at a time, with a control to open it out — the
+ * book blurb and its `More` / `Less` toggle.
  */
 
-const MORE_LABEL = '… more';
+const MORE_LABEL = 'More';
 const LESS_LABEL = 'Less';
 
 /**
  * A deliberate *lower bound* on how many characters a line holds, which is what
- * decides whether the control appears at all.
+ * decides whether the toggle appears at all.
  *
  * Measuring would be exact but has no cross-platform answer: `onTextLayout`
  * reports only the lines a clamped `Text` kept, so it can never see past the
@@ -28,13 +23,11 @@ const LESS_LABEL = 'Less';
  * duplicating the blurb for every text query the e2e suite makes.
  *
  * So the count is estimated instead, and the estimate is biased. Being low costs
- * an occasional "… more" on text that already fitted — one tap, nothing hidden.
+ * an occasional `More` on text that already fitted — one tap, nothing hidden.
  * Being high would leave text truncated with no control to reveal it, which is
  * the failure this component exists to prevent.
  */
 const MIN_CHARS_PER_LINE = 30;
-
-const TEXT_CLASS = 'text-ink-muted font-body text-body';
 
 export function ExpandableText({
   children,
@@ -47,8 +40,10 @@ export function ExpandableText({
   const isExpandable = children.length > collapsedLines * MIN_CHARS_PER_LINE;
 
   return (
-    <View className="gap-1">
-      <Text numberOfLines={isExpanded ? undefined : collapsedLines} className={TEXT_CLASS}>
+    <View className="items-start gap-[6px]">
+      <Text
+        numberOfLines={isExpanded ? undefined : collapsedLines}
+        className="text-ink-muted font-body text-body">
         {children}
       </Text>
 
@@ -56,9 +51,9 @@ export function ExpandableText({
         <Pressable
           role="button"
           onPress={() => setIsExpanded((expanded) => !expanded)}
-          hitSlop={8}
+          hitSlop={10}
           style={(state) => (state.pressed ? { opacity: 0.6 } : null)}>
-          <Text className="text-foreground font-body-medium text-body-sm">
+          <Text className="text-primary font-display text-sm">
             {isExpanded ? LESS_LABEL : MORE_LABEL}
           </Text>
         </Pressable>

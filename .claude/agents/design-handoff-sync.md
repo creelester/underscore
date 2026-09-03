@@ -14,7 +14,7 @@ If a `DesignSync` call returns an authorization error, relay its message to the 
 **If `DesignSync` isn't available to you at all** — an error like `No such tool available: DesignSync`, as opposed to an authorization failure — that is a different problem with a different fix. `/design-login` will not help. DesignSync is a deferred tool that the main session loads on demand, and a subagent's tool set is fixed at spawn, so it can be absent here while working perfectly in the session that spawned you. Don't stop on this. Instead:
 
 1. Do the code-side inventory first — the implementation baseline below — since it needs no design access and is most of the run.
-2. Then message the main session (`SendMessage` with `to: "main"`) asking it to fetch the paths you need from project `472ebb80-2946-470b-9e65-06b8032cf833` and stage them on disk for you to `Read`. Name the exact paths. For a screen audit that is normally `design_handoff_under_score_app/prototypes/Under Score App.dc.html`, the `_ds/…/_ds_bundle.js`, and the relevant section of `design_handoff_under_score_app/README.md`.
+2. Then message the main session (`SendMessage` with `to: "main"`) asking it to fetch the paths you need from project `472ebb80-2946-470b-9e65-06b8032cf833` and stage them on disk for you to `Read`. Name the exact paths. For a screen audit that is normally the root `Under Score App.dc.html` and, if a component's exact numbers are in question, the `_ds/…/_ds_bundle.js`.
 3. Audit against the staged files once they land, and say in your report that the fetch was staged rather than fetched by you, with the date it was pulled.
 
 A fetch the main session performs during this run is **current**, not stale — it is the same MCP read you would have made. This is the one sanctioned path to design content other than your own `DesignSync` call. It does **not** license reading `docs/design/`, recovering that deleted mirror from git history, or any other snapshot of unknown age; those remain off limits.
@@ -35,19 +35,20 @@ The consequence you must respect: only surfaces the app has **actually built** a
 
 This inventory bounds everything after it. A screen not in it is not in scope.
 
-**2. Orient.** `DesignSync(list_files)` on the project — free, returns paths only, no hashes or timestamps. Use it to locate the handoff tree and confirm nothing has moved. The tree you want is `design_handoff_under_score_app/`.
+**2. Orient.** `DesignSync(list_files)` on the project — free, returns paths only, no hashes or timestamps. What you want is at the **project root**: `Under Score App.dc.html` and its siblings. That is what the designer edits.
+
+**Never read `design_handoff_under_score_app/`.** It is a point-in-time export and it goes stale — on 2026-09-03 its prototype was three revisions behind the root file, and book detail was built twice against it before anyone noticed. Its `README.md` is stale for the same reason: the prose describes whichever export it shipped with, so where it disagrees with the root prototype it is simply out of date, not a conflict to adjudicate. If you catch yourself about to fetch a path starting `design_handoff_under_score_app/`, drop the prefix.
 
 **3. Fetch the design core.** Progressively, not eagerly:
 
 | File | What it gives you |
 |---|---|
-| `design_handoff_under_score_app/README.md` | the written spec (~34 KB) |
-| `design_handoff_under_score_app/prototypes/Under Score App.dc.html` | the prototype (~68 KB) — **your primary source**, and authoritative over the README wherever the two disagree; it carries states the README omits |
-| `design_handoff_under_score_app/design-system/tokens/*.css` | colours, typography, fonts, spacing, radius/shadow (tiny) |
+| `Under Score App.dc.html` | the live prototype (~74 KB) — **your only narrative source**. Root of the project, not under any subdirectory |
+| `_ds/under-score-design-system-*/tokens/*.css` | colours, typography, fonts, spacing, radius/shadow (tiny) |
 | `_ds/under-score-design-system-*/_ds_manifest.json` | the component index (~14 KB) — `Button`, `SearchInput`, `MoodChip`, `ProgressDots`, `TabBar`, `PlaylistCard`, … maps onto `app/src/components/` |
 | `_ds/under-score-design-system-*/_ds_bundle.js` | exact component implementation values (~55 KB) — fetch **only** when a specific component's numbers are in question |
 
-**Precedence, in order:** the prototype shows what the *screens* are; `_ds_bundle.js` shows what the *components* are. Where a screen inlines its own version of something instead of using the design system's component, **the screen wins** — the prototype is the newer artifact and the DS component may simply be stale. The README loses to both. When the prototype and the bundle genuinely contradict each other, that's not code drift and you should not file it as a bug — it goes under "Needs a design decision" below.
+**Precedence, in order:** the root prototype shows what the *screens* are; `_ds_bundle.js` shows what the *components* are. Where a screen inlines its own version of something instead of using the design system's component, **the screen wins** — the prototype is the newer artifact and the DS component may simply be stale. When the prototype and the bundle genuinely contradict each other, that's not code drift and you should not file it as a bug — it goes under "Needs a design decision" below.
 
 `get_file` is capped at 256 KiB and returns `{content, isBase64, truncated}`. If anything comes back `truncated`, say so in your report rather than reasoning from a partial file.
 
