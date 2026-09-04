@@ -2,10 +2,8 @@ import { clsx, type ClassValue } from 'clsx';
 import { extendTailwindMerge } from 'tailwind-merge';
 
 /**
- * tailwind-merge only knows Tailwind's stock scales. Without registering the design's
- * type scale here it reads `text-display-md` as a *colour* class and drops the
- * `text-foreground` that precedes it, so headings silently render in the wrong ink.
- * Same for the custom radii.
+ * tailwind-merge knows only Tailwind's stock scales: unregistered, it reads
+ * `text-display-md` as a colour class and drops the `text-foreground` before it.
  */
 const twMerge = extendTailwindMerge({
   extend: {

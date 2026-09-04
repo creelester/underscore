@@ -7,18 +7,13 @@ import { useTheme } from '@/lib/use-theme';
 import { pressedStyle } from '@/lib/pressed';
 
 /**
- * The design's `MoodChip` — a selectable pill that is **gradient-bordered, not
- * gradient-filled**, and appends a `✓` to its label when selected.
+ * The design's `MoodChip` — gradient-bordered, not gradient-filled. The web original
+ * is one element with `padding-box` over `border-box` backgrounds, which RN has no
+ * equivalent for, so this is a padded outer view painting the border under an inner
+ * view painting the surface — the same size either way.
  *
- * The web original is one element with two backgrounds, `padding-box` over
- * `border-box`, which React Native has no equivalent for. Here it is a padded
- * outer view painting the border and an inner view painting the chip's own
- * surface over it, which comes out the same size: the outer 1.5px plus the
- * inner 10/18 padding is exactly the CSS border plus padding.
- *
- * The interior is not one token. The design uses `--bg` in light and
- * `--surface` in dark — the chip sits on the app backdrop, and those are the
- * values that read as "unfilled" against it in each theme.
+ * The interior is `--bg` in light and `--surface` in dark: those are what read as
+ * "unfilled" against the app backdrop in each theme.
  */
 
 const BORDER_WIDTH = 1.5;

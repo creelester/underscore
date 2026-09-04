@@ -2,12 +2,9 @@ import { ScoringScreen } from '@/components/scoring-screen';
 import { Text } from '@/components/ui/text';
 
 /**
- * Placeholder for scoring a book by hand — title, genre and mood asked for
- * directly when the catalogue has nothing. Stands in so the library home's
- * `+ Add manually` button navigates somewhere real.
- *
- * When it is built, genre is `GENRE · PICK UP TO THREE` — multi-select, max
- * three, oldest drops at a fourth, one always stays selected.
+ * Placeholder for scoring by hand when the catalogue has nothing, so the library home's
+ * `+ Add manually` navigates somewhere real. Genre will be multi-select, max three,
+ * oldest dropping at a fourth, with one always selected.
  */
 export default function ScoreByHandScreen() {
   return (

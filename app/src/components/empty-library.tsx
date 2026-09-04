@@ -13,15 +13,11 @@ import { Text } from '@/components/ui/text';
 import { useTheme } from '@/lib/use-theme';
 
 /**
- * The library home's empty state, from `Under Score App.dc.html`.
+ * The library home's empty state: an empty shelf and no query, what a new account sees
+ * before it has scored anything. Not the no-results state, which answers a search.
  *
- * Shown when the shelf has nothing on it *and* there is no query — the
- * prototype gates it on `libraryEmpty && !q`. It is not the no-results state:
- * that one answers a search that found nothing, while this one is what a new
- * account sees before it has scored anything.
- *
- * The shelf is line art rather than an illustration asset, so it takes
- * `--ink-faint` from the active theme instead of needing a per-theme export.
+ * Line art rather than an illustration asset, so it takes `--ink-faint` from the active
+ * theme instead of needing a per-theme export.
  */
 export function EmptyLibrary() {
   const { theme } = useTheme();
@@ -32,7 +28,7 @@ export function EmptyLibrary() {
         <Text className="text-foreground font-display text-[22px] leading-[28px] tracking-tight">
           Your library is empty.
         </Text>
-        {/* `max-width:30ch` in the prototype — roughly 240px at Inter 14. */}
+        {/* The prototype's `max-width:30ch`, ~240px at Inter 14. */}
         <Text className="text-ink-muted font-body text-body-sm max-w-[240px] text-center">
           Search for a book you&rsquo;re reading and start scoring it.
         </Text>
@@ -41,9 +37,8 @@ export function EmptyLibrary() {
       <View className="aspect-[300/220] w-full max-w-[300px]">
         <Svg width="100%" height="100%" viewBox="0 0 300 220" fill="none">
           <Defs>
-            {/* The prototype masks the shelf so it dissolves downward rather than
-                ending on a hard edge. A luminance mask wants white→black, which is
-                what a `mask-image` alpha ramp compiles to. */}
+            {/* The shelf dissolves downward rather than ending on a hard edge. A
+                luminance mask wants white→black. */}
             <SvgLinearGradient id="shelf-fade" x1="0" y1="0" x2="0" y2="1">
               <Stop offset="42%" stopColor="#fff" stopOpacity={1} />
               <Stop offset="96%" stopColor="#000" stopOpacity={1} />

@@ -10,16 +10,12 @@ type HttpClientOptions = {
 };
 
 /**
- * Builds the axios instance a connector talks to an upstream through.
+ * The axios instance a connector talks to an upstream through. The interceptor is the
+ * point: every transport failure leaves as `UPSTREAM_UNAVAILABLE`, so connectors never
+ * restate that mapping and a raw AxiosError — which carries the api key in its request
+ * config — can never reach the terminal handler and be logged.
  *
- * The point of the factory is the interceptor: every transport failure — a
- * timeout, a DNS miss, a 500 from the provider, a 429 — leaves as the same
- * `UPSTREAM_UNAVAILABLE`, so connectors never restate that mapping and a raw
- * AxiosError (which carries the request config, including any api key) can
- * never reach the terminal error handler and be logged.
- *
- * A 404 is deliberately *not* converted: "this volume does not exist" is a
- * routing answer, not an outage, so connectors get the response back and decide.
+ * A 404 is not converted: that is a routing answer, not an outage.
  */
 export function createHttpClient({
   baseURL,
@@ -41,9 +37,8 @@ export function createHttpClient({
         const detail = error.response
           ? `responded ${error.response.status}`
           : (error.code ?? "was unreachable");
-        // Deliberately not passing the AxiosError itself as `cause`: it carries
-        // the full request config, api key and all, and the terminal handler
-        // logs causes. Keep only what a diagnosis actually needs.
+        // Not the AxiosError itself as `cause`: it carries the api key in its request
+        // config, and the terminal handler logs causes.
         return Promise.reject(
           ApiError.upstreamUnavailable(`${name} ${detail}`, {
             method: error.config?.method,

@@ -9,16 +9,9 @@ import { ScreenFade } from '@/components/screen-fade';
 import { TabBar, TabBarButton } from '@/components/ui/tab-bar';
 
 /**
- * The three tabs — Now Playing / Library / Profile.
- *
- * `expo-router/ui`'s headless tabs rather than the styled navigator: the bar is
- * a hairline rule over an icon-and-label pair that share a single colour, which
- * is a fight with a navigator that brings its own indicator and its own
- * active/inactive tinting.
- *
- * The scoring flow — book detail, score by hand, and later mood/generating/
- * playlist — lives outside this group because the tab bar is hidden throughout
- * it, on the player and during onboarding.
+ * The three tabs — Now Playing / Library / Profile. Headless `expo-router/ui` tabs
+ * rather than the styled navigator, which brings its own indicator and tinting to
+ * fight. The scoring flow sits outside this group because the bar is hidden there.
  */
 export default function TabsLayout() {
   return (
@@ -43,16 +36,10 @@ export default function TabsLayout() {
 }
 
 /**
- * A child of `<Tabs>` rather than part of the layout body above, so it can read
- * the tab navigator's own state — the context comes from `<Tabs>` and is not
- * visible to the component that renders it.
- *
- * That state is the whole point: the enter animation has to replay on a tab
- * change, and the focused route name is the only thing that says one happened.
- * `usePathname()` cannot, because it reports the *global* route — a push to
- * `/book/<id>` changes it while this layout sits mounted underneath, and driving
- * the animation from that used to tear the tab screens down and back up around
- * every push.
+ * A child of `<Tabs>` so it can read the navigator's state, which the component
+ * rendering `<Tabs>` cannot see. The focused route name is the only thing that says a
+ * tab changed: `usePathname()` reports the global route, so a push to `/book/<id>`
+ * would replay the enter animation and tear the tab screens down around every push.
  */
 function TabsContent() {
   const insets = useSafeAreaInsets();
@@ -64,8 +51,7 @@ function TabsContent() {
       className="px-screen flex-1"
       style={{
         paddingTop: insets.top + 6,
-        // No safe-area inset: the tab bar below already applies it, and
-        // taking it here too would reserve the home indicator twice.
+        // The tab bar below already applies the inset.
         paddingBottom: 20,
       }}>
       <AppBackdrop />

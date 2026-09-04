@@ -4,15 +4,12 @@ import { ScoringScreen } from '@/components/scoring-screen';
 import { Text } from '@/components/ui/text';
 
 /**
- * Placeholder for the mood step — the model's read said back in one sentence,
- * over a gradient panel, with the chips that correct it. Stands in so book
- * detail's `Analyze →` navigates somewhere real.
+ * Placeholder for the mood step — the model's read over a gradient panel, with the
+ * chips that correct it — so book detail's `Analyze →` navigates somewhere real.
  *
- * It also owns the `Fine tune the mood` block, which moved here off book detail:
- * a `LYRICS` switch, then `BOOK FORMAT`, `SETTING` and `ERA` chip groups, each
- * single-select and clearable, with `Something else` opening a free-text field.
- * `Chip` and `Switch` are already built for it; the option vocabularies are on
- * the `book-detail-parked` branch.
+ * It also owns the `Fine tune the mood` block that moved off book detail: a `LYRICS`
+ * switch and the `BOOK FORMAT` / `SETTING` / `ERA` chip groups. `Chip` and `Switch`
+ * are built; the option vocabularies are on the `book-detail-parked` branch.
  */
 export default function MoodScreen() {
   const { googleBooksId } = useLocalSearchParams<{ googleBooksId: string }>();

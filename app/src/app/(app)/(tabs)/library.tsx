@@ -15,14 +15,10 @@ import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { useTheme } from '@/lib/use-theme';
 
 /**
- * The library home — the Library tab and the entry point to a new score. There
- * is no separate library grid and no pushed search screen.
- *
- * The saved half of the screen is not built: `RECENT` and `YOUR PLAYLISTS` need
- * saved playlists, and nothing can create one until the scoring flow and
- * `GET /api/bookshelf` exist. So the shelf is empty for everyone and the screen
- * renders its search half — a state the design already covers rather than a
- * stand-in.
+ * The library home and the entry point to a new score; there is no separate grid or
+ * pushed search screen. The saved half needs the scoring flow and `GET /api/bookshelf`,
+ * so for now the shelf is empty for everyone and only the search half renders — a state
+ * the design already covers rather than a stand-in.
  */
 
 const SEARCH_DEBOUNCE_MS = 700;
@@ -30,19 +26,12 @@ const SEARCH_DEBOUNCE_MS = 700;
 const BOOK_COVER_WIDTH = 48;
 const BOOK_COVER_HEIGHT = 70;
 
-/**
- * TODO: replace with the filtered count from `GET /api/bookshelf` once the
- * bookshelf endpoint exists. Typed rather than left literal so the gating below
- * stays a real rule instead of an expression TypeScript folds away.
- */
+/** TODO: the filtered count from `GET /api/bookshelf`. Typed so the gating below stays
+ *  a real rule rather than an expression TypeScript folds away. */
 const savedMatchCount: number = 0;
 
-/**
- * TODO: derive from `GET /api/bookshelf` alongside `savedMatchCount`.
- *
- * Distinct from that count: a shelf with books that none of them match is a
- * search miss, not an empty library, and the two say different things.
- */
+/** TODO: from `GET /api/bookshelf` too. Distinct from `savedMatchCount`: a shelf whose
+ *  books all fail the query is a search miss, not an empty library. */
 const isLibraryEmpty: boolean = true;
 
 export default function LibraryScreen() {
@@ -53,15 +42,13 @@ export default function LibraryScreen() {
   const settled = useDebouncedValue(trimmed, SEARCH_DEBOUNCE_MS);
 
   const isLongEnough = trimmed.length >= MIN_QUERY_LENGTH;
-  // The catalogue is the fallback, not the first stop: it runs only once the
-  // shelf has nothing matching what was typed.
+  // The catalogue is the fallback: it runs only once the shelf has no match.
   const isFallbackActive = settled.length >= MIN_QUERY_LENGTH && savedMatchCount === 0;
   const search = useBookSearch(isFallbackActive ? settled : '');
   const results = isFallbackActive ? (search.data ?? []) : [];
 
-  // Gated on any non-empty query rather than on `isLongEnough`, so one character
-  // shows the searching state while `MIN_QUERY_LENGTH` still holds the request
-  // back — the screen says it is searching as it waits for a second character.
+  // Any non-empty query, not `isLongEnough`: one character shows the searching state
+  // while `MIN_QUERY_LENGTH` still holds the request back.
   const isSearching =
     !!trimmed &&
     savedMatchCount === 0 &&
@@ -83,8 +70,7 @@ export default function LibraryScreen() {
             : 'No results';
 
   const isSectionVisible = savedMatchCount > 0 || !!trimmed;
-  // A query replaces the empty state with the search's own states, so the two
-  // are never on screen together.
+  // A query replaces the empty state, so the two are never on screen together.
   const isEmptyLibraryVisible = isLibraryEmpty && !trimmed;
 
   return (
@@ -109,8 +95,7 @@ export default function LibraryScreen() {
         showsVerticalScrollIndicator={false}>
         {isEmptyLibraryVisible && <EmptyLibrary />}
 
-        {/* `RECENT` — up to three in-progress playlists, current book first —
-            slots in here once the bookshelf endpoint exists. */}
+        {/* `RECENT` slots in here once the bookshelf endpoint exists. */}
 
         {isSectionVisible && (
           <LibrarySection label={sectionLabel}>
@@ -134,8 +119,8 @@ export default function LibraryScreen() {
           </LibrarySection>
         )}
 
-        {/* `/api/books/search` answers 502 when the catalogue is down, and
-            showing "no match" there would blame the query for an outage. */}
+        {/* Search answers 502 when the catalogue is down; "no match" would blame the
+            query for an outage. */}
         {isFailed && (
           <View className="gap-[10px] px-1 pt-5 pb-1">
             <Text className="text-foreground font-display text-[19px] leading-[25px]">

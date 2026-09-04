@@ -12,13 +12,9 @@ import { isApiError } from '@/lib/api-client';
 import { bookDetailMetaLine, bookFacts, plainText } from '@/lib/book-display';
 
 /**
- * Book detail — the first step of the scoring flow, reached from a search row on
- * the library home. The book and what the catalogue knows about it, then into
- * the mood step.
- *
- * It asks for nothing. The mood controls that briefly lived here now belong to
- * the mood screen, which leaves this screen purely a confirmation that the right
- * book was picked — so `Analyze →` is live the moment it renders.
+ * Book detail — the first step of the scoring flow. It asks for nothing: the mood
+ * controls belong to the mood screen, leaving this purely a confirmation that the
+ * right book was picked, so `Analyze →` is live the moment it renders.
  */
 
 const COVER_WIDTH = 108;
@@ -36,8 +32,7 @@ export default function BookDetailScreen() {
   const { data: book, error } = useBook(googleBooksId);
 
   if (error) {
-    // A volume Google no longer knows is not a retry — say so, rather than
-    // inviting one. Anything else reached us as a transport or upstream failure.
+    // A volume Google no longer knows is not worth a retry.
     const isMissing = isApiError(error) && error.code === 'BOOK_NOT_FOUND';
 
     return (
@@ -56,8 +51,7 @@ export default function BookDetailScreen() {
     );
   }
 
-  // No spinner: arriving from a search row seeds this from cache and paints at
-  // once, so the only thing a loading state could do here is flash.
+  // No spinner: arriving from a search row seeds this from cache and paints at once.
   if (!book) return <ScoringScreen contentGap={CONTENT_GAP} />;
 
   const author = book.authors.join(', ');

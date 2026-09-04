@@ -16,21 +16,12 @@ import {
  * Authentication: email/password sign-up, login, logout, and the route guards in
  * app/src/app/_layout.tsx.
  *
- * The seeded account is reseeded once per run (server/prisma/seed.ts, driven by
- * SEED_USER_EMAIL / SEED_USER_PASSWORD in playwright.config.ts), not once per
- * test, and workers run in parallel — so tests only ever *read* it. Anything that
- * creates an account uses `uniqueEmail()`.
+ * The seeded account is reseeded once per run and workers run in parallel, so tests
+ * only read it; anything that creates an account uses `uniqueEmail()`. Forms are
+ * reached directly by URL — the walk to them is onboarding.spec.ts's job.
  *
- * Signed-out visitors land on `/splash`, not on `/login` — the splash screen's own
- * coverage lives in splash.spec.ts; here it only shows up as where `/` and a
- * sign-out settle. The forms themselves are still reached directly by URL.
- *
- * Signed-in visitors land on a *tab*, not on `/`: the app root redirects into the
- * tab group. `expectSignedInApp()` is what asserts that, anchored on the tab bar
- * rather than on a tab's copy — see helpers.ts for why.
- *
- * Social sign-in is deliberately uncovered: it would leave localhost for Google's
- * and Spotify's consent screens.
+ * Social sign-in is deliberately uncovered: it leaves localhost for Google's and
+ * Spotify's consent screens.
  */
 
 test.describe("logging in", () => {
@@ -55,13 +46,9 @@ test.describe("logging in", () => {
     await fillLoginForm(page, `  ${SEEDED_USER.email}  `, SEEDED_USER.password);
     await page.getByRole("button", { name: "Log in" }).click();
 
-    // loginSchema trims the email before it reaches the submit handler, so a
-    // padded address is the same credential as the bare one. Better Auth
-    // lowercases but never trims. Caveat for whoever edits this: Chromium also
-    // sanitizes input[type=email] (react-native-web maps keyboardType
-    // "email-address" to that type), so on the web surface the padding is gone
-    // before zod runs — this pins the user-visible behaviour, not the schema.
-    // Only a unit test on loginSchema can guard the `.trim()` itself.
+    // loginSchema trims the email; Better Auth lowercases but never trims. Chromium
+    // also sanitizes input[type=email], so the padding is gone before zod runs — this
+    // pins the user-visible behaviour, not the schema's `.trim()`.
     await expectSignedInApp(page);
   });
 
@@ -70,10 +57,8 @@ test.describe("logging in", () => {
     await fillLoginForm(page, "   ", SEEDED_USER.password);
     await page.getByRole("button", { name: "Log in" }).click();
 
-    // `.trim()` runs before `.min(1)`, so blank-but-not-empty is "required"
-    // rather than "invalid" — though on web the browser's own email-input
-    // sanitization would produce the same message either way (see the padded
-    // login test above), so this documents the wording rather than the ordering.
+    // `.trim()` runs before `.min(1)`, so blank-but-not-empty is "required". On web the
+    // browser's sanitization gives the same message either way, so this pins wording.
     await expect(page.getByText("Email is required")).toBeVisible();
     await expect(page.getByText("Enter a valid email")).toBeHidden();
     await expect(page).toHaveURL(/\/login$/);
@@ -93,8 +78,7 @@ test.describe("logging in", () => {
     await fillLoginForm(page, uniqueEmail("no-such-account"), "some-password-1234");
     await page.getByRole("button", { name: "Log in" }).click();
 
-    // Identical wording for both cases is the point: it does not leak whether the
-    // address has an account.
+    // Identical wording for both cases: it must not leak whether the address exists.
     await expect(page.getByText("Invalid email or password")).toBeVisible();
     await expect(page).toHaveURL(/\/login$/);
   });
@@ -131,8 +115,7 @@ test.describe("logging in", () => {
   });
 
   test("disables the submit button while the request is in flight", async ({ page }) => {
-    // Hold the sign-in response open so the in-flight state can be asserted without
-    // racing it, then release it and let the flow finish for real.
+    // Hold the response open so the in-flight state can be asserted without racing it.
     let releaseSignIn = () => {};
     const signInHeld = new Promise<void>((resolve) => {
       releaseSignIn = resolve;
@@ -194,9 +177,8 @@ test.describe("signing up", () => {
     await page.getByRole("button", { name: "Sign up" }).click();
     await expectSignedInApp(page);
 
-    // Logging back in with the bare address proves the padding never reached the
-    // server. Same caveat as the padded login test: on web the browser strips it
-    // too, so this cannot fail on its own if the schema's `.trim()` is dropped.
+    // Logging back in bare proves the padding never reached the server. As above, the
+    // browser strips it too, so this cannot fail alone if `.trim()` is dropped.
     await signOutToLogin(page);
 
     await fillLoginForm(page, email, NEW_USER_PASSWORD);
@@ -217,8 +199,7 @@ test.describe("signing up", () => {
 
     await signOutToLogin(page);
 
-    // The trimmed form is a different passphrase, deliberately: only the email
-    // is trimmed, because padding can be part of a real password.
+    // Only the email is trimmed — padding can be part of a real password.
     await fillLoginForm(page, email, NEW_USER_PASSWORD);
     await page.getByRole("button", { name: "Log in" }).click();
     await expect(page.getByText("Invalid email or password")).toBeVisible();
@@ -245,8 +226,7 @@ test.describe("signing up", () => {
 
     await expect(page.getByText("Name is required")).toBeVisible();
     await expect(page.getByText("Email is required")).toBeVisible();
-    // The sign-up schema replaces the login schema's "Password is required" with
-    // its own length rule, so an empty password reports the length message.
+    // Sign-up replaces "Password is required" with its length rule.
     await expect(page.getByText("Use at least 8 characters")).toBeVisible();
     await expect(page).toHaveURL(/\/sign-up$/);
   });
@@ -278,8 +258,8 @@ test.describe("session and route guards", () => {
   test("sends an unauthenticated visitor from the app to the splash screen", async ({ page }) => {
     await page.goto("/");
 
-    // `splash` is registered first in the signed-out group, which makes it that
-    // group's fallback — so an unauthenticated visitor settles there, not on the form.
+    // `splash` is registered first in the signed-out group, so it is that group's
+    // fallback — an unauthenticated visitor settles there, not on the form.
     await expect(page).toHaveURL(/\/splash$/);
     await expect(page.getByText(SPLASH_TAGLINE)).toBeVisible();
   });
@@ -289,12 +269,9 @@ test.describe("session and route guards", () => {
 
     await page.goto("/");
 
-    // The one place the landing tab is pinned. app/src/app/(app)/index.tsx
-    // redirects `/` to Library rather than to the handoff's tab 0 (Now), which
-    // has nothing to show until a book has been scored — and redirects rather
-    // than claiming `/` for a tab, so the three tabs keep honest URLs. Every
-    // other test here only asserts that *some* tab was reached
-    // (`expectSignedInApp`), so moving the landing tab is a one-line change.
+    // The one place the landing tab is pinned. `/` redirects to Library rather than the
+    // handoff's tab 0 (Now), which has nothing to show until a book is scored. Every
+    // other test asserts only that some tab was reached.
     await expect(page).toHaveURL(/\/library$/);
     await expect(page.getByRole("tab", { name: "Library" })).toBeVisible();
   });
@@ -330,7 +307,7 @@ test.describe("session and route guards", () => {
     await expect(page).toHaveURL(/\/splash$/);
     await expect(page.getByText(SPLASH_TAGLINE)).toBeVisible();
 
-    // A reload proves the session was actually cleared and not just navigated away from.
+    // A reload proves the session was cleared, not just navigated away from.
     await page.reload();
     await expect(page).toHaveURL(/\/splash$/);
     await expect(page.getByText(SPLASH_TAGLINE)).toBeVisible();

@@ -3,13 +3,9 @@ import { View } from 'react-native';
 import { Text } from '@/components/ui/text';
 
 /**
- * The catalogue metadata book detail lists under the blurb — publisher, length,
- * ISBN and the rest, as a rule-separated key/value table.
- *
- * Rows come from `bookFacts`, which drops whatever Google has nothing for, so
- * this renders however many it is handed and never a blank row. Values are
- * right-aligned against a fixed-width label and wrap under themselves, which is
- * what keeps a long category path from pushing its label off the line.
+ * The catalogue metadata under the blurb, as a rule-separated key/value table. Rows
+ * come from `bookFacts`, which drops what Google has nothing for. Values wrap under
+ * themselves so a long category path cannot push its label off the line.
  */
 export function BookFacts({ facts }: { facts: { label: string; value: string }[] }) {
   return (

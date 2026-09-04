@@ -14,9 +14,8 @@ export const BookSearchResponseSchema = z.object({
 export type BookSearchResponse = z.infer<typeof BookSearchResponseSchema>;
 
 /**
- * A single volume, for the book detail screen. Unpersisted like search — the
- * screen has to be reachable by deep link and after a reload, when no search
- * result is in memory to read from.
+ * A single volume, unpersisted like search — book detail has to be reachable by deep
+ * link and after a reload, with no search result in memory.
  */
 export const BookDetailResponseSchema = z.object({
   book: BookDetailSchema,
@@ -24,10 +23,9 @@ export const BookDetailResponseSchema = z.object({
 export type BookDetailResponse = z.infer<typeof BookDetailResponseSchema>;
 
 /**
- * The generation endpoints take a Google volume id rather than an internal book
- * id: search persists nothing, so at the point of asking for a playlist the only
- * handle the client holds is Google's. The server re-fetches the volume and
- * mints the `Book` row itself, so book metadata is never client-supplied.
+ * A Google volume id, not an internal book id: search persists nothing, so that is the
+ * only handle the client holds. The server re-fetches the volume and mints the `Book`
+ * row itself, so book metadata is never client-supplied.
  */
 const bookOrGenreRefinement = <T extends { googleBooksId?: string; manualGenre?: string }>(
   data: T,

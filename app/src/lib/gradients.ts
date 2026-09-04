@@ -4,12 +4,8 @@ import { PALETTE } from '@/lib/theme';
 
 export { MOODS, type Mood };
 
-/**
- * NativeWind has no native gradient support, so gradients are data rather than classes.
- * Every value here feeds `<LinearGradient>` from expo-linear-gradient.
- *
- * Source of truth: the design system's colour tokens.
- */
+// NativeWind has no gradient classes, so gradients are data. Values feed
+// `<LinearGradient>`; colours come from the design system's tokens.
 
 export type GradientSpec = {
   colors: readonly [string, string, ...string[]];
@@ -18,11 +14,7 @@ export type GradientSpec = {
   end: { x: number; y: number };
 };
 
-/**
- * Converts a CSS gradient angle to expo-linear-gradient start/end points.
- * CSS measures clockwise from "to top", so the gradient line direction in screen
- * coordinates (y pointing down) is (sin θ, -cos θ).
- */
+/** CSS measures clockwise from "to top", so with y pointing down the line is (sin θ, -cos θ). */
 export function angleToPoints(degrees: number) {
   const rad = (degrees * Math.PI) / 180;
   const dx = Math.sin(rad);
@@ -54,11 +46,9 @@ export const GRAD_HERO: GradientSpec = {
 };
 
 /**
- * Each mood is two stops; they stand in for artwork everywhere. `Record<Mood, …>` keeps this in
- * lockstep with `MOODS` in @underscore/shared — a mood without a pair is a type error.
- *
- * The first six are the design's; the last four extend the vocabulary to cover romance, comedy,
- * adventure and horror, reusing PALETTE colours rather than introducing tokens.
+ * Two stops per mood, standing in for artwork. `Record<Mood, …>` makes a mood without
+ * a pair a type error. The first six are the design's; the last four extend the
+ * vocabulary from existing PALETTE colours rather than new tokens.
  */
 export const MOOD_STOPS: Record<Mood, readonly [string, string]> = {
   cozy: [PALETTE.coral500, PALETTE.yellow300],
@@ -76,13 +66,9 @@ export const MOOD_STOPS: Record<Mood, readonly [string, string]> = {
 const MOOD_ANGLE = 160;
 
 /**
- * Artwork gradient for a profile's moods. Takes `MoodProfile.mood` directly, so the fallbacks
- * live here rather than at every call site: an empty list (the manual-genre path) renders
- * `DEFAULT_MOOD`, and anything past the first two is ignored.
- *
- * Single mood: `linear-gradient(160deg, a[0], a[1])`.
- * Two moods: `linear-gradient(160deg, a[0] 0%, a[1] 46%, b[1] 100%)` — the composite
- * rule from the design, so a pair reads as one gradient rather than two stacked.
+ * Artwork gradient for a profile's moods. Takes `MoodProfile.mood` directly so the
+ * fallbacks live here rather than at every call site. A pair uses the design's
+ * composite rule — one gradient, not two stacked.
  */
 export function moodGradient(moods: readonly Mood[]): GradientSpec {
   const [first = DEFAULT_MOOD, second] = moods;
@@ -97,10 +83,7 @@ export function moodGradient(moods: readonly Mood[]): GradientSpec {
   return { colors: [a[0], a[1], b[1]], locations: [0, 0.46, 1], ...points };
 }
 
-/**
- * The design's pacing labels. The wire values stay `slow | steady | fast`
- * (`MoodProfile.pacing`); only the display strings live here.
- */
+/** Display labels only; the wire values stay `MoodProfile.pacing`. */
 export const PACING_LABELS: Record<MoodProfile['pacing'], string> = {
   slow: 'Slow burn',
   steady: 'Steady',

@@ -19,10 +19,8 @@ import { moodGradient, type Mood } from '@/lib/gradients';
 import { useTheme } from '@/lib/use-theme';
 
 /**
- * Onboarding screen 2 — the design's "How it works": three swipeable pages,
- * always skippable, each a heading, a line of body copy and a mood-gradient
- * panel standing in for artwork. Copy and moods come from the prototype
- * (the design spec §2); the connect screen is onboarding step 4.
+ * Onboarding screen 2 — three swipeable, always skippable pages, each a heading, a
+ * line of copy and a mood-gradient panel standing in for artwork.
  */
 const PAGES: readonly {
   eyebrow: string;
@@ -55,20 +53,17 @@ export default function HowItWorksScreen() {
   const { shadows } = useTheme();
   const { width } = useWindowDimensions();
 
-  // Every file under app/ is an addressable route, so a reload, a restored URL or a deep
-  // link can open this screen directly instead of the splash's `Get started →`. Arriving
-  // from the splash always leaves something to go back to; arriving directly never does,
-  // because the anchor paints without being pushed. Read once at mount: it is a fact about
-  // how the screen was entered, not a value that changes while it is open.
+  // Every file under app/ is addressable, so a reload or deep link can open this screen
+  // directly. Arriving from the splash leaves something to go back to; arriving directly
+  // never does. Read once at mount — it is a fact about how the screen was entered.
   const [openedDirectly] = useState(() => !router.canGoBack());
 
   const [page, setPage] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
   const lastPage = page === PAGES.length - 1;
 
-  // The page index derives from the scroll offset rather than momentum events:
-  // react-native-web implements paging with CSS scroll snap and never fires
-  // onMomentumScrollEnd, while onScroll arrives on every platform.
+  // From the scroll offset, not momentum events: react-native-web pages with CSS scroll
+  // snap and never fires onMomentumScrollEnd.
   const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const measured = event.nativeEvent.layoutMeasurement.width;
     if (!measured) return;
@@ -84,8 +79,7 @@ export default function HowItWorksScreen() {
     scrollRef.current?.scrollTo({ x: (page + 1) * width, animated: true });
   };
 
-  // The flow starts at the splash, so a direct arrival goes back there rather than
-  // opening onboarding on its own.
+  // The flow starts at the splash, so a direct arrival goes back there.
   if (openedDirectly) return <Redirect href='/splash' />;
 
   return (

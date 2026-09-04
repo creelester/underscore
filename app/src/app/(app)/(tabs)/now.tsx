@@ -3,10 +3,8 @@ import { View } from 'react-native';
 import { Text } from '@/components/ui/text';
 
 /**
- * Placeholder for the Now tab. The real screen is the current-book card —
- * gradient band, `<BOOK> · <N>%`, `Resume` and `Story turned?` — over a list of
- * earlier sections. It needs a saved playlist to have anything to show, so it
- * waits on the scoring flow.
+ * Placeholder for the Now tab: the current-book card over a list of earlier sections.
+ * It needs a saved playlist to show anything, so it waits on the scoring flow.
  */
 export default function NowScreen() {
   return (

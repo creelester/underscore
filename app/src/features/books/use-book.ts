@@ -19,37 +19,27 @@ async function fetchBook(googleBooksId: string): Promise<BookDetail> {
 }
 
 /**
- * The volume already sitting in a search result, if the user got here by tapping
- * a library row, widened to the detail shape. It covers everything above the
- * fold, so the screen can paint from it immediately instead of flashing a load
- * on the one path that always has most of the answer already.
+ * The volume already in a search result, widened to the detail shape, so arriving
+ * from a library row paints immediately instead of flashing a load.
  *
- * Scanned across every cached search rather than looked up by key, because the
- * key carries the query string the user typed and the screen does not know it.
- *
- * The scan is bounded and small — `MAX_RESULTS` caps each search at 8 hits, and
- * only searches the user actually ran are in the cache — but it is memoised
- * anyway, because it feeds two options that React Query would otherwise each
- * call on every render.
+ * Scanned across cached searches rather than looked up by key: the key carries the
+ * query string and the screen does not know it. Memoised because it feeds two
+ * options React Query would otherwise call on every render.
  */
 function cachedCandidate(
   queryClient: QueryClient,
   googleBooksId: string,
 ): { book: BookDetail; updatedAt: number } | undefined {
   for (const [key, results] of queryClient.getQueriesData<BookCandidate[]>({
-    // The prefix of `bookKeys.search`, so this matches every cached search and
-    // nothing else. `bookKeys.all` would also match the detail entries, whose
-    // data is a single candidate rather than a list.
+    // Matches every cached search and nothing else; `bookKeys.all` would also match
+    // detail entries, whose data is a candidate rather than a list.
     queryKey: [...bookKeys.all, 'search'],
   })) {
     const candidate = results?.find((result) => result.googleBooksId === googleBooksId);
     if (candidate) {
       return {
-        // A search hit carries everything above the fold — cover, title, blurb —
-        // and none of the facts table, which only the detail endpoint returns.
-        // Those rows are absent rather than empty until the fetch lands, and
-        // `bookFacts` drops absent rows, so the table fills in instead of
-        // flashing placeholders.
+        // Facts are absent rather than empty until the detail fetch lands, and
+        // `bookFacts` drops absent rows, so the table fills in without placeholders.
         book: { ...candidate, ...NO_CATALOGUE_FACTS },
         updatedAt: queryClient.getQueryState(key)?.dataUpdatedAt ?? 0,
       };
@@ -58,13 +48,9 @@ function cachedCandidate(
 }
 
 /**
- * One volume by its Google id, for the book detail screen.
- *
- * A round trip of its own rather than a read of the search results, because the
- * screen has to survive a deep link and a web reload, when no search has run in
- * this session. The cache seeds it where it can — see `cachedCandidate` — and
- * the real timestamp goes with it so a stale hit still refetches on schedule
- * rather than being treated as fresh.
+ * One volume by its Google id. A round trip of its own rather than a read of the
+ * search results, because the screen has to survive a deep link or a web reload
+ * with no search in this session; `cachedCandidate` seeds it where it can.
  */
 export function useBook(googleBooksId: string) {
   const queryClient = useQueryClient();
@@ -78,12 +64,10 @@ export function useBook(googleBooksId: string) {
     queryFn: () => fetchBook(googleBooksId),
     enabled: !!googleBooksId,
     initialData: seed?.book,
-    // Paired with `initialData`: without the real timestamp React Query treats a
-    // cache hit as fresh right now, and a search from ten minutes ago would sit
-    // past its `staleTime` without ever refetching.
+    // Without the real timestamp React Query treats the seeded hit as fresh now, and
+    // a ten-minute-old search would sit past its `staleTime` without refetching.
     initialDataUpdatedAt: seed?.updatedAt,
-    // A volume's metadata does not move; keep it across a back-navigation, as
-    // search does with its results.
+    // A volume's metadata does not move; keep it across a back-navigation.
     staleTime: 5 * 60_000,
   });
 }

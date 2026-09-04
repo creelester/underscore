@@ -35,17 +35,12 @@ export function createApp() {
     }
   });
 
-  // Terminal error handler. Without this, Express 4's default handler serialises
-  // stack traces into the response whenever NODE_ENV !== "production".
-  //
-  // An ApiError is a message we wrote and checked, so it goes out as-is. Anything
-  // else is a bug, and its message is unvetted — it could carry a connection
-  // string or an upstream key — so it becomes an opaque 500 and only the log
-  // sees the detail.
+  // Express 4's default handler serialises stack traces into the response whenever
+  // NODE_ENV !== "production". An ApiError is a message we wrote; anything else could
+  // carry a connection string or an upstream key, so it goes out as an opaque 500.
   app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     if (isApiError(err)) {
-      // Log the upstream detail carried on `cause` — method, url, status — so a
-      // 502 is diagnosable. The client only ever sees the envelope.
+      // The upstream detail on `cause` makes a 502 diagnosable in the log only.
       if (err.code === "UPSTREAM_UNAVAILABLE") {
         console.error(`[upstream] ${err.message}`, err.cause ?? "");
       }

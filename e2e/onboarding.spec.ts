@@ -3,18 +3,12 @@ import { expect, test } from "@playwright/test";
 import { SPLASH_TAGLINE } from "./helpers";
 
 /**
- * Onboarding: the splash's `Get started →` path — three how-it-works pages, then
- * the connect-music screen — ending at the sign-up form.
+ * Onboarding: the splash's `Get started →` path — three how-it-works pages, then the
+ * connect-music screen — ending at the sign-up form. auth.spec.ts reaches `/sign-up`
+ * by URL so the form's coverage does not depend on the flow; this file guards the flow.
  *
- * This is the only route a new user has to sign-up. auth.spec.ts reaches
- * `/sign-up` directly by URL, deliberately, so that nothing about the form's own
- * coverage depends on the flow in front of it; the cost is that nothing there
- * would notice if the path to the form broke. That is what this file guards.
- *
- * Every test starts at `/splash`. Both onboarding screens redirect a direct
- * arrival straight back there — they treat "nothing to go back to" as proof the
- * flow was not entered from its start — so a `goto` into the middle of the flow
- * tests the guard rather than the screen. The guard has its own tests below.
+ * Every test starts at `/splash`, because both onboarding screens send a direct
+ * arrival back there — a `goto` into the middle tests the guard, not the screen.
  */
 
 /** Copy only the connect screen renders, so it identifies that screen on its own. */
@@ -30,16 +24,9 @@ test.describe("onboarding", () => {
     });
 
     test("reaching the last page turns the CTA into 'Connect music'", async ({ page }) => {
-      // The pager keeps all three pages mounted side by side, so which one is on
-      // screen is not something text visibility can answer — an off-screen page
-      // inside a scroll container still has a box and still counts as visible.
-      // The CTA is the signal instead: `Next →` until the last page, then
-      // `Connect music →` (app/src/app/how-it-works.tsx).
-      //
-      // Scrolled to rather than clicked through, because that is the gesture the
-      // screen is built around — react-native-web pages it with CSS scroll snap
-      // — and because `Next →` animates the scroll, so two clicks in a row race
-      // the page index that the second one reads.
+      // All three pages stay mounted, and an off-screen one still counts as visible, so
+      // the CTA is the signal instead. Scrolled rather than clicked: that is the gesture
+      // the screen is built around, and `Next →` animates, so two clicks race.
       await page.getByText("Press play.").scrollIntoViewIfNeeded();
 
       const finish = page.getByRole("button", { name: "Connect music →" });
@@ -51,9 +38,8 @@ test.describe("onboarding", () => {
     });
 
     test("'Skip' leaves how-it-works for connect music", async ({ page }) => {
-      // The eyebrow-and-Skip header sits inside the pager, so it repeats once per
-      // page and three Skips exist at once. `.first()` is the one on the page the
-      // user arrived on — not a way to quiet an ambiguous match.
+      // The header sits inside the pager, so three Skips exist at once; `.first()` is
+      // the one on the arrival page, not a way to quiet an ambiguous match.
       await page.getByRole("button", { name: "Skip" }).first().click();
 
       await expect(page).toHaveURL(/\/connect-music$/);
@@ -67,17 +53,14 @@ test.describe("onboarding", () => {
       await page.getByRole("button", { name: "Connect later" }).click();
 
       await expect(page).toHaveURL(/\/sign-up$/);
-      // The connect screen stays mounted underneath the pushed form, so this
-      // asserts on something only sign-up renders.
+      // The connect screen stays mounted underneath, so assert on sign-up's own copy.
       await expect(page.getByPlaceholder("Name")).toBeVisible();
     });
   });
 
   test.describe("arriving directly", () => {
-    // Every file under app/ is an addressable route, so a reload, a restored URL
-    // or a deep link can open either onboarding screen out of sequence. Both send
-    // that arrival back to the splash rather than opening onboarding halfway
-    // through, with no way back.
+    // Every file under app/ is addressable, so a reload or deep link can open either
+    // screen out of sequence. Both send that arrival back to the splash.
 
     test("sends a direct arrival at how-it-works back to the splash", async ({ page }) => {
       await page.goto("/how-it-works");
