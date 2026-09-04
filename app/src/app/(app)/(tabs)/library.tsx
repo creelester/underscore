@@ -5,7 +5,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { BookCover } from '@/components/book-cover';
 import { EmptyLibrary } from '@/components/empty-library';
-import { LibraryRow, LibrarySection } from '@/components/library-section';
+import { LibraryRow, LibraryRowSkeleton, LibrarySection } from '@/components/library-section';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';
 import { Text } from '@/components/ui/text';
@@ -29,6 +29,13 @@ const SEARCH_DEBOUNCE_MS = 700;
 
 const BOOK_COVER_WIDTH = 48;
 const BOOK_COVER_HEIGHT = 70;
+
+/**
+ * Enough to read as a list without standing in for a count the search has not
+ * returned yet — `MAX_RESULTS` allows eight, and eight placeholders would claim
+ * a full page every time.
+ */
+const SKELETON_ROWS = 3;
 
 /**
  * TODO: replace with the filtered count from `GET /api/bookshelf` once the
@@ -82,6 +89,11 @@ export default function LibraryScreen() {
             ? `Found ${results.length} ${results.length === 1 ? 'result' : 'results'}`
             : 'No results';
 
+  // Gated on there being nothing to show rather than on `isSearching` alone, so
+  // refining a term keeps the previous rows up until the debounce settles
+  // instead of dropping to placeholders between every edit.
+  const isSkeletonVisible = isSearching && results.length === 0;
+
   const isSectionVisible = savedMatchCount > 0 || !!trimmed;
   // A query replaces the empty state with the search's own states, so the two
   // are never on screen together.
@@ -114,6 +126,11 @@ export default function LibraryScreen() {
 
         {isSectionVisible && (
           <LibrarySection label={sectionLabel}>
+            {isSkeletonVisible &&
+              Array.from({ length: SKELETON_ROWS }, (_, index) => (
+                <LibraryRowSkeleton key={index} />
+              ))}
+
             {results.map((book) => (
               <LibraryRow
                 key={book.googleBooksId}
