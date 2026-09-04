@@ -5,11 +5,18 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { BookCover } from '@/components/book-cover';
 import { EmptyLibrary } from '@/components/empty-library';
-import { LibraryRow, LibrarySection } from '@/components/library-section';
+import {
+  LibraryRow,
+  LibraryRowSkeleton,
+  LibrarySection,
+} from '@/components/library-section';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';
 import { Text } from '@/components/ui/text';
-import { MIN_QUERY_LENGTH, useBookSearch } from '@/features/books/use-book-search';
+import {
+  MIN_QUERY_LENGTH,
+  useBookSearch,
+} from '@/features/books/use-book-search';
 import { bookMetaLine } from '@/lib/book-display';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { useTheme } from '@/lib/use-theme';
@@ -26,8 +33,18 @@ const SEARCH_DEBOUNCE_MS = 700;
 const BOOK_COVER_WIDTH = 48;
 const BOOK_COVER_HEIGHT = 70;
 
-/** TODO: the filtered count from `GET /api/bookshelf`. Typed so the gating below stays
- *  a real rule rather than an expression TypeScript folds away. */
+/**
+ * Enough to read as a list without standing in for a count the search has not
+ * returned yet — `MAX_RESULTS` allows eight, and eight placeholders would claim
+ * a full page every time.
+ */
+const SKELETON_ROWS = 3;
+
+/**
+ * TODO: replace with the filtered count from `GET /api/bookshelf` once the
+ * bookshelf endpoint exists. Typed rather than left literal so the gating below
+ * stays a real rule instead of an expression TypeScript folds away.
+ */
 const savedMatchCount: number = 0;
 
 /** TODO: from `GET /api/bookshelf` too. Distinct from `savedMatchCount`: a shelf whose
@@ -43,7 +60,8 @@ export default function LibraryScreen() {
 
   const isLongEnough = trimmed.length >= MIN_QUERY_LENGTH;
   // The catalogue is the fallback: it runs only once the shelf has no match.
-  const isFallbackActive = settled.length >= MIN_QUERY_LENGTH && savedMatchCount === 0;
+  const isFallbackActive =
+    settled.length >= MIN_QUERY_LENGTH && savedMatchCount === 0;
   const search = useBookSearch(isFallbackActive ? settled : '');
   const results = isFallbackActive ? (search.data ?? []) : [];
 
@@ -55,7 +73,11 @@ export default function LibraryScreen() {
     (!isLongEnough || settled !== trimmed || search.isFetching);
   const isFailed = isFallbackActive && !search.isFetching && search.isError;
   const isNoMatch =
-    isLongEnough && savedMatchCount === 0 && !isSearching && !isFailed && results.length === 0;
+    isLongEnough &&
+    savedMatchCount === 0 &&
+    !isSearching &&
+    !isFailed &&
+    results.length === 0;
 
   const sectionLabel = !trimmed
     ? 'Your playlists'
@@ -69,13 +91,18 @@ export default function LibraryScreen() {
             ? `Found ${results.length} ${results.length === 1 ? 'result' : 'results'}`
             : 'No results';
 
+  // Gated on there being nothing to show rather than on `isSearching` alone, so
+  // refining a term keeps the previous rows up until the debounce settles
+  // instead of dropping to placeholders between every edit.
+  const isSkeletonVisible = isSearching && results.length === 0;
+
   const isSectionVisible = savedMatchCount > 0 || !!trimmed;
   // A query replaces the empty state, so the two are never on screen together.
   const isEmptyLibraryVisible = isLibraryEmpty && !trimmed;
 
   return (
-    <View className="flex-1 gap-4">
-      <Text className="text-foreground font-display text-[28px] leading-[31px] tracking-tight">
+    <View className='flex-1 gap-4'>
+      <Text className='text-foreground font-display text-[28px] leading-[31px] tracking-tight'>
         Your library
       </Text>
 
@@ -83,22 +110,28 @@ export default function LibraryScreen() {
         value={query}
         onChangeText={setQuery}
         onClear={() => setQuery('')}
-        placeholder="Search your books, or any book"
+        placeholder='Search your books, or any book'
         autoCorrect={false}
-        returnKeyType="search"
+        returnKeyType='search'
       />
 
       <ScrollView
-        className="flex-1"
+        className='flex-1'
         contentContainerStyle={{ gap: 20, flexGrow: 1 }}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}>
+        keyboardShouldPersistTaps='handled'
+        showsVerticalScrollIndicator={false}
+      >
         {isEmptyLibraryVisible && <EmptyLibrary />}
 
         {/* `RECENT` slots in here once the bookshelf endpoint exists. */}
 
         {isSectionVisible && (
           <LibrarySection label={sectionLabel}>
+            {isSkeletonVisible &&
+              Array.from({ length: SKELETON_ROWS }, (_, index) => (
+                <LibraryRowSkeleton key={index} />
+              ))}
+
             {results.map((book) => (
               <LibraryRow
                 key={book.googleBooksId}
@@ -122,22 +155,22 @@ export default function LibraryScreen() {
         {/* Search answers 502 when the catalogue is down; "no match" would blame the
             query for an outage. */}
         {isFailed && (
-          <View className="gap-[10px] px-1 pt-5 pb-1">
-            <Text className="text-foreground font-display text-[19px] leading-[25px]">
+          <View className='gap-[10px] px-1 pt-5 pb-1'>
+            <Text className='text-foreground font-display text-[19px] leading-[25px]'>
               Search is unavailable right now.
             </Text>
-            <Text className="text-ink-muted font-body text-body-sm">
+            <Text className='text-ink-muted font-body text-body-sm'>
               Try again in a moment.
             </Text>
           </View>
         )}
 
         {isNoMatch && (
-          <View className="gap-[10px] px-1 pt-5 pb-1">
-            <Text className="text-foreground font-display text-[19px] leading-[25px]">
+          <View className='gap-[10px] px-1 pt-5 pb-1'>
+            <Text className='text-foreground font-display text-[19px] leading-[25px]'>
               No match for “{trimmed}”.
             </Text>
-            <Text className="text-ink-muted font-body text-body-sm">
+            <Text className='text-ink-muted font-body text-body-sm'>
               Add it by hand — title, mood and pacing are all it needs.
             </Text>
           </View>
@@ -145,8 +178,17 @@ export default function LibraryScreen() {
       </ScrollView>
 
       {isNoMatch && (
-        <Button variant="secondary" size="lg" onPress={() => router.push('/score-by-hand')}>
-          <Plus size={16} strokeWidth={2.2} color={theme.ink} style={styles.plus} />
+        <Button
+          variant='secondary'
+          size='lg'
+          onPress={() => router.push('/score-by-hand')}
+        >
+          <Plus
+            size={16}
+            strokeWidth={2.2}
+            color={theme.ink}
+            style={styles.plus}
+          />
           <Text>Add manually</Text>
         </Button>
       )}
