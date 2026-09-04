@@ -1,6 +1,12 @@
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
-import Animated, { Easing, FadeInDown } from 'react-native-reanimated';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { MOTION } from '@/lib/theme';
 
@@ -8,29 +14,45 @@ import { MOTION } from '@/lib/theme';
  * The design's `us-fade` — the screen enter every non-splash screen uses:
  * 220ms, `opacity 0→1` with `translateY(8px→0)`, on the standard ease.
  *
- * `FadeInDown` is the right preset but starts 25px out, so the distance is
- * overridden to the design's 8px. Reanimated asks for the flat `translateY`
- * form here rather than a `transform` tuple, which is deprecated for initial
- * values.
- *
- * Built once at module scope: layout-animation builders are re-evaluated on
- * every render if they are constructed inline, which is exactly what the
- * library warns against.
+ * Driven from a shared value rather than Reanimated's `entering` prop, which is
+ * a mount animation: replaying it means remounting, and the one caller wraps the
+ * tab slot, where a remount throws away every tab screen's state — the search
+ * term and results on the library home among them. `replayOn` runs it again
+ * without touching the tree below.
  */
-const US_FADE = FadeInDown.duration(MOTION.durMed)
-  .easing(Easing.bezier(...MOTION.easeStandard))
-  .withInitialValues({ translateY: 8 });
+
+/** The 8px the content travels up over, per the design. */
+const TRAVEL = 8;
 
 export function ScreenFade({
   children,
+  replayOn,
   style,
 }: {
   children: ReactNode;
+  /** Any value that, when it changes, should play the fade again. */
+  replayOn?: unknown;
   style?: StyleProp<ViewStyle>;
 }) {
-  return (
-    <Animated.View entering={US_FADE} style={style}>
-      {children}
-    </Animated.View>
-  );
+  const reduceMotion = useReducedMotion();
+  const progress = useSharedValue(0);
+
+  // `get`/`set` rather than `.value`: the React Compiler treats a value passed to
+  // a hook as immutable, and the eslint rule that enforces that is on.
+  useEffect(() => {
+    progress.set(0);
+    progress.set(
+      withTiming(1, {
+        duration: reduceMotion ? 0 : MOTION.durMed,
+        easing: Easing.bezier(...MOTION.easeStandard),
+      })
+    );
+  }, [replayOn, progress, reduceMotion]);
+
+  const fade = useAnimatedStyle(() => ({
+    opacity: progress.get(),
+    transform: [{ translateY: (1 - progress.get()) * TRAVEL }],
+  }));
+
+  return <Animated.View style={[style, fade]}>{children}</Animated.View>;
 }
