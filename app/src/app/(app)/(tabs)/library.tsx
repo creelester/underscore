@@ -79,29 +79,20 @@ export default function LibraryScreen() {
     !isFailed &&
     results.length === 0;
 
-  // `switch (true)` because the branches test different values rather than one
-  // subject: the first matching case wins, in the design's order of precedence.
   let sectionLabel: string;
-  switch (true) {
-    case !trimmed:
-      sectionLabel = 'Your playlists';
-      break;
-    case savedMatchCount > 0:
-      sectionLabel = 'In your library';
-      break;
-    case isSearching:
-      sectionLabel = 'Searching…';
-      break;
-    case isFailed:
-      sectionLabel = 'Search unavailable';
-      break;
-    case results.length > 0: {
-      const plural = results.length === 1 ? 'result' : 'results';
-      sectionLabel = `Found ${results.length} ${plural}`;
-      break;
-    }
-    default:
-      sectionLabel = 'No results';
+  if (!trimmed) {
+    sectionLabel = 'Your playlists';
+  } else if (savedMatchCount > 0) {
+    sectionLabel = 'In your library';
+  } else if (isSearching) {
+    sectionLabel = 'Searching…';
+  } else if (isFailed) {
+    sectionLabel = 'Search unavailable';
+  } else if (results.length > 0) {
+    const plural = results.length === 1 ? 'result' : 'results';
+    sectionLabel = `Found ${results.length} ${plural}`;
+  } else {
+    sectionLabel = 'No results';
   }
 
   // Gated on there being nothing to show rather than on `isSearching` alone, so
