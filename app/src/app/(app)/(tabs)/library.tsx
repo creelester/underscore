@@ -79,17 +79,30 @@ export default function LibraryScreen() {
     !isFailed &&
     results.length === 0;
 
-  const sectionLabel = !trimmed
-    ? 'Your playlists'
-    : savedMatchCount > 0
-      ? 'In your library'
-      : isSearching
-        ? 'Searching…'
-        : isFailed
-          ? 'Search unavailable'
-          : results.length > 0
-            ? `Found ${results.length} ${results.length === 1 ? 'result' : 'results'}`
-            : 'No results';
+  // `switch (true)` because the branches test different values rather than one
+  // subject: the first matching case wins, in the design's order of precedence.
+  let sectionLabel: string;
+  switch (true) {
+    case !trimmed:
+      sectionLabel = 'Your playlists';
+      break;
+    case savedMatchCount > 0:
+      sectionLabel = 'In your library';
+      break;
+    case isSearching:
+      sectionLabel = 'Searching…';
+      break;
+    case isFailed:
+      sectionLabel = 'Search unavailable';
+      break;
+    case results.length > 0: {
+      const plural = results.length === 1 ? 'result' : 'results';
+      sectionLabel = `Found ${results.length} ${plural}`;
+      break;
+    }
+    default:
+      sectionLabel = 'No results';
+  }
 
   // Gated on there being nothing to show rather than on `isSearching` alone, so
   // refining a term keeps the previous rows up until the debounce settles
