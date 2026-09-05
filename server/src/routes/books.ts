@@ -12,11 +12,8 @@ import { requireSession } from '../middleware/requireSession';
 export const booksRouter = Router();
 
 /**
- * GET /api/books/search?q=…
- *
- * Read-only by design: no Book row is written here. A search hit is a candidate
- * keyed by its Google volume id, and the row is minted later, when a playlist is
- * actually generated from it. See the Books section of the API design doc.
+ * GET /api/books/search?q=… — read-only. The `Book` row is minted later, when a
+ * playlist is generated from the candidate.
  */
 booksRouter.get(
   '/search',
@@ -31,23 +28,16 @@ booksRouter.get(
 
     const results = await searchVolumes(query.data.q);
 
-    // Parsing our own output keeps the server honest about the contract the app
-    // is built against — a connector change that breaks the shape fails here
+    // Parsing our own output means a connector change that breaks the shape fails here
     // rather than in the client.
     res.json(BookSearchResponseSchema.parse({ results }));
   }),
 );
 
 /**
- * GET /api/books/:googleBooksId
- *
- * The book detail screen's read. Registered after `/search` so the literal path
- * keeps winning — Express matches in declaration order, and a param route here
- * would otherwise swallow it.
- *
- * Read-only for the same reason search is: the `Book` row is minted by
- * `POST /api/playlists/generate`, which re-fetches the volume itself. Nothing a
- * client sends here is ever persisted.
+ * GET /api/books/:googleBooksId — the book detail read, also read-only. Registered
+ * after `/search` so the literal path keeps winning: Express matches in declaration
+ * order and this param route would otherwise swallow it.
  */
 booksRouter.get(
   '/:googleBooksId',

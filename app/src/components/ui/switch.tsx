@@ -11,20 +11,12 @@ import { MOTION } from '@/lib/theme';
 import { useTheme } from '@/lib/use-theme';
 
 /**
- * The design's pill toggle — `ThemeSwitch` in the component inventory, used for
- * the Profile preferences rows and for book detail's `LYRICS`.
+ * The design's pill toggle. Sized 52 × 32 from book detail's inline copy rather than
+ * the DS component's 52 × 30, per the precedence rule that an inlining screen wins.
  *
- * Sized from book detail's inline copy (52 × 32) rather than the DS component's
- * 52 × 30, per the handoff's precedence rule: where a screen inlines its own
- * version, the screen wins.
- *
- * `StyleSheet.create` rather than NativeWind classes, which is the exception in
- * this codebase and deliberate: the knob's size and travel are *derived* from
- * the track — width less its padding, borders and the knob — and a Tailwind
- * class has to be a literal string, so classes would mean writing 32, 3 and 24
- * twice and letting them drift. The colours still come from the theme rather
- * than from hex here, because two of them are animated and Reanimated has to
- * own those anyway.
+ * `StyleSheet.create` rather than NativeWind classes, exceptionally: the knob's size
+ * and travel are derived from the track, and a Tailwind class has to be a literal, so
+ * classes would mean writing the same numbers twice and letting them drift.
  */
 
 const WIDTH = 52;

@@ -3,13 +3,9 @@ import LockupPlum from '@/assets/images/under-score-logo-plum.svg';
 import { useTheme } from '@/lib/use-theme';
 
 /**
- * The logo lockup — the word "under", the wave mark and the word "score" locked into
- * one fixed assembly, which each SVG ships whole.
- *
- * There is one file per theme rather than one file recoloured at runtime because the
- * fill is baked onto a `<g>` inside the artwork. Lilac on dark and plum on light are
- * the design's pairings; the gradient-filled variant is retired on the splash, so
- * this must never be tinted (the design spec, Splash).
+ * The logo lockup, which each SVG ships whole. One file per theme rather than one
+ * recoloured at runtime, because the fill is baked onto a `<g>` inside the artwork.
+ * The gradient-filled variant is retired, so this must never be tinted.
  */
 export function LogoLockup({ size = 242 }: { size?: number }) {
   const { isLight } = useTheme();

@@ -11,12 +11,10 @@ import { LOCKUP_TOP, SplashBackdrop } from '@/components/splash-backdrop';
 const DURATION = 600;
 
 /**
- * Bridges the native splash to the first rendered screen: draws the same artwork over
- * the whole viewport, hides the native splash underneath it, then fades itself out.
- *
- * It shares `SplashBackdrop` and `LogoLockup` with `app/splash.tsx`, and the native
- * splash in `app.json` is configured from the same colours, so the three surfaces hand
- * off without a seam in either colour scheme.
+ * Bridges the native splash to the first rendered screen: the same artwork over the
+ * whole viewport, hiding the native splash beneath it, then fading out. Shares its
+ * pieces with `app/splash.tsx` and its colours with `app.json`, so all three hand off
+ * without a seam.
  */
 export function AnimatedSplashOverlay() {
   const insets = useSafeAreaInsets();
@@ -44,8 +42,8 @@ export function AnimatedSplashOverlay() {
     },
   });
 
-  // The lockup sits where `app/splash.tsx` puts it, not centred, so the fade reveals an
-  // identical frame instead of letting the mark settle into place.
+  // Positioned as `app/splash.tsx` puts it, not centred, so the fade reveals an
+  // identical frame rather than letting the mark settle into place.
   const artwork = (
     <>
       <SplashBackdrop />

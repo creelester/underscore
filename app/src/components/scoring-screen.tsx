@@ -8,30 +8,19 @@ import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 
 /**
- * The shell every pushed screen in the scoring flow shares: the screen padding
- * and the `← Back` control.
+ * The screen padding and `← Back` control every pushed scoring screen shares. A
+ * component, not a route layout: these are plain siblings under `(app)`, and a layout
+ * would need a route group of its own purely to hang it on.
  *
- * A component rather than a route layout because these screens are plain
- * siblings under `(app)`. Giving them a layout would mean wrapping them in a
- * route group of their own purely to hang it on, which buys a directory and
- * changes nothing about what renders.
- *
- * `contentGap` is the space under `← Back`, which the design sets per screen
- * rather than globally — 18px on book detail, 14px on mood and by-hand.
+ * `contentGap` is the space under `← Back`, which the design sets per screen.
  */
 
 /**
- * Where `← Back` goes when there is no history to pop.
+ * Where `← Back` goes with no history to pop — a deep link or a web reload, where
+ * `router.back()` is a silent no-op and the control looks broken. The library home is
+ * where a score begins, and the design gives back an explicit destination anyway.
  *
- * These screens are deep-linkable — `/book/<id>` is a real URL, and on web a
- * reload re-enters the route cold — and in that state `router.back()` is a
- * silent no-op, so the control looks broken. The design gives book detail's back
- * an explicit destination rather than a history pop (`goSearch` in the
- * prototype), and the library home is where a score begins, so it is also the
- * right place to land from a cold entry.
- *
- * `replace`, not `push`: the route being left had nothing behind it, and pushing
- * would build a history that runs backwards.
+ * `replace`, not `push`: pushing would build a history that runs backwards.
  */
 const BACK_FALLBACK = '/library';
 
@@ -39,8 +28,7 @@ export function ScoringScreen({
   children,
   contentGap = 16,
 }: {
-  // Optional so a screen still waiting on its data can render the shell alone,
-  // which is what book detail does instead of flashing a spinner.
+  // Optional so a screen awaiting data can render the shell alone, as book detail does.
   children?: ReactNode;
   contentGap?: number;
 }) {

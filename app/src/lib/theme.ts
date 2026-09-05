@@ -1,12 +1,8 @@
 import { DarkTheme, DefaultTheme, type Theme } from 'expo-router';
 
-/**
- * TypeScript mirror of the CSS variables in `src/global.css`. Use these where a raw
- * colour value is required (gradients, status bar, navigation theme, SVG fills) and
- * Tailwind classes everywhere else — the two must stay in sync.
- *
- * Source of truth: the design system's colour tokens.
- */
+// Mirror of the CSS variables in `src/global.css`, which the design system's tokens
+// drive. Use these only where a raw colour value is required — gradients, status bar,
+// navigation theme, SVG fills — and Tailwind classes everywhere else.
 export const THEME = {
   light: {
     background: '#FFF8EF',
@@ -76,10 +72,7 @@ export const MOTION = {
   durMed: 220,
 } as const;
 
-/**
- * Shadows are RN `boxShadow` strings so the design's negative-spread values survive
- * intact — RN's legacy shadowOffset/shadowRadius props cannot express them.
- */
+/** `boxShadow` strings: RN's legacy shadow props cannot express negative spread. */
 export const SHADOWS = {
   light: {
     glow: '0 16px 32px -14px rgba(255,0,132,0.30)',
@@ -94,12 +87,8 @@ export const SHADOWS = {
 } as const;
 
 /**
- * The splash is the one surface that does not sit on `THEME.background`: it stacks a
- * flat ground, a faded hero haze and a half-visible record. See the Splash section of
- * the design spec; the values come from the prototype's computed styles.
- *
- * `ground` is deliberately deeper than `background` in both themes — the haze and the
- * record are read against it, not against the app surface.
+ * The one surface not on `THEME.background`. `ground` is deeper than `background` in
+ * both themes: the haze and the record are read against it, not the app surface.
  */
 export const SPLASH = {
   light: {
@@ -117,12 +106,8 @@ export const SPLASH = {
 } as const;
 
 /**
- * The blotchy field every screen outside the splash sits on, from "App background (all
- * non-splash screens)" in the design spec. `AppBackdrop` draws it.
- *
- * One entry per CSS layer, in the order the design lists them — `radial-gradient(rx ry at
- * x y, color alpha 0%, transparent fade)` — with the lengths kept as fractions of the
- * viewport so they scale with the device the way the percentages do.
+ * The blotchy field every non-splash screen sits on; `AppBackdrop` draws it. One entry
+ * per CSS layer, lengths kept as viewport fractions so they scale like the percentages.
  */
 export const APP_BACKGROUND = {
   light: {
@@ -139,8 +124,7 @@ export const APP_BACKGROUND = {
     blotches: [
       { color: PALETTE.plum600, alpha: 0.85, x: 0.06, y: 0.02, rx: 0.64, ry: 0.3, fade: 0.7 },
       { color: PALETTE.magenta600, alpha: 0.24, x: 0.98, y: 0.18, rx: 0.58, ry: 0.26, fade: 0.72 },
-      // rgb(90,42,140) — a lift between plum-600 and orchid that the palette has no token
-      // for; the design uses it only here.
+      // A lift between plum-600 and orchid with no palette token; used only here.
       { color: '#5A2A8C', alpha: 0.4, x: 0.14, y: 0.62, rx: 0.74, ry: 0.34, fade: 0.74 },
       { color: PALETTE.plum600, alpha: 0.55, x: 0.92, y: 0.88, rx: 0.66, ry: 0.3, fade: 0.76 },
     ],

@@ -4,29 +4,19 @@ import { Pressable, View } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { pressed } from '@/lib/pressed';
 
-/**
- * Body copy shown a few lines at a time, with a control to open it out — the
- * book blurb and its `More` / `Less` toggle.
- */
+/** Body copy shown a few lines at a time, with a `More` / `Less` toggle. */
 
 const MORE_LABEL = 'More';
 const LESS_LABEL = 'Less';
 
 /**
- * A deliberate *lower bound* on how many characters a line holds, which is what
- * decides whether the toggle appears at all.
+ * A deliberate lower bound on characters per line, which decides whether the toggle
+ * appears. Measuring has no cross-platform answer: `onTextLayout` cannot see past the
+ * clamp, and measuring an unclamped copy means a second copy in the DOM that
+ * react-native-web never resolves at all.
  *
- * Measuring would be exact but has no cross-platform answer: `onTextLayout`
- * reports only the lines a clamped `Text` kept, so it can never see past the
- * clamp, and measuring an unclamped copy means keeping a second copy of the
- * text mounted — which react-native-web then never resolves, because it does not
- * implement `onTextLayout` at all. That copy would sit in the DOM permanently,
- * duplicating the blurb for every text query the e2e suite makes.
- *
- * So the count is estimated instead, and the estimate is biased. Being low costs
- * an occasional `More` on text that already fitted — one tap, nothing hidden.
- * Being high would leave text truncated with no control to reveal it, which is
- * the failure this component exists to prevent.
+ * Biased low on purpose: that costs a `More` on text that already fitted, where biased
+ * high would truncate with no control to reveal the rest.
  */
 const MIN_CHARS_PER_LINE = 30;
 

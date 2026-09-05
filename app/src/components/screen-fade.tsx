@@ -11,14 +11,10 @@ import Animated, {
 import { MOTION } from '@/lib/theme';
 
 /**
- * The design's `us-fade` — the screen enter every non-splash screen uses:
- * 220ms, `opacity 0→1` with `translateY(8px→0)`, on the standard ease.
- *
- * Driven from a shared value rather than Reanimated's `entering` prop, which is
- * a mount animation: replaying it means remounting, and the one caller wraps the
- * tab slot, where a remount throws away every tab screen's state — the search
- * term and results on the library home among them. `replayOn` runs it again
- * without touching the tree below.
+ * The design's `us-fade`, the enter every non-splash screen uses. Driven from a shared
+ * value rather than Reanimated's `entering` prop, which is a mount animation: replaying
+ * it means remounting, and the caller wraps the tab slot, where that would throw away
+ * every tab screen's state. `replayOn` runs it again without touching the tree below.
  */
 
 /** The 8px the content travels up over, per the design. */
@@ -37,8 +33,8 @@ export function ScreenFade({
   const reduceMotion = useReducedMotion();
   const progress = useSharedValue(0);
 
-  // `get`/`set` rather than `.value`: the React Compiler treats a value passed to
-  // a hook as immutable, and the eslint rule that enforces that is on.
+  // `get`/`set` rather than `.value`: the React Compiler treats a value passed to a
+  // hook as immutable, and the eslint rule enforcing that is on.
   useEffect(() => {
     progress.set(0);
     progress.set(

@@ -10,17 +10,12 @@ import { cn } from '@/lib/utils';
 import { pressedStyle } from '@/lib/pressed';
 
 /**
- * Under Score's button, per the design spec.
+ * Under Score's button. `primary` carries the warm gradient; `tertiary` is the
+ * solid-plum stand-in for it wherever the background is already a gradient, since two
+ * must never overlap. Press feedback is scale(.96) only, never a colour shift.
  *
- * Three variants, one shared label spec (16px / 500 / uppercase / .05em tracking).
- * `primary` carries the warm gradient; `tertiary` is the solid-plum alternative used
- * wherever the background is already a gradient, because two gradients must never
- * overlap. Emphasis comes from fill and glow, never from a hover/press colour shift —
- * press feedback is scale(.96) only.
- *
- * `destructive` is the one variant the design does not specify; it exists because
- * destructive actions need to read as such. Anything the design calls "ghost" —
- * `← Back`, `Skip`, `Done`, `Sign out` — is `secondary`.
+ * `destructive` is the one variant the design does not specify. Anything it calls
+ * "ghost" — `← Back`, `Skip`, `Done`, `Sign out` — is `secondary`.
  */
 const buttonVariants = cva(
   cn(
@@ -47,9 +42,8 @@ const buttonVariants = cva(
         icon: 'h-11 w-11 px-0',
       },
     },
-    // After the size classes, so this wins the padding: a text button's label is the whole
-    // control, so it sits flush with the screen's content margin instead of inside a
-    // pill's padding. The size still sets the height, which keeps the tap target.
+    // After the size classes so it wins the padding: the label sits flush with the
+    // content margin, while the size still sets the height that keeps the tap target.
     compoundVariants: [{ variant: 'text', class: 'px-0' }],
     defaultVariants: {
       variant: 'primary',
@@ -58,9 +52,7 @@ const buttonVariants = cva(
   }
 );
 
-// `font-display` (Quicksand), not body: the bundle's shared label spec is
-// `500 16px var(--font-display)`, and the README assigns display to buttons
-// alongside headings and labels.
+// `font-display`, not body: the bundle's label spec is `500 16px var(--font-display)`.
 const buttonTextVariants = cva(
   'text-center font-display-medium text-base tracking-label uppercase',
   {

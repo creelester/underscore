@@ -11,18 +11,14 @@ import { moodGradient } from '@/lib/gradients';
 import { pressedStyle } from '@/lib/pressed';
 
 /**
- * Onboarding step 4 — the design's "Connect music" (screen 3). Frontend only
- * for now: the Spotify row and "Connect later" both land on sign-up. When the
- * Spotify connector ships, the row kicks off its OAuth instead.
- *
- * Apple Music is designed as a visible "Coming soon" row — inert on purpose.
+ * Onboarding step 4 — "Connect music". Frontend only: both rows land on sign-up until
+ * the Spotify connector ships. Apple Music is a "Coming soon" row, inert by design.
  */
 export default function ConnectMusicScreen() {
   const insets = useSafeAreaInsets();
 
-  // Step 4 of a flow that starts at the splash, so an arrival that skipped it — a reload,
-  // a restored URL, a deep link — goes back there. See how-it-works.tsx for why nothing
-  // to go back to is the signal.
+  // The flow starts at the splash, so an arrival that skipped it goes back there. See
+  // how-it-works.tsx for why nothing to go back to is the signal.
   const [openedDirectly] = useState(() => !router.canGoBack());
   if (openedDirectly) return <Redirect href='/splash' />;
 

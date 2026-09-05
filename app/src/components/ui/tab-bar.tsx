@@ -7,25 +7,13 @@ import { Text } from '@/components/ui/text';
 import { useTheme } from '@/lib/use-theme';
 
 /**
- * The design's tab bar — Now / Library / Profile.
+ * The design's tab bar — Now / Library / Profile. The bar follows the DS component;
+ * the items follow the prototype, which hand-writes its own (icon above label, both
+ * one colour) rather than importing the bundle's older dot-and-label version.
  *
- * The bar itself is `components/navigation/TabBar.jsx` in `_ds_bundle.js`: a
- * hairline top rule over `--surface`, with the safe-area inset owned here rather
- * than by the screens above it.
- *
- * The *items* deliberately do not follow that bundle component. `Under Score
- * App.dc.html` hand-writes its own bar instead of importing the DS one, giving
- * each tab a 22px outline icon above the label and colouring icon and label
- * together — `--primary` when active, `--ink-faint` when not. The bundle's
- * version still describes an earlier design: a 6px dot, no icons, and an active
- * label in `--ink`. Where a screen inlines its own version the screen wins, so
- * the icons are current and the dot is not.
- *
- * Layout here is `style` rather than NativeWind classes, unlike the rest of the
- * app: `TabTrigger asChild` clones the button through a slot and merges its own
- * style in, and rather than reason about how that lands on top of the style
- * NativeWind compiles a className into, the layout that has to survive the clone
- * is written directly. Colour still comes from the theme tokens.
+ * Layout is `style`, not NativeWind classes: `TabTrigger asChild` clones the button
+ * through a slot and merges its own style in, so the layout that has to survive the
+ * clone is written directly. Colour still comes from the theme tokens.
  */
 export function TabBar({ children }: { children: React.ReactNode }) {
   const insets = useSafeAreaInsets();
@@ -46,11 +34,8 @@ export function TabBar({ children }: { children: React.ReactNode }) {
   );
 }
 
-/**
- * One tab. `expo-router/ui`'s `TabTrigger asChild` hands this its press handlers
- * and `isFocused`, so it forwards a ref and spreads what it is given — before its
- * own style, which has to win.
- */
+/** `TabTrigger asChild` hands down press handlers and `isFocused`, so this forwards a
+ *  ref and spreads what it is given — before its own style, which has to win. */
 export const TabBarButton = forwardRef<
   RNView,
   React.ComponentProps<typeof Pressable> & {
@@ -61,8 +46,7 @@ export const TabBarButton = forwardRef<
 >(function TabBarButton({ isFocused, label, icon: Icon, style, ...props }, ref) {
   const { theme } = useTheme();
 
-  // One colour for the pair: the prototype sets it on the button and lets the
-  // icon stroke `currentColor`, so the label can never drift from the glyph.
+  // One colour for the pair, as the prototype does with `currentColor`.
   const color = isFocused ? theme.primary : theme.inkFaint;
 
   return (

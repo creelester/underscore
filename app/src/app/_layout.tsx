@@ -30,22 +30,14 @@ import { useTheme } from '@/lib/use-theme';
 SplashScreen.preventAutoHideAsync();
 
 /**
- * Mirrors the device's colour scheme onto NativeWind — on web only.
+ * Mirrors the device's colour scheme onto NativeWind, on web only — the two runtimes
+ * disagree. Native already follows the device, and `colorScheme.set()` there delegates
+ * to `Appearance.setColorScheme()`, which would pin the app to whatever the device was
+ * at mount. Web seeds to `'light'` from the absent `dark` class instead of falling back
+ * to the system, so it needs the scheme resolved by hand.
  *
- * NativeWind's two runtimes disagree, so this has to be one-sided:
- *
- * - **Native** already follows the device. `colorScheme.get()` falls back to a system
- *   observable driven by its own Appearance and AppState listeners. Calling
- *   `colorScheme.set()` here would be harmful, not redundant: on native it delegates to
- *   `Appearance.setColorScheme()`, which *overrides* the app's appearance, pinning it to
- *   whatever the device happened to be at mount and deafening it to later changes.
- * - **Web** does not. Its observable seeds to `'light'` from the absent `dark` class
- *   rather than falling back to the system, and only the literal value `'dark'` ever adds
- *   that class — `'system'` removes it, which would leave `dark:` variants inert while JS
- *   read dark. So web needs the scheme resolved and applied by hand.
- *
- * `darkMode` stays `'class'` rather than `'media'` so a Profile theme override can call
- * `colorScheme.set()` later — under `'media'` that call throws.
+ * `darkMode` stays `'class'`, not `'media'`, so a Profile theme override can call
+ * `colorScheme.set()` later — under `'media'` that throws.
  */
 function useDeviceColorScheme() {
   useEffect(() => {
@@ -78,32 +70,26 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={styles.root}>
-      {/* Above ThemeProvider so the cache outlives any theme remount, and above
-          the fonts/session gate below so no screen can mount without it. */}
+      {/* Above ThemeProvider so the cache outlives a theme remount, and above the gate
+          below so no screen can mount without it. */}
       <QueryClientProvider client={queryClient}>
         <ThemeProvider value={NAV_THEME[scheme]}>
           <StatusBar style={isLight ? 'dark' : 'light'} />
           <AnimatedSplashOverlay />
           {!isPending && fontsLoaded && (
             <Stack screenOptions={{ headerShown: false }}>
-              {/* One entry guards every signed-in screen, because `(app)` is the auth
-                  boundary as a directory rather than as a list: anything under it is
-                  protected by existing, so a new screen cannot ship reachable by
-                  forgetting to name it here. `(app)` is Expo Router's own name for this
-                  group — see its authentication guide — which is why the path stutters:
-                  `app/` the workspace, `src/app/` the routes directory, `(app)/` the
-                  guarded group. Three different meanings, none of them free to rename. */}
+              {/* One entry guards every signed-in screen: `(app)` is the auth boundary as
+                  a directory, so a new screen cannot ship reachable by forgetting to name
+                  it here. The name is Expo Router's own, hence the stuttering path. */}
               <Stack.Protected guard={!!session}>
                 <Stack.Screen name="(app)" />
               </Stack.Protected>
 
-              {/* `splash` is first, which makes it this group's fallback: `/` and a
-                  sign-out both settle there, and the forms are reached from its CTAs.
-                  Reordering these silently changes where signed-out visitors land.
-
-                  Both forms fade rather than slide: the splash grows its record to fill
-                  the viewport before it pushes (app/splash.tsx), and a slide would carry
-                  the form in across that frame instead of out of it. */}
+              {/* `splash` is first, making it this group's fallback: `/` and a sign-out
+                  both settle there. Reordering silently moves where signed-out visitors
+                  land. Both forms fade rather than slide, because the splash grows its
+                  record to fill the viewport first and a slide would cross that frame
+                  rather than come out of it. */}
               <Stack.Protected guard={!session}>
                 <Stack.Screen name="splash" />
                 <Stack.Screen name="how-it-works" options={{ animation: 'fade' }} />

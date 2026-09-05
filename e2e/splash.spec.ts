@@ -3,17 +3,13 @@ import { expect, test } from "@playwright/test";
 import { SPLASH_TAGLINE, expectSignedInApp, logInAsSeededUser } from "./helpers";
 
 /**
- * The splash screen: where signed-out visitors land, and the two CTAs that lead off
- * it.
+ * The splash screen: where signed-out visitors land, and the two CTAs off it. It is
+ * registered first in the signed-out group, making it that group's fallback —
+ * reordering would silently move `/` and every sign-out, which the landing assertions
+ * guard.
  *
- * `splash` is registered first in the signed-out group in app/src/app/_layout.tsx,
- * which makes it that group's fallback — reordering those screens would silently send
- * `/` and every sign-out somewhere else, so the landing assertions below are the guard
- * on that ordering.
- *
- * Nothing here asserts on colour: the app follows the device colour scheme, and
- * Playwright's default (`colorScheme: "light"`) is not the app's own default, so a
- * theme-dependent assertion would pin the harness rather than the product.
+ * Nothing asserts on colour: Playwright's `colorScheme: "light"` default is not the
+ * app's, so a theme assertion would pin the harness rather than the product.
  */
 
 test.describe("the splash screen", () => {
@@ -27,20 +23,15 @@ test.describe("the splash screen", () => {
   test("shows the logo lockup and the tagline", async ({ page }) => {
     await page.goto("/splash");
 
-    // The tagline first: it is the one thing only this screen renders, so seeing it
-    // means the screen itself is mounted rather than just the boot overlay.
+    // Only this screen renders the tagline, so it proves the screen and not the overlay.
     await expect(page.getByText(SPLASH_TAGLINE)).toBeVisible();
 
-    // The lockup ships as an inline `<svg>`, so it takes role `img`; its accessible
-    // name is the `accessibilityLabel` LogoLockup sets, which react-native-svg renders
-    // as `aria-label`. (The artwork's own `<title>` does not survive the export —
-    // SVGO's `removeTitle` runs as part of react-native-svg-transformer's preset.)
+    // Inline `<svg>`, so role `img` named by LogoLockup's `accessibilityLabel` — the
+    // artwork's own `<title>` is stripped by SVGO in the svg-transformer preset.
     //
-    // The boot overlay (app/src/components/splash-overlay.tsx) draws the same lockup
-    // over the whole viewport until it fades out, so for about half a second there are
-    // two. Waiting for the count to settle is what keeps the strict-mode locator from
-    // resolving to both — a strict violation fails an assertion outright, it is not
-    // retried away.
+    // The boot overlay draws the same lockup, so for ~half a second there are two.
+    // Waiting for the count to settle keeps the strict-mode locator off both; a strict
+    // violation fails outright rather than being retried.
     const lockup = page.getByRole("img", { name: "Under Score" });
     await expect(lockup).toHaveCount(1);
     await expect(lockup).toBeVisible();
@@ -51,13 +42,10 @@ test.describe("the splash screen", () => {
 
     await page.getByRole("button", { name: "Get started →" }).click();
 
-    // `Get started →` opens onboarding, not the sign-up form: sign-up is the far
-    // end of that flow, two screens later (app/src/app/splash.tsx). `I already
-    // have an account`, below, is the CTA that skips onboarding. The walk from
-    // here through to sign-up is onboarding.spec.ts.
+    // `Get started →` opens onboarding; sign-up is two screens further on. The walk
+    // through to it is onboarding.spec.ts.
     await expect(page).toHaveURL(/\/how-it-works$/);
-    // The splash stays mounted underneath the pushed screen, so this asserts on
-    // something only how-it-works renders.
+    // The splash stays mounted underneath, so assert on how-it-works' own copy.
     await expect(page.getByRole("button", { name: "Next →" })).toBeVisible();
   });
 

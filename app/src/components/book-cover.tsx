@@ -8,16 +8,9 @@ import { MOTION } from '@/lib/theme';
 import { useTheme } from '@/lib/use-theme';
 
 /**
- * A book's artwork, or the mood swatch that stands in for it.
- *
- * The design draws every cover as a mood gradient and marks that a placeholder
- * to be wired to real imagery, so a volume with a Google thumbnail shows it and
- * everything else falls back to `coverMood`'s deterministic swatch. The gradient
- * sits underneath rather than beside the image, which also covers the gap while
- * a thumbnail loads and the case where it fails outright.
- *
- * Sized by prop because the same cover appears at 48 × 70 in a library row and
- * 108 × 158 on book detail.
+ * A book's artwork, or the mood swatch that stands in for it. The gradient sits
+ * underneath the image rather than beside it, which also covers the gap while a
+ * thumbnail loads and the case where it fails outright.
  */
 export function BookCover({
   googleBooksId,

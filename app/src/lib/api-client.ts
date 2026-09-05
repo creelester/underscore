@@ -6,19 +6,15 @@ import { Platform } from 'react-native';
 
 import { authClient } from './auth-client';
 
-/**
- * The client for our own API. Better Auth's own endpoints do not go through here
- * — `authClient` owns those — so this is exclusively `/api/*` product routes.
- */
+/** Product routes only; `authClient` owns Better Auth's own endpoints. */
 export const apiClient = createAxiosInstance({
-  // Same resolution as auth-client.ts: both must point at the same origin or the
-  // session cookie is scoped to a host we never call.
+  // Must resolve to the same origin as auth-client.ts, or the session cookie is scoped
+  // to a host we never call.
   baseURL: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000',
   timeout: 15_000,
-  // Web only. The browser holds the session cookie and the server's cors() is
-  // configured with credentials: true. On native there is no cookie jar, so this
-  // stays off and the header below carries the session instead — Better Auth's
-  // Expo docs are explicit that sending both interferes with the manual header.
+  // Web only: the browser holds the cookie. On native there is no cookie jar and the
+  // header below carries the session — Better Auth's Expo docs warn that sending both
+  // interferes with the manual header.
   withCredentials: Platform.OS === 'web',
 });
 
@@ -31,10 +27,7 @@ if (Platform.OS !== 'web') {
   });
 }
 
-/**
- * True when a rejection is our documented error envelope, letting callers branch
- * on `code` rather than on status numbers.
- */
+/** True when a rejection is our error envelope, so callers branch on `code`. */
 export function isApiError(error: unknown): error is ApiError {
   return ApiErrorSchema.safeParse(error).success;
 }
@@ -46,9 +39,8 @@ apiClient.interceptors.response.use(
     const envelope = ApiErrorSchema.safeParse(error.response?.data);
     if (envelope.success) return Promise.reject(envelope.data);
 
-    // No envelope means we never reached our API (offline, DNS, timeout) or it
-    // failed before the error handler ran. Present it in the same shape so
-    // consumers have exactly one error type to deal with.
+    // No envelope means we never reached our API, or it failed before the error handler
+    // ran. Same shape either way, so consumers have one error type.
     const fallback: ApiError = {
       code: 'UPSTREAM_UNAVAILABLE',
       message: error.message || 'Could not reach Underscore',
