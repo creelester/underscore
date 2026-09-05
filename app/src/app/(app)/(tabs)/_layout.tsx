@@ -1,7 +1,7 @@
 import { Navigator } from 'expo-router';
 import { TabList, TabSlot, TabTrigger, Tabs } from 'expo-router/ui';
 import { BookOpen, CirclePlay, UserRound } from 'lucide-react-native';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppBackdrop } from '@/components/app-backdrop';
@@ -56,13 +56,9 @@ function TabsContent() {
       }}>
       <AppBackdrop />
 
-      <ScreenFade replayOn={focusedTab} style={styles.slot}>
+      <ScreenFade replayOn={focusedTab}>
         <TabSlot />
       </ScreenFade>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  slot: { flex: 1 },
-});

@@ -1,5 +1,4 @@
 import { useEffect, type ReactNode } from 'react';
-import type { StyleProp, ViewStyle } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -23,12 +22,10 @@ const TRAVEL = 8;
 export function ScreenFade({
   children,
   replayOn,
-  style,
 }: {
   children: ReactNode;
   /** Any value that, when it changes, should play the fade again. */
   replayOn?: unknown;
-  style?: StyleProp<ViewStyle>;
 }) {
   const reduceMotion = useReducedMotion();
   const progress = useSharedValue(0);
@@ -45,10 +42,14 @@ export function ScreenFade({
     );
   }, [replayOn, progress, reduceMotion]);
 
+  // `flex` belongs in the animated style, not a static one alongside it. Reanimated 4
+  // drops the static half of `style={[layout, animated]}` on this component, which
+  // collapsed the tab slot to zero height and rendered every tab screen invisible.
   const fade = useAnimatedStyle(() => ({
+    flex: 1,
     opacity: progress.get(),
     transform: [{ translateY: (1 - progress.get()) * TRAVEL }],
   }));
 
-  return <Animated.View style={[style, fade]}>{children}</Animated.View>;
+  return <Animated.View style={fade}>{children}</Animated.View>;
 }
