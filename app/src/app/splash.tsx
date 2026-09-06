@@ -41,7 +41,9 @@ export default function SplashScreen() {
 
   // `get`/`set` rather than `.value`: the React Compiler treats a value passed to a hook
   // as immutable, and the eslint rule enforcing that is on.
-  const columnStyle = useAnimatedStyle(() => ({ opacity: column.get() }));
+  // `flex` rides inside the worklet: Reanimated drops static layout passed alongside an
+  // animated style, so it cannot sit in the `style` array next to it.
+  const columnStyle = useAnimatedStyle(() => ({ flex: 1, opacity: column.get() }));
 
   // The screen stays mounted under what it pushed. Resetting on focus rather than after
   // the push is what makes a swipe back — including one abandoned halfway — land on the
@@ -57,7 +59,7 @@ export default function SplashScreen() {
       return () => {
         if (pushTimer.current) clearTimeout(pushTimer.current);
       };
-    }, [zoom, column])
+    }, [zoom, column]),
   );
 
   /**
@@ -75,44 +77,47 @@ export default function SplashScreen() {
     }
 
     column.set(withTiming(0, { duration: COLUMN_FADE_MS }));
-    zoom.set(withTiming(1, { duration: ZOOM_MS, easing: Easing.inOut(Easing.quad) }));
+    zoom.set(
+      withTiming(1, { duration: ZOOM_MS, easing: Easing.inOut(Easing.quad) }),
+    );
 
     pushTimer.current = setTimeout(() => router.push(href), PUSH_AT_MS);
   };
 
-  // `style` carries only what a NativeWind class cannot: device insets, the shared
-  // `LOCKUP_TOP`, and `columnStyle`, which runs on the UI thread. Insets are applied by
-  // hand because `<SafeAreaView>` would drop the design's 34px bottom gap.
+  // The animated node carries no `className`: NativeWind's cssInterop and Reanimated
+  // both rewrite `style`, and the class styles lose. Layout sits on the plain child.
+  // Insets are applied by hand because `<SafeAreaView>` drops the design's 34px bottom gap.
   return (
-    <View className="flex-1">
+    <View className='flex-1'>
       <SplashBackdrop zoom={zoom} />
 
-      <Animated.View
-        className="px-screen-wide flex-1 justify-between"
-        style={[
-          {
+      <Animated.View style={columnStyle}>
+        <View
+          className='px-screen-wide flex-1 justify-between'
+          style={{
             paddingTop: insets.top,
             paddingBottom: Math.max(insets.bottom, 34),
-          },
-          columnStyle,
-        ]}>
-        <View className="items-center" style={styles.lockup}>
-          <LogoLockup />
-          <Text className="text-plum-600 dark:text-lilac-200 font-display-medium text-body mt-[18px] text-center">
-            a soundtrack to all your stories
-          </Text>
-        </View>
+          }}
+        >
+          <View className='items-center' style={styles.lockup}>
+            <LogoLockup />
+            <Text className='text-plum-600 dark:text-lilac-200 font-display-medium text-body mt-[18px] text-center'>
+              a soundtrack to all your stories
+            </Text>
+          </View>
 
-        <View className="gap-3">
-          <Button
-            size="lg"
-            variant={isLight ? 'tertiary' : 'primary'}
-            onPress={() => leave('/how-it-works')}>
-            <Text>Get started →</Text>
-          </Button>
-          <Button size="lg" variant="secondary" onPress={() => leave('/login')}>
-            <Text>I already have an account</Text>
-          </Button>
+          <View className='gap-3'>
+            <Button
+              size='lg'
+              variant={isLight ? 'tertiary' : 'primary'}
+              onPress={() => leave('/how-it-works')}
+            >
+              <Text>Get started →</Text>
+            </Button>
+            <Button size='lg' variant='secondary' onPress={() => leave('/login')}>
+              <Text>I already have an account</Text>
+            </Button>
+          </View>
         </View>
       </Animated.View>
     </View>
