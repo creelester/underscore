@@ -59,7 +59,7 @@ export default function SplashScreen() {
       return () => {
         if (pushTimer.current) clearTimeout(pushTimer.current);
       };
-    }, [zoom, column]),
+    }, [zoom, column])
   );
 
   /**
@@ -77,44 +77,40 @@ export default function SplashScreen() {
     }
 
     column.set(withTiming(0, { duration: COLUMN_FADE_MS }));
-    zoom.set(
-      withTiming(1, { duration: ZOOM_MS, easing: Easing.inOut(Easing.quad) }),
-    );
+    zoom.set(withTiming(1, { duration: ZOOM_MS, easing: Easing.inOut(Easing.quad) }));
 
     pushTimer.current = setTimeout(() => router.push(href), PUSH_AT_MS);
   };
 
-  // The animated node carries no `className`: NativeWind's cssInterop and Reanimated
-  // both rewrite `style`, and the class styles lose. Layout sits on the plain child.
-  // Insets are applied by hand because `<SafeAreaView>` drops the design's 34px bottom gap.
+  // The animated node carries no `className`: NativeWind's cssInterop and Reanimated both
+  // rewrite `style`, and the class styles lose. Layout sits on the plain child. Insets are
+  // applied by hand because `<SafeAreaView>` would drop the design's 34px bottom gap.
   return (
-    <View className='flex-1'>
+    <View className="flex-1">
       <SplashBackdrop zoom={zoom} />
 
       <Animated.View style={columnStyle}>
         <View
-          className='px-screen-wide flex-1 justify-between'
+          className="px-screen-wide flex-1 justify-between"
           style={{
             paddingTop: insets.top,
             paddingBottom: Math.max(insets.bottom, 34),
-          }}
-        >
-          <View className='items-center' style={styles.lockup}>
+          }}>
+          <View className="items-center" style={styles.lockup}>
             <LogoLockup />
-            <Text className='text-plum-600 dark:text-lilac-200 font-display-medium text-body mt-[18px] text-center'>
+            <Text className="text-plum-600 dark:text-lilac-200 font-display-medium text-body mt-[18px] text-center">
               a soundtrack to all your stories
             </Text>
           </View>
 
-          <View className='gap-3'>
+          <View className="gap-3">
             <Button
-              size='lg'
+              size="lg"
               variant={isLight ? 'tertiary' : 'primary'}
-              onPress={() => leave('/how-it-works')}
-            >
+              onPress={() => leave('/how-it-works')}>
               <Text>Get started →</Text>
             </Button>
-            <Button size='lg' variant='secondary' onPress={() => leave('/login')}>
+            <Button size="lg" variant="secondary" onPress={() => leave('/login')}>
               <Text>I already have an account</Text>
             </Button>
           </View>
