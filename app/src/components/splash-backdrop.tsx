@@ -87,7 +87,15 @@ export function SplashBackdrop({ zoom }: { zoom?: SharedValue<number> }) {
   // corner. The wrapper shares that centre, so scaling it is concentric.
   const coverScale = (Math.hypot(width / 2, height) / RECORD_RADIUS) * COVER_MARGIN;
 
-  const zoomStyle = useAnimatedStyle(() => ({
+  // The disc's placement rides inside the worklet: Reanimated drops static styles passed
+  // alongside an animated one, which left the record in normal flow at the top.
+  const recordStyle = useAnimatedStyle(() => ({
+    position: 'absolute',
+    left: '50%',
+    bottom: -RECORD_RADIUS,
+    width: RECORD_SIZE,
+    height: RECORD_SIZE,
+    marginLeft: -RECORD_RADIUS,
     transform: [{ scale: interpolate(zoomProgress.get(), [0, 1], [1, coverScale]) }],
   }));
 
@@ -133,7 +141,7 @@ export function SplashBackdrop({ zoom }: { zoom?: SharedValue<number> }) {
         <Rect width={width} height={height} fill="url(#haze-fade)" />
       </Svg>
 
-      <Animated.View style={[styles.record, zoomStyle]}>
+      <Animated.View style={recordStyle}>
         <Svg width={RECORD_SIZE} height={RECORD_SIZE}>
           <Circle
             cx={RECORD_RADIUS}
@@ -165,13 +173,5 @@ const styles = StyleSheet.create({
     right: '-30%',
     top: `-${HAZE_OVERSHOOT * 100}%`,
     bottom: 0,
-  },
-  record: {
-    position: 'absolute',
-    left: '50%',
-    bottom: -RECORD_RADIUS,
-    width: RECORD_SIZE,
-    height: RECORD_SIZE,
-    marginLeft: -RECORD_RADIUS,
   },
 });
