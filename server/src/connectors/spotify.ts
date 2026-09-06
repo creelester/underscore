@@ -5,8 +5,10 @@ import { ApiError } from "../lib/apiError";
 import { createHttpClient } from "../lib/http";
 
 /**
- * App-level Spotify — client credentials, no user involved. Catalog search during
- * generation only; playback and export use the per-user OAuth token instead.
+ * App-level Spotify — client credentials, deliberately not Better Auth's Spotify
+ * provider. That one governs identity and yields a *user's* token; generation has to
+ * work for a reader who signed in with Google and has linked nothing, so catalog search
+ * runs on the app's own credentials. The per-user token is for playback and export.
  */
 
 const accounts = createHttpClient({
@@ -89,17 +91,11 @@ async function accessToken(): Promise<string> {
   return fetchToken();
 }
 
-/**
- * Spotify's field filters, which match far better than the bare words would: an anchor
- * is an artist and a title, not a free-text query.
- */
-function searchQuery({ artist, title }: AnchorSuggestion): string {
-  return `track:"${title}" artist:"${artist}"`;
-}
-
-async function search(anchor: AnchorSuggestion, token: string) {
+async function search({ artist, title }: AnchorSuggestion, token: string) {
   return api.get("/search", {
-    params: { q: searchQuery(anchor), type: "track", limit: 1 },
+    // Field filters, not the bare words: an anchor is an artist and a title, and
+    // Spotify matches those far better than it matches free text.
+    params: { q: `track:"${title}" artist:"${artist}"`, type: "track", limit: 1 },
     headers: { Authorization: `Bearer ${token}` },
   });
 }

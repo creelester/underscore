@@ -10,14 +10,12 @@ import {
 } from "@underscore/shared";
 import { env } from "../config/env";
 import { ApiError } from "../lib/apiError";
+import { ANCHOR_SYSTEM, MOOD_SYSTEM, anchorPrompt, moodPrompt } from "./prompts";
 
 const MODEL = "claude-opus-5";
 
 /** Without it a policy decline ends a generation outright; `"default"` routes the retry. */
 const FALLBACK_BETA = "server-side-fallback-2026-07-01";
-
-/** The design's "~30 tracks". Asked for in the prompt — a JSON schema takes no length bound. */
-const ANCHOR_COUNT = 30;
 
 /** Everything on a profile except `genre`, which comes from Google's categories. */
 const MoodAnalysisSchema = MoodProfileSchema.omit({ genre: true });
@@ -144,23 +142,11 @@ async function requestStructured<T>({ label, schema, ...request }: StructuredReq
   throw ApiError.upstreamUnavailable(`Claude returned an unusable ${label}`, lastError);
 }
 
-const MOOD_SYSTEM = `You read a book's metadata and report the mood a soundtrack for it should carry.
-Choose at most two moods, the ones a reader would recognise from the first chapter.
-Pacing is the book's rhythm, not its length. The summary is one or two sentences of
-rationale, and the only place nuance outside the mood vocabulary belongs.`;
-
 export async function analyzeMood(book: BookDetail): Promise<MoodAnalysis> {
-  const prompt = [
-    `Title: ${book.title}`,
-    `Authors: ${book.authors.join(", ") || "unknown"}`,
-    `Categories: ${book.categories.join("; ") || "none given"}`,
-    `Description: ${book.description ?? "none given"}`,
-  ].join("\n");
-
   return requestStructured({
     label: "mood profile",
     system: MOOD_SYSTEM,
-    prompt,
+    prompt: moodPrompt(book),
     format: MOOD_ANALYSIS_FORMAT,
     // Reading a mood off a blurb is a light task; the effort is better spent on tracks.
     effort: "low",
@@ -169,34 +155,15 @@ export async function analyzeMood(book: BookDetail): Promise<MoodAnalysis> {
   });
 }
 
-const ANCHOR_SYSTEM = `You build reading soundtracks: instrumental-leaning, cinematic playlists
-that sit behind a book without competing with it.
-Suggest real, released tracks a listener could find on Spotify — exact artist and track
-names, no compilations, no invented titles, no two tracks by the same artist.
-If the book has a film, television or game adaptation with a released score, draw a few
-tracks from it.`;
-
 /** ~30 anchors for a profile. `book` is absent on the manual-genre path. */
 export async function suggestAnchors(
   profile: MoodProfile,
   book?: Pick<BookDetail, "title" | "authors">,
 ): Promise<AnchorSuggestion[]> {
-  const prompt = [
-    book ? `Book: ${book.title} by ${book.authors.join(", ") || "unknown"}` : null,
-    `Genre: ${profile.genre.join(", ") || "unspecified"}`,
-    `Mood: ${profile.mood.join(", ") || "unspecified"}`,
-    `Pacing: ${profile.pacing}`,
-    profile.summary ? `Reader's experience: ${profile.summary}` : null,
-    "",
-    `Suggest exactly ${ANCHOR_COUNT} tracks.`,
-  ]
-    .filter((line) => line !== null)
-    .join("\n");
-
   const { tracks } = await requestStructured({
     label: "track list",
     system: ANCHOR_SYSTEM,
-    prompt,
+    prompt: anchorPrompt(profile, book),
     format: ANCHORS_FORMAT,
     // Recalling real catalogue entries is where the quality of a playlist is decided.
     effort: "medium",
