@@ -17,6 +17,7 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.124.0",
     "@better-auth/expo": "1.6.25",
     "@prisma/client": "5.22.0",
     "@underscore/shared": "workspace:*",

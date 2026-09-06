@@ -7,6 +7,8 @@ type HttpClientOptions = {
   /** Named in the message of any UPSTREAM_UNAVAILABLE this client raises. */
   name: string;
   timeoutMs?: number;
+  /** Statuses the caller answers itself rather than treating as an outage. */
+  passThroughStatuses?: number[];
 };
 
 /**
@@ -15,19 +17,23 @@ type HttpClientOptions = {
  * restate that mapping and a raw AxiosError — which carries the api key in its request
  * config — can never reach the terminal handler and be logged.
  *
- * A 404 is not converted: that is a routing answer, not an outage.
+ * A 404 is not converted: that is a routing answer, not an outage. `passThroughStatuses`
+ * widens that for an upstream with more of them — Spotify answers a stale app token
+ * with 401, which the caller fixes by refreshing rather than by failing the request.
  */
 export function createHttpClient({
   baseURL,
   name,
   timeoutMs = 8000,
+  passThroughStatuses = [404],
 }: HttpClientOptions): AxiosInstance {
   const client = axios.create({
     baseURL,
     timeout: timeoutMs,
     headers: { Accept: "application/json" },
-    // Let 404 through to the caller; everything else outside 2xx is an outage.
-    validateStatus: (status) => (status >= 200 && status < 300) || status === 404,
+    // Everything outside 2xx and the pass-through list is an outage.
+    validateStatus: (status) =>
+      (status >= 200 && status < 300) || passThroughStatuses.includes(status),
   });
 
   client.interceptors.response.use(

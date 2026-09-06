@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { BookCandidateSchema, BookDetailSchema } from "./book";
 import { PlaylistSchema } from "./playlist";
+import { MAX_GENRE_LENGTH } from "./book";
 import { MoodProfileSchema } from "./moodProfile";
 
 export const BookSearchQuerySchema = z.object({
@@ -31,10 +32,13 @@ const bookOrGenreRefinement = <T extends { googleBooksId?: string; manualGenre?:
   data: T,
 ) => (data.googleBooksId ? !data.manualGenre : !!data.manualGenre);
 
+/** Becomes the `MANUAL_GENRE` book's title, so it is capped like a genre label. */
+const manualGenreSchema = z.string().trim().min(1).max(MAX_GENRE_LENGTH);
+
 export const MoodProfileRequestSchema = z
   .object({
     googleBooksId: z.string().optional(),
-    manualGenre: z.string().optional(),
+    manualGenre: manualGenreSchema.optional(),
   })
   .refine(bookOrGenreRefinement, {
     message: "Exactly one of googleBooksId or manualGenre must be set",
@@ -49,7 +53,13 @@ export type MoodProfileResponse = z.infer<typeof MoodProfileResponseSchema>;
 export const GeneratePlaylistRequestSchema = z
   .object({
     googleBooksId: z.string().optional(),
-    manualGenre: z.string().optional(),
+    manualGenre: manualGenreSchema.optional(),
+    /**
+     * The profile the user was shown, corrections included. Omitted, the server runs
+     * the Mood Engine itself — sent, it is used verbatim, so a corrected mood reaches
+     * the Playlist Builder instead of a second, possibly different, read of the book.
+     */
+    moodProfile: MoodProfileSchema.optional(),
   })
   .refine(bookOrGenreRefinement, {
     message: "Exactly one of googleBooksId or manualGenre must be set",

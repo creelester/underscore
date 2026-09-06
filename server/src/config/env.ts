@@ -18,6 +18,9 @@ const EnvSchema = z.object({
   // Overridable so the e2e stack can point at a fixture server and never reach a live
   // third-party API. Unset means the real endpoint.
   GOOGLE_BOOKS_BASE_URL: z.string().url().default("https://www.googleapis.com/books/v1"),
+  ANTHROPIC_BASE_URL: z.string().url().optional(),
+  SPOTIFY_ACCOUNTS_BASE_URL: z.string().url().default("https://accounts.spotify.com"),
+  SPOTIFY_API_BASE_URL: z.string().url().default("https://api.spotify.com/v1"),
   APP_ORIGIN: z.string().url(),
   SEED_USER_EMAIL: z.string().email().optional(),
   SEED_USER_PASSWORD: z.string().optional(),
