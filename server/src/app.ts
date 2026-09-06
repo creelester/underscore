@@ -7,6 +7,8 @@ import { env } from "./config/env";
 import { isApiError } from "./lib/apiError";
 import { requireSession } from "./middleware/requireSession";
 import { booksRouter } from "./routes/books";
+import { moodProfileRouter } from "./routes/moodProfile";
+import { playlistsRouter } from "./routes/playlists";
 
 export function createApp() {
   const app = express();
@@ -25,6 +27,8 @@ export function createApp() {
   });
 
   app.use("/api/books", booksRouter);
+  app.use("/api/mood-profile", moodProfileRouter);
+  app.use("/api/playlists", playlistsRouter);
 
   app.get("/health", async (_req, res) => {
     try {

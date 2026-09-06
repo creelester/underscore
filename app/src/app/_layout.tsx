@@ -18,7 +18,12 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { colorScheme } from 'nativewind';
 import { useEffect } from 'react';
-import { Appearance, Platform, StyleSheet, type ColorSchemeName } from 'react-native';
+import {
+  Appearance,
+  Platform,
+  StyleSheet,
+  type ColorSchemeName,
+} from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AnimatedSplashOverlay } from '@/components/splash-overlay';
@@ -48,7 +53,7 @@ function useDeviceColorScheme() {
 
     apply(Appearance.getColorScheme());
     const subscription = Appearance.addChangeListener((preferences) =>
-      apply(preferences.colorScheme)
+      apply(preferences.colorScheme),
     );
     return () => subscription.remove();
   }, []);
@@ -82,7 +87,7 @@ export default function RootLayout() {
                   a directory, so a new screen cannot ship reachable by forgetting to name
                   it here. The name is Expo Router's own, hence the stuttering path. */}
               <Stack.Protected guard={!!session}>
-                <Stack.Screen name="(app)" />
+                <Stack.Screen name='(app)' />
               </Stack.Protected>
 
               {/* `splash` is first, making it this group's fallback: `/` and a sign-out
@@ -91,11 +96,17 @@ export default function RootLayout() {
                   record to fill the viewport first and a slide would cross that frame
                   rather than come out of it. */}
               <Stack.Protected guard={!session}>
-                <Stack.Screen name="splash" />
-                <Stack.Screen name="how-it-works" options={{ animation: 'fade' }} />
-                <Stack.Screen name="connect-music" options={{ animation: 'fade' }} />
-                <Stack.Screen name="login" options={{ animation: 'fade' }} />
-                <Stack.Screen name="sign-up" options={{ animation: 'fade' }} />
+                <Stack.Screen name='splash' />
+                <Stack.Screen
+                  name='how-it-works'
+                  options={{ animation: 'fade' }}
+                />
+                <Stack.Screen
+                  name='connect-music'
+                  options={{ animation: 'fade' }}
+                />
+                <Stack.Screen name='login' options={{ animation: 'fade' }} />
+                <Stack.Screen name='sign-up' options={{ animation: 'fade' }} />
               </Stack.Protected>
             </Stack>
           )}
