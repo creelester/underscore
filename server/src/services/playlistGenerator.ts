@@ -122,13 +122,15 @@ export async function generatePlaylist(
   const { profile, book } = await resolveProfile(request);
   const bookRef = book ?? undefined;
 
-  let tracks = await resolveAnchors(await suggestAnchors(profile, bookRef));
+  const context = request.readingContext;
+
+  let tracks = await resolveAnchors(await suggestAnchors(profile, bookRef, context));
 
   // Claude names tracks that turn out not to exist in the catalog; too few surviving
   // means the suggestions were the problem, so ask once more before settling.
   const regenerated = tracks.length < REGENERATE_BELOW;
   if (regenerated) {
-    tracks = await resolveAnchors(await suggestAnchors(profile, bookRef));
+    tracks = await resolveAnchors(await suggestAnchors(profile, bookRef, context));
   }
 
   if (tracks.length === 0) {

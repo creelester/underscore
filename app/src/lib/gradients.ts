@@ -63,6 +63,24 @@ export const MOOD_STOPS: Record<Mood, readonly [string, string]> = {
   haunting: [PALETTE.plum700, PALETTE.seafoam300],
 };
 
+/**
+ * Ink for a chip filled with a mood's gradient. The first six are the design's own
+ * `MoodChip` values, picked for contrast against the gradient's darkest stop; the last
+ * four follow the same reading of the extended moods' first stops.
+ */
+export const MOOD_INK: Record<Mood, string> = {
+  cozy: PALETTE.plum950,
+  melancholy: '#FFFFFF',
+  hopeful: PALETTE.plum950,
+  tense: '#FFFFFF',
+  dreamy: PALETTE.plum950,
+  nostalgic: '#FFFFFF',
+  romantic: '#FFFFFF',
+  playful: PALETTE.plum950,
+  epic: '#FFFFFF',
+  haunting: '#FFFFFF',
+};
+
 const MOOD_ANGLE = 160;
 
 /**
@@ -80,7 +98,11 @@ export function moodGradient(moods: readonly Mood[]): GradientSpec {
   }
 
   const b = MOOD_STOPS[second];
-  return { colors: [a[0], a[1], b[1]], locations: [0, 0.46, 1], ...points };
+  // The design's `a[0] → a[1] → b[1]` creases when the pair ends on the same colour:
+  // the ramp finishes at 46% and the rest is flat. Its own first stop is the nearest
+  // thing the second mood has to contribute instead.
+  const middle = a[1] === b[1] ? b[0] : a[1];
+  return { colors: [a[0], middle, b[1]], locations: [0, 0.46, 1], ...points };
 }
 
 /** Display labels only; the wire values stay `MoodProfile.pacing`. */
