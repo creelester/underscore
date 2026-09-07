@@ -12,9 +12,9 @@ import { defineConfig, devices } from "@playwright/test";
 //   Expo web   8081    8082
 //   database   underscore    underscore_e2e
 //
-// Every value below is injected through webServer.env. Neither Bun's .env loading nor
-// Prisma's dotenv pass overrides a variable already in process.env, so server/.env
-// cannot leak the dev DATABASE_URL into a test run.
+// Every value below is injected through webServer.env. Neither the server's own env-file
+// loader nor Prisma's dotenv pass overrides a variable already in process.env, so
+// server/.env cannot leak the dev DATABASE_URL into a test run.
 
 const API_PORT = 3100;
 const WEB_PORT = 8082;
@@ -44,9 +44,8 @@ if (databaseName !== "underscore_e2e") {
 const METRO_CACHE_DIR = join(tmpdir(), `underscore-e2e-metro-${API_PORT}`);
 mkdirSync(METRO_CACHE_DIR, { recursive: true });
 
-// Test-only credentials for a throwaway localhost database; they unlock nothing.
-// server/src/config/env.ts refuses to default BETTER_AUTH_SECRET, so no real secret is
-// ever committed — these keep that while leaving the harness zero-setup.
+// Test-only credentials for a throwaway localhost database; they unlock nothing. They
+// keep a real secret out of the repo while leaving the harness zero-setup.
 const E2E_AUTH_SECRET =
   process.env.E2E_AUTH_SECRET ?? "e2e-only-not-a-real-secret-0123456789";
 const E2E_USER_EMAIL = "e2e@underscore.test";

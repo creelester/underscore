@@ -161,7 +161,7 @@ Sending both keys, or neither, is a `400 INVALID_INPUT` — the zod schema in `/
 
 Notes: `manualGenre` path never calls Claude — profile is constructed directly from the user's text (`genre = [manualGenre]`, `pacing = "steady"`, `mood = []`, `summary = ""`). The UI renders the default mood gradient for an empty `mood`; `moodGradient` in `app/src/lib/gradients.ts` applies that fallback itself.
 
-**Constraining `mood`.** The analysis tool's `input_schema` carries `MOODS` as an `enum` with `maxItems: 2`, so Claude maps its own read onto the vocabulary rather than inventing a descriptor the UI would have to discard. Nuance the ten can't carry goes in `summary`, which is free text. An `enum` in a tool schema is a strong steer and not a guarantee, so `MoodProfileSchema.parse` on the server stays the real gate: a parse failure gets one retry, then `502 UPSTREAM_UNAVAILABLE`.
+**Constraining `mood`.** The request's `output_config.format` carries `MOODS` as an `enum` with `maxItems: 2`, so Claude maps its own read onto the vocabulary rather than inventing a descriptor the UI would have to discard. Nuance the ten can't carry goes in `summary`, which is free text. An `enum` in an output schema is a strong steer and not a guarantee, so `MoodProfileSchema.parse` on the server stays the real gate: a parse failure gets one retry, then `502 UPSTREAM_UNAVAILABLE`.
 
 ---
 
@@ -169,7 +169,7 @@ Notes: `manualGenre` path never calls Claude — profile is constructed directly
 
 | Endpoint                       | Auth             | Request                                               | Response (200)                                     | Errors                                                                                                |
 | ------------------------------ | ---------------- | ----------------------------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `POST /api/playlists/generate` | session-required | `{ googleBooksId: string }` **or** `{ manualGenre: string }` | `Playlist` (auto-saved; `spotifyPlaylistId: null`) | `400 INVALID_INPUT`, `404 BOOK_NOT_FOUND`, `502 UPSTREAM_UNAVAILABLE` (Claude or Spotify search down) |
+| `POST /api/playlists/generate` | session-required | `{ googleBooksId: string }` **or** `{ manualGenre: string }`, plus optional `moodProfile: MoodProfile` | `Playlist` (auto-saved; `spotifyPlaylistId: null`) | `400 INVALID_INPUT`, `404 BOOK_NOT_FOUND`, `502 UPSTREAM_UNAVAILABLE` (Claude or Spotify search down) |
 
 Example bodies — identical shape to `POST /api/mood-profile`, book path:
 
@@ -182,6 +182,8 @@ Manual-genre fallback path:
 ```json
 { "manualGenre": "gothic horror" }
 ```
+
+`moodProfile` is the profile the user was shown on the mood screen, corrections included. Omitted, the endpoint runs the Mood Engine itself, as the shape above implies; sent, it is used verbatim after `MoodProfileSchema.parse` — otherwise a correction would be discarded and Claude's second read of the same book could differ from the one on screen. The volume is still re-fetched either way: the `Book` row is minted from the catalogue, never from the request.
 
 Side effects: on the `googleBooksId` path, re-fetches the volume from Google Books and upserts the `Book` row (this is the only place a `GOOGLE_BOOKS` book is created — search does not write one) → runs Mood Engine → Playlist Builder (Claude, ~30 anchors) → Spotify app-level resolution (regenerates once if &lt;8 resolve) → persists `Playlist` + `PlaylistTrack` + upserted `Track` rows in a single transaction. The `manualGenre` path upserts a `MANUAL_GENRE` book whose `title` is the user's text and skips the Mood Engine. No partial `Playlist` row is ever left on failure.
 
