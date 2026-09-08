@@ -4,7 +4,7 @@ import {
   MAX_MOODS,
   MOODS,
   SETTINGS,
-  SOMETHING_ELSE,
+  OTHER,
   type BookFormat,
   type Era,
   MoodProfileSchema,
@@ -20,11 +20,11 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { OptionGroup } from '@/components/option-group';
+import { ScoringProgress } from '@/components/scoring-progress';
 import { OtherInput } from '@/components/other-input';
 import { ScoringScreen } from '@/components/scoring-screen';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { useBook } from '@/features/books/use-book';
@@ -41,8 +41,10 @@ import { useTheme } from '@/lib/use-theme';
  * the tracks.
  */
 
-const CONTENT_GAP = 14;
+/** Wider than the design's 14: with the fine-tune block below it, 14 ran the sections together. */
+const CONTENT_GAP = 22;
 
+/** The design's band, used when there is no cover to give the panel a shape of its own. */
 const PANEL_HEIGHT = 118;
 
 /** Over a cover the gradient tints rather than replaces it. */
@@ -54,27 +56,17 @@ type Correction = Pick<MoodProfile, 'mood' | 'pacing'>;
 /** Read off the schema rather than restated, so the pills cannot drift from the wire. */
 const PACINGS = MoodProfileSchema.shape.pacing.options;
 
-const NO_CONTEXT: ReadingContext = {
-  lyrics: false,
-  moodOther: null,
-  format: null,
-  setting: null,
-  settingOther: null,
-  era: null,
-  eraOther: null,
-};
+/** Only `lyrics` has a state worth sending unasked; the rest are absent until answered. */
+const NO_CONTEXT: ReadingContext = { lyrics: false };
 
 const capitalize = (word: string) => word[0].toUpperCase() + word.slice(1);
 
-function LoadingBody() {
-  return (
-    <>
-      <Skeleton className="rounded-card" style={{ height: PANEL_HEIGHT }} />
-      <Skeleton className="h-[19px] w-3/4" />
-      <Skeleton className="h-[14px] w-full" />
-    </>
-  );
-}
+/** The design's `analyzing` steps, which stand in for one request we get no milestones from. */
+const ANALYZE_STEPS = [
+  'Pulling the book’s details',
+  'Reading tone and pacing',
+  'Shaping a mood…',
+] as const;
 
 export default function MoodScreen() {
   const { googleBooksId } = useLocalSearchParams<{ googleBooksId: string }>();
@@ -95,20 +87,25 @@ export default function MoodScreen() {
     return (
       <ScoringScreen contentGap={CONTENT_GAP} eyebrow="STEP 02 · MOOD">
         <View className="gap-[10px] pt-2">
-          <Text className="text-foreground font-display text-[19px] leading-[25px]">
+          <Text className="font-display text-[19px] leading-[25px] text-foreground">
             {isMissing ? 'This book has gone missing.' : "We couldn't read this one."}
           </Text>
-          <Text className="text-ink-muted font-body text-body-sm">
+          <Text className="font-body text-body-sm text-ink-muted">
             {isMissing
               ? 'Google Books no longer lists it. Search again, or add it by hand.'
               : 'The analysis did not come back. Try again in a moment.'}
           </Text>
+
+          {/* TODO(next iteration): offer the mood controls here so a book the catalogue
+              has lost can still be scored by hand, rather than sending the user back to
+              search. Needs the by-hand screen's genre step, which is not built yet. */}
         </View>
       </ScoringScreen>
     );
   }
 
-  const current: Correction = override ??
+  const current: Correction =
+    override ??
     (profile ? { mood: profile.mood, pacing: profile.pacing } : { mood: [], pacing: 'steady' });
 
   const cover = book?.thumbnailUrl;
@@ -127,6 +124,18 @@ export default function MoodScreen() {
 
   const setDetail = (next: Partial<ReadingContext>) => setContext({ ...context, ...next });
 
+  if (!profile) {
+    return (
+      <ScoringScreen contentGap={CONTENT_GAP} eyebrow="STEP 02 · MOOD">
+        <ScoringProgress
+          gradient={gradient}
+          title={book ? `Reading ${book.title}…` : 'Reading the book…'}
+          steps={ANALYZE_STEPS}
+        />
+      </ScoringScreen>
+    );
+  }
+
   return (
     <ScoringScreen contentGap={CONTENT_GAP} eyebrow="STEP 02 · MOOD">
       <ScrollView
@@ -134,151 +143,161 @@ export default function MoodScreen() {
         contentContainerStyle={{ gap: CONTENT_GAP }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
-        <Text className="text-foreground font-display text-[30px] leading-[34px] tracking-tight">
+        <Text className="font-display text-[30px] leading-[34px] tracking-tight text-foreground">
           Here&apos;s how it reads.
         </Text>
 
-        {!profile ? (
-          <LoadingBody />
-        ) : (
-          <>
-            <View
-              style={{
-                height: PANEL_HEIGHT,
-                borderRadius: RADIUS.card,
-                overflow: 'hidden',
-                boxShadow: shadows.soft,
-              }}>
-              {!!cover && (
-                <Image
-                  source={cover}
-                  alt={book?.title}
-                  contentFit="cover"
-                  cachePolicy="memory-disk"
-                  transition={MOTION.durMed}
-                  style={StyleSheet.absoluteFill}
-                />
-              )}
+        <View
+          style={{
+            height: PANEL_HEIGHT,
+            borderRadius: RADIUS.card,
+            overflow: 'hidden',
+            boxShadow: shadows.soft,
+          }}>
+          <LinearGradient {...gradient} style={StyleSheet.absoluteFill} />
+
+          {!!cover && (
+            <>
+              {/* `contain`, so a jacket keeps its proportions instead of being cropped
+                  to the band; the gradient fills what it does not cover. */}
+              <Image
+                source={cover}
+                alt={book?.title}
+                contentFit="contain"
+                cachePolicy="memory-disk"
+                transition={MOTION.durMed}
+                style={StyleSheet.absoluteFill}
+              />
               <LinearGradient
                 {...gradient}
-                style={[StyleSheet.absoluteFill, !!cover && { opacity: GRADIENT_OVER_COVER }]}
+                style={[StyleSheet.absoluteFill, { opacity: GRADIENT_OVER_COVER }]}
               />
-            </View>
+            </>
+          )}
+        </View>
 
-            <Text className="text-foreground font-display text-[19px] leading-[26px]">
-              {sentence}
-            </Text>
+        <Text className="font-display text-[19px] leading-[26px] text-foreground">{sentence}</Text>
 
-            {!!profile.summary && (
-              <Text className="text-ink-muted font-body text-body-sm">{profile.summary}</Text>
-            )}
-
-            <View className="bg-border h-px" />
-
-            <Text className="text-foreground font-display text-[17px]">
-              Fine-tune to sharpen the score
-            </Text>
-
-            <View className="gap-[9px]">
-              <View className="flex-row items-center justify-between">
-                <Text className="text-ink-faint font-mono text-eyebrow tracking-eyebrow uppercase">
-                  Mood · change if it&apos;s off
-                </Text>
-                <Button variant="text" size="sm" onPress={() => setOverride(null)}>
-                  <Text>Reset</Text>
-                </Button>
-              </View>
-
-              <View className="flex-row flex-wrap gap-[9px]">
-                {MOODS.map((mood) => (
-                  <Chip
-                    key={mood}
-                    label={capitalize(mood)}
-                    isSelected={current.mood.includes(mood)}
-                    onPress={() => toggleMood(mood)}
-                    gradient={moodGradient([mood])}
-                    ink={MOOD_INK[mood]}
-                  />
-                ))}
-
-                {/* Additive, not a third pick: its text rides in the reading context,
-                    so the closed vocabulary behind the gradient stays closed. */}
-                <Chip
-                  label={SOMETHING_ELSE}
-                  isSelected={context.moodOther !== null}
-                  onPress={() => setDetail({ moodOther: context.moodOther === null ? '' : null })}
-                />
-              </View>
-
-              {context.moodOther !== null && (
-                <OtherInput
-                  value={context.moodOther}
-                  onChangeText={(moodOther) => setDetail({ moodOther })}
-                  placeholder="How would you put it?"
-                />
-              )}
-            </View>
-
-            <OptionGroup
-              label="Pacing"
-              options={PACINGS}
-              value={current.pacing}
-              onChange={(pacing) => pacing && setOverride({ ...current, pacing })}
-              required
-              labelFor={(pacing) => PACING_LABELS[pacing]}
-            />
-
-            <View className="flex-row items-center justify-between gap-4">
-              <View className="gap-1">
-                <Text className="text-ink-faint font-mono text-eyebrow tracking-eyebrow uppercase">
-                  Lyrics
-                </Text>
-                <Text className="text-ink-muted font-body text-[13px]">
-                  Include music with lyrics
-                </Text>
-              </View>
-              <Switch
-                checked={context.lyrics}
-                onCheckedChange={(lyrics) => setDetail({ lyrics })}
-                accessibilityLabel="Include music with lyrics"
-              />
-            </View>
-
-            <OptionGroup
-              label="Book format"
-              options={BOOK_FORMATS}
-              value={context.format}
-              onChange={(format: BookFormat | null) => setDetail({ format })}
-            />
-
-            <OptionGroup
-              label="Setting"
-              options={SETTINGS}
-              value={context.setting}
-              onChange={(setting: Setting | null) => setDetail({ setting })}
-              otherValue={context.settingOther ?? ''}
-              onOtherChange={(settingOther) => setDetail({ settingOther })}
-              otherPlaceholder="Where is it set?"
-            />
-
-            <OptionGroup
-              label="Era"
-              options={ERAS}
-              value={context.era}
-              onChange={(era: Era | null) => setDetail({ era })}
-              otherValue={context.eraOther ?? ''}
-              onOtherChange={(eraOther) => setDetail({ eraOther })}
-              otherPlaceholder="Which era? e.g. the 1970s"
-            />
-          </>
+        {!!profile.summary && (
+          <Text className="font-body text-body-sm text-ink-muted">{profile.summary}</Text>
         )}
+
+        <View className="h-px bg-border" />
+
+        <Text className="font-display text-[17px] text-foreground">
+          Fine-tune to sharpen the score
+        </Text>
+
+        <View className="gap-[9px]">
+          <View className="flex-row items-center justify-between">
+            <Text className="font-mono text-eyebrow uppercase tracking-eyebrow text-ink-faint">
+              Mood
+            </Text>
+            <Button variant="text" size="sm" onPress={() => setOverride(null)}>
+              <Text>Reset</Text>
+            </Button>
+          </View>
+
+          <View className="flex-row flex-wrap gap-[9px]">
+            {MOODS.map((mood) => (
+              <Chip
+                key={mood}
+                label={capitalize(mood)}
+                isSelected={current.mood.includes(mood)}
+                onPress={() => toggleMood(mood)}
+                gradient={moodGradient([mood])}
+                ink={MOOD_INK[mood]}
+              />
+            ))}
+
+            {/* Additive, not a third pick: its text rides in the reading context,
+                  so the closed vocabulary behind the gradient stays closed. */}
+            <Chip
+              label={OTHER}
+              isSelected={context.moodOther !== undefined}
+              onPress={() =>
+                setDetail({
+                  moodOther: context.moodOther === undefined ? '' : undefined,
+                })
+              }
+            />
+          </View>
+
+          {context.moodOther !== undefined && (
+            <OtherInput
+              value={context.moodOther}
+              onChangeText={(moodOther) => setDetail({ moodOther })}
+              placeholder="How would you put it?"
+            />
+          )}
+        </View>
+
+        <OptionGroup
+          label="Pacing"
+          options={PACINGS}
+          value={current.pacing}
+          onChange={(pacing) => pacing && setOverride({ ...current, pacing })}
+          required
+          labelFor={(pacing) => PACING_LABELS[pacing]}
+        />
+
+        <View className="flex-row items-center justify-between gap-4">
+          <View className="gap-1">
+            <Text className="font-mono text-eyebrow uppercase tracking-eyebrow text-ink-faint">
+              Lyrics
+            </Text>
+            <Text className="font-body text-[13px] text-ink-muted">Include music with lyrics</Text>
+          </View>
+          <Switch
+            checked={context.lyrics}
+            onCheckedChange={(lyrics) => setDetail({ lyrics })}
+            accessibilityLabel="Include music with lyrics"
+          />
+        </View>
+
+        <OptionGroup
+          label="Book format"
+          options={BOOK_FORMATS}
+          value={context.format}
+          onChange={(format?: BookFormat) => setDetail({ format })}
+        />
+
+        <OptionGroup
+          label="Setting"
+          options={SETTINGS}
+          value={context.setting}
+          onChange={(setting?: Setting) => setDetail({ setting })}
+          otherValue={context.settingOther ?? ''}
+          onOtherChange={(settingOther) => setDetail({ settingOther })}
+          otherPlaceholder="Where is it set?"
+        />
+
+        <OptionGroup
+          label="Era"
+          options={ERAS}
+          value={context.era}
+          onChange={(era?: Era) => setDetail({ era })}
+          otherValue={context.eraOther ?? ''}
+          onOtherChange={(eraOther) => setDetail({ eraOther })}
+          otherPlaceholder="Which era? e.g. the 1970s"
+        />
       </ScrollView>
 
       <View className="pt-4">
         <Button
           size="lg"
-          disabled={!profile}
-          onPress={() => router.push({ pathname: '/playlist', params: { googleBooksId } })}>
+          onPress={() =>
+            router.push({
+              pathname: '/playlist',
+              // The profile the user actually saw, corrections included, so generation
+              // never runs a second read of the book that could differ from this screen.
+              params: {
+                googleBooksId,
+                profile: JSON.stringify({ ...profile, ...current }),
+                context: JSON.stringify(context),
+              },
+            })
+          }>
           <Text>Generate playlist →</Text>
         </Button>
       </View>

@@ -1,4 +1,4 @@
-import { SOMETHING_ELSE } from '@underscore/shared';
+import { OTHER } from '@underscore/shared';
 import { View } from 'react-native';
 
 import { OtherInput } from '@/components/other-input';
@@ -30,8 +30,8 @@ export function OptionGroup<T extends string>({
 }: {
   label: string;
   options: readonly T[];
-  value: T | null;
-  onChange: (value: T | null) => void;
+  value?: T;
+  onChange: (value?: T) => void;
   required?: boolean;
   /** For a group whose wire values are not what the chips read, as pacing's are not. */
   labelFor?: (option: T) => string;
@@ -39,11 +39,11 @@ export function OptionGroup<T extends string>({
   onOtherChange?: (value: string) => void;
   otherPlaceholder?: string;
 }) {
-  const isOtherOpen = !!onOtherChange && value === SOMETHING_ELSE;
+  const isOtherOpen = !!onOtherChange && value === OTHER;
 
   return (
     <View className="gap-[9px]">
-      <Text className="text-ink-faint font-mono text-eyebrow tracking-eyebrow uppercase">
+      <Text className="font-mono text-eyebrow uppercase tracking-eyebrow text-ink-faint">
         {label}
       </Text>
 
@@ -53,7 +53,7 @@ export function OptionGroup<T extends string>({
             key={option}
             label={labelFor?.(option) ?? option}
             isSelected={value === option}
-            onPress={() => onChange(value === option && !required ? null : option)}
+            onPress={() => onChange(value === option && !required ? undefined : option)}
           />
         ))}
       </View>

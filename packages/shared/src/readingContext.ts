@@ -12,7 +12,7 @@ import { z } from "zod";
  */
 
 /** The chip that trades the closed list for a free-text field, drawn as one more option. */
-export const SOMETHING_ELSE = "Something else";
+export const OTHER = "Something else";
 
 export const BOOK_FORMATS = ["Print", "Ebook", "Audiobook"] as const;
 
@@ -23,7 +23,7 @@ export const SETTINGS = [
   "Coast or sea",
   "Wilderness",
   "Another world",
-  SOMETHING_ELSE,
+  OTHER,
 ] as const;
 
 export const ERAS = [
@@ -35,7 +35,7 @@ export const ERAS = [
   "Present day",
   "Near future",
   "Far future",
-  SOMETHING_ELSE,
+  OTHER,
 ] as const;
 
 export type BookFormat = (typeof BOOK_FORMATS)[number];
@@ -45,24 +45,26 @@ export type Era = (typeof ERAS)[number];
 /** A phrase, not a paragraph — it becomes one line of a prompt. */
 export const MAX_READING_DETAIL_LENGTH = 60;
 
-const otherSchema = z.string().trim().max(MAX_READING_DETAIL_LENGTH).nullable();
+const otherSchema = z.string().trim().max(MAX_READING_DETAIL_LENGTH).optional();
 
 /**
  * The `Something else` text stays in its own field rather than replacing the chip
- * value, so the server can tell a vocabulary answer from the escape hatch.
+ * value, so the server can tell a vocabulary answer from the escape hatch. Every answer
+ * is optional rather than nullable: none of them is ever deliberately empty, they are
+ * simply not given.
  */
 export const ReadingContextSchema = z.object({
   lyrics: z.boolean(),
   /**
    * A mood the closed vocabulary cannot carry, in the reader's own words. It rides here
    * rather than in `MoodProfile.mood` because that enum stays closed — every value there
-   * needs a gradient and a chip. Null means the option was never chosen.
+   * needs a gradient and a chip. Absent means the option was never chosen.
    */
   moodOther: otherSchema,
-  format: z.enum(BOOK_FORMATS).nullable(),
-  setting: z.enum(SETTINGS).nullable(),
+  format: z.enum(BOOK_FORMATS).optional(),
+  setting: z.enum(SETTINGS).optional(),
   settingOther: otherSchema,
-  era: z.enum(ERAS).nullable(),
+  era: z.enum(ERAS).optional(),
   eraOther: otherSchema,
 });
 export type ReadingContext = z.infer<typeof ReadingContextSchema>;

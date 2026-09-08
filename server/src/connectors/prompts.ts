@@ -1,4 +1,4 @@
-import { SOMETHING_ELSE, type BookDetail, type MoodProfile, type ReadingContext } from "@underscore/shared";
+import { OTHER, type BookDetail, type MoodProfile, type ReadingContext } from "@underscore/shared";
 
 /**
  * What Claude is asked, kept apart from how it is asked. `anthropic.ts` owns the
@@ -31,9 +31,9 @@ If the book has a film, television or game adaptation with a released score, dra
 tracks from it.`;
 
 /** The chip unless it was the escape hatch, in which case whatever was typed under it. */
-function resolveDetail(choice: string | null, other: string | null): string | null {
-  if (choice !== SOMETHING_ELSE) return choice;
-  return other?.trim() || null;
+function resolveDetail(choice?: string, other?: string): string | undefined {
+  if (choice !== OTHER) return choice;
+  return other?.trim() || undefined;
 }
 
 /**
@@ -41,7 +41,7 @@ function resolveDetail(choice: string | null, other: string | null): string | nu
  * something against ANCHOR_SYSTEM's instrumental lean. Format only earns a line for an
  * audiobook, where a narrator is already competing for the ear.
  */
-function readingContextLines(context: ReadingContext): (string | null)[] {
+function readingContextLines(context: ReadingContext): (string | undefined)[] {
   const setting = resolveDetail(context.setting, context.settingOther);
   const era = resolveDetail(context.era, context.eraOther);
   const moodOther = context.moodOther?.trim();
@@ -49,15 +49,15 @@ function readingContextLines(context: ReadingContext): (string | null)[] {
   return [
     // Beside the profile's own moods, not instead of them — the reader reaching for a
     // word the vocabulary lacks is exactly the nuance the enum cannot hold.
-    moodOther ? `The reader also calls it: ${moodOther}` : null,
+    moodOther ? `The reader also calls it: ${moodOther}` : undefined,
     context.lyrics
       ? "Lyrics: tracks with vocals are welcome alongside instrumentals."
       : "Lyrics: instrumental only — no vocals.",
     context.format === "Audiobook"
       ? "The reader is listening to an audiobook, so nothing should crowd a narrator."
-      : null,
-    setting ? `Setting: ${setting}` : null,
-    era ? `Era: ${era}` : null,
+      : undefined,
+    setting ? `Setting: ${setting}` : undefined,
+    era ? `Era: ${era}` : undefined,
   ];
 }
 
@@ -68,15 +68,15 @@ export function anchorPrompt(
   context?: ReadingContext,
 ): string {
   return [
-    book ? `Book: ${book.title} by ${book.authors.join(", ") || "unknown"}` : null,
+    book ? `Book: ${book.title} by ${book.authors.join(", ") || "unknown"}` : undefined,
     `Genre: ${profile.genre.join(", ") || "unspecified"}`,
     `Mood: ${profile.mood.join(", ") || "unspecified"}`,
     `Pacing: ${profile.pacing}`,
-    profile.summary ? `Reader's experience: ${profile.summary}` : null,
+    profile.summary ? `Reader's experience: ${profile.summary}` : undefined,
     ...(context ? readingContextLines(context) : []),
     "",
     `Suggest exactly ${ANCHOR_COUNT} tracks.`,
   ]
-    .filter((line) => line !== null)
+    .filter((line) => line !== undefined)
     .join("\n");
 }
