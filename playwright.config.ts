@@ -9,6 +9,7 @@ import { defineConfig, devices } from "@playwright/test";
 //
 //              dev     e2e
 //   API        3000    3100
+//   upstreams  live    3101 (Google Books and Claude, from fixtures)
 //   Expo web   8081    8082
 //   database   underscore    underscore_e2e
 //
@@ -17,8 +18,10 @@ import { defineConfig, devices } from "@playwright/test";
 // server/.env cannot leak the dev DATABASE_URL into a test run.
 
 const API_PORT = 3100;
+const UPSTREAM_PORT = 3101;
 const WEB_PORT = 8082;
 const API_URL = `http://localhost:${API_PORT}`;
+const UPSTREAM_URL = `http://localhost:${UPSTREAM_PORT}`;
 const WEB_URL = `http://localhost:${WEB_PORT}`;
 
 const E2E_DATABASE_URL =
@@ -77,6 +80,21 @@ export default defineConfig({
 
   webServer: [
     {
+      // Google Books and Claude, from e2e/fixtures/catalog.ts. Both connectors take
+      // their root from env (server/src/config/env.ts), so the real server, routes and
+      // schemas stay in the run and only the third parties are replaced — no live call,
+      // no Anthropic spend, and the same mood profile on every run.
+      name: "upstream fixtures",
+      command: `bun run e2e/fixtures/upstream-server.ts`,
+      url: `${UPSTREAM_URL}/health`,
+      // Never reuse: whatever is already on this port was not started by this config.
+      reuseExistingServer: false,
+      timeout: 30_000,
+      stdout: "pipe",
+      stderr: "pipe",
+      env: { E2E_UPSTREAM_PORT: String(UPSTREAM_PORT) },
+    },
+    {
       // Chained rather than in globalSetup: Playwright starts webServer first, so a
       // reset there would run against an already-booted API.
       command:
@@ -99,6 +117,12 @@ export default defineConfig({
         APP_ORIGIN: WEB_URL,
         SEED_USER_EMAIL: E2E_USER_EMAIL,
         SEED_USER_PASSWORD: E2E_USER_PASSWORD,
+        // Both upstreams point at the fixture server above. Google Books needs no key
+        // and would otherwise be reached live; Claude refuses to run without one, so
+        // the key is a placeholder the fixture never looks at.
+        GOOGLE_BOOKS_BASE_URL: UPSTREAM_URL,
+        ANTHROPIC_BASE_URL: UPSTREAM_URL,
+        ANTHROPIC_API_KEY: "e2e-fixture-key-not-a-real-key",
       },
     },
     {

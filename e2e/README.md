@@ -28,6 +28,7 @@ The suite runs its own stack alongside — never instead of — your dev stack:
 |              | dev            | e2e                                |
 | ------------ | -------------- | ---------------------------------- |
 | API port     | 3000           | 3100                               |
+| upstreams    | live APIs      | fixture server on 3101             |
 | Expo web     | 8081           | 8082                               |
 | database     | `underscore`   | `underscore_e2e`                   |
 | Metro cache  | `$TMPDIR`      | `$TMPDIR/underscore-e2e-metro-3100` |
@@ -42,6 +43,40 @@ its cache at `<TMPDIR>/metro-cache`. `expo export --clear` would also defeat a
 stale inline, but it deletes the cache your dev server is using, so it is not what
 the harness does. The API port is part of the directory name, so changing a port
 starts from a clean cache rather than a stale inline of the old one.
+
+## Third-party upstreams
+
+Google Books and Claude are served from `fixtures/upstream-server.ts`, a third
+`webServer` on port 3101. `playwright.config.ts` points the API at it with
+`GOOGLE_BOOKS_BASE_URL` and `ANTHROPIC_BASE_URL` — both already overridable in
+`server/src/config/env.ts` — plus a placeholder `ANTHROPIC_API_KEY`, since the
+connector refuses to build a client without one.
+
+Only the two upstreams are replaced, and only at their own network boundary: the
+server, its routes and its zod schemas are all still under test. That is why no
+spec stubs `/api/*` with `page.route` — mocking our own API would mock the
+contract the test exists to exercise. A run therefore never leaves localhost,
+never spends Anthropic credit, and gets the same mood profile every time, which
+is what makes the mood screen assertable at all.
+
+The books and their reads live in `fixtures/catalog.ts`, imported by both the
+fixture server and the specs so the two cannot drift. Titles are invented on
+purpose: a real one would let a run that had escaped to the live API still look
+like it passed. Add a book there, not in a spec.
+
+Spotify is deliberately not fixtured. No spec generates a playlist to completion,
+and `SPOTIFY_CLIENT_ID` is unset, so `POST /api/playlists/generate` fails fast and
+locally with "Spotify is not configured" — the `[upstream] Spotify is not
+configured` line in the server log during a mood run is that, and is expected.
+Covering the playlist result screen means serving Spotify's token and search
+endpoints from the same fixture server.
+
+`server/.env.test` carries the same two base URLs, so running the e2e stack by
+hand needs the fixture server running too:
+
+```sh
+bun run e2e/fixtures/upstream-server.ts
+```
 
 ## One-time setup
 
@@ -137,6 +172,15 @@ locator:
   twice for that window, and a strict-mode violation fails an assertion outright
   rather than being retried away, so wait the duplicate out with `toHaveCount(1)`
   instead of reaching for `.first()`. See `splash.spec.ts`.
+- `accessibilityState` does **not** reach the web DOM: react-native-web 0.21 maps
+  the individual `aria-*` props but drops the state object, so a `Chip`'s
+  `{ selected }` and the `Switch`'s `{ checked }` are invisible to `getByRole`'s
+  state options and to `toBeChecked()`. A chip's selection is assertable only as
+  the ` ✓` its label grows (`toHaveText("Cozy ✓")`); its accessible name stays the
+  bare label either way, so the locator survives the toggle. The switch has no
+  visible text at all, so its state is only observable through what the next
+  request carries. Both are real accessibility gaps on web, not just test
+  friction.
 - `keyboardType="email-address"` becomes `<input type="email">`, and Chromium
   runs the HTML value-sanitization algorithm on that type — leading and trailing
   whitespace is stripped before the app ever sees it. So a `fill("  a@b.c  ")`
