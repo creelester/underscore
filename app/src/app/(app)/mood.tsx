@@ -188,6 +188,8 @@ export default function MoodScreen() {
           Fine-tune to sharpen the score
         </Text>
 
+        {/* `Mood`, and no divider under the pacing pills: both asked for directly, both
+            still `MOOD · CHANGE IF IT'S OFF` and a divider in the prototype. */}
         <View className="gap-[9px]">
           <View className="flex-row items-center justify-between">
             <Text className="font-mono text-eyebrow uppercase tracking-eyebrow text-ink-faint">
