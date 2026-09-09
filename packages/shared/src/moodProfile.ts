@@ -20,13 +20,16 @@ export const MOODS = [
 ] as const;
 export type Mood = (typeof MOODS)[number];
 
+/** What the correction UI lets the user pick, and so what Claude is held to. */
+export const MAX_MOODS = 2;
+
 /** For a profile with no mood, matching the design's no-chip-selected default. */
 export const DEFAULT_MOOD: Mood = 'melancholy';
 
 export const MoodProfileSchema = z.object({
   genre: z.array(z.string().min(1).max(MAX_GENRE_LENGTH)).max(MAX_GENRES),
-  /** Empty on the manual-genre path; capped at two, which is what the design lets the user pick. */
-  mood: z.array(z.enum(MOODS)).max(2),
+  /** Empty on the manual-genre path. */
+  mood: z.array(z.enum(MOODS)).max(MAX_MOODS),
   pacing: z.enum(['slow', 'steady', 'fast']),
   summary: z.string(),
 });

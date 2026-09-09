@@ -3,6 +3,7 @@ import { BookCandidateSchema, BookDetailSchema } from "./book";
 import { PlaylistSchema } from "./playlist";
 import { MAX_GENRE_LENGTH } from "./book";
 import { MoodProfileSchema } from "./moodProfile";
+import { ReadingContextSchema } from "./readingContext";
 
 export const BookSearchQuerySchema = z.object({
   q: z.string().trim().min(1, "A search term is required"),
@@ -60,6 +61,11 @@ export const GeneratePlaylistRequestSchema = z
      * the Playlist Builder instead of a second, possibly different, read of the book.
      */
     moodProfile: MoodProfileSchema.optional(),
+    /**
+     * The mood screen's fine-tune answers. Generation only: the screen collects them
+     * below Claude's read, so they are never in hand early enough to inform it.
+     */
+    readingContext: ReadingContextSchema.optional(),
   })
   .refine(bookOrGenreRefinement, {
     message: "Exactly one of googleBooksId or manualGenre must be set",
