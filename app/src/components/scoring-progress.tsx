@@ -48,6 +48,57 @@ const PENDING = '◌';
 /** Steps not yet reached are dimmed rather than hidden, so the list never reflows. */
 const PENDING_OPACITY = 0.4;
 
+/**
+ * The step in flight spins instead of sitting under `◌`. The design has no such state —
+ * its prototype resolves in seconds — but generation runs for a minute or more, and a
+ * static marker for that long reads as a hung screen.
+ */
+const US_SPIN = {
+  from: { transform: [{ rotate: '0deg' }] },
+  to: { transform: [{ rotate: '360deg' }] },
+};
+const SPIN_MS = '900ms';
+
+const SPINNER_SIZE = 12;
+const SPINNER_BORDER = 2;
+
+/** Wide enough for the glyphs and the ring alike, so a step changing state cannot shift its label. */
+const MARKER_WIDTH = 14;
+
+function StepMarker({ state, color }: { state: 'done' | 'active' | 'pending'; color: string }) {
+  const reduceMotion = useReducedMotion();
+
+  if (state === 'active' && !reduceMotion) {
+    return (
+      <View style={{ width: MARKER_WIDTH }} className="items-center">
+        <AnimatedView
+          style={{
+            width: SPINNER_SIZE,
+            height: SPINNER_SIZE,
+            borderRadius: SPINNER_SIZE / 2,
+            borderWidth: SPINNER_BORDER,
+            borderColor: color,
+            // The gap that makes the ring read as turning rather than pulsing.
+            borderTopColor: 'transparent',
+            animationName: US_SPIN,
+            animationDuration: SPIN_MS,
+            animationIterationCount: 'infinite',
+            animationTimingFunction: 'linear',
+          }}
+        />
+      </View>
+    );
+  }
+
+  return (
+    <Text
+      className="font-mono text-[13px] font-bold"
+      style={{ width: MARKER_WIDTH, color, textAlign: 'center' }}>
+      {state === 'done' ? DONE : PENDING}
+    </Text>
+  );
+}
+
 export function ScoringProgress({
   gradient,
   title,
@@ -105,13 +156,12 @@ export function ScoringProgress({
             key={step}
             className="flex-row items-center gap-3"
             style={index <= reached ? undefined : { opacity: PENDING_OPACITY }}>
-            <Text
-              className="font-mono text-[13px] font-bold"
-              style={{
-                color: index < reached ? theme.primary : theme.inkFaint,
-              }}>
-              {index < reached ? DONE : PENDING}
-            </Text>
+            <StepMarker
+              state={index < reached ? 'done' : index === reached ? 'active' : 'pending'}
+              // The live step takes the finished step's colour, not the pending grey: it
+              // is working, and the ring already tells it apart from a tick.
+              color={index <= reached ? theme.primary : theme.inkFaint}
+            />
             <Text className="font-body text-body-sm text-foreground">{step}</Text>
           </View>
         ))}
