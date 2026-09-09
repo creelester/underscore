@@ -12,8 +12,7 @@ import { Text } from '@/components/ui/text';
  * component, not a route layout: these are plain siblings under `(app)`, and a layout
  * would need a route group of its own purely to hang it on.
  *
- * `contentGap` is the space under `← Back`, which the design sets per screen, and
- * `eyebrow` is the step marker the mood screen hangs beside it.
+ * `contentGap` is the space under `← Back`, which the design sets per screen.
  */
 
 /**
@@ -25,18 +24,13 @@ import { Text } from '@/components/ui/text';
  */
 const BACK_FALLBACK = '/library';
 
-/** The design's counterweight to `← Back` on the far side of a step eyebrow. */
-const EYEBROW_SPACER = 44;
-
 export function ScoringScreen({
   children,
   contentGap = 16,
-  eyebrow,
 }: {
   // Optional so a screen awaiting data can render the shell alone, as book detail does.
   children?: ReactNode;
   contentGap?: number;
-  eyebrow?: string;
 }) {
   const insets = useSafeAreaInsets();
 
@@ -50,7 +44,7 @@ export function ScoringScreen({
       }}>
       <AppBackdrop />
 
-      <View className="flex-row items-center">
+      <View className="flex-row">
         <Button
           variant="text"
           size="sm"
@@ -59,16 +53,6 @@ export function ScoringScreen({
           }>
           <Text>← Back</Text>
         </Button>
-
-        {!!eyebrow && (
-          <>
-            <Text className="text-ink-faint font-mono text-eyebrow tracking-eyebrow flex-1 text-center">
-              {eyebrow}
-            </Text>
-            {/* Balances `← Back` so the eyebrow reads centred rather than nudged right. */}
-            <View style={{ width: EYEBROW_SPACER }} />
-          </>
-        )}
       </View>
 
       {children}

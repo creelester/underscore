@@ -1,12 +1,21 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
-import Animated, { useReducedMotion } from 'react-native-reanimated';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import { cssInterop } from 'nativewind';
 
+import Wave from '@/assets/images/wave.svg';
 import { Text } from '@/components/ui/text';
 import { type GradientSpec } from '@/lib/gradients';
-import { RADIUS } from '@/lib/theme';
+import { MOTION, RADIUS } from '@/lib/theme';
 import { useTheme } from '@/lib/use-theme';
 
 /**
@@ -99,6 +108,86 @@ function StepMarker({ state, color }: { state: 'done' | 'active' | 'pending'; co
   );
 }
 
+const WAVE_WIDTH = 170;
+const WAVE_HEIGHT = 47;
+const WAVE_GHOST = 'rgba(255,255,255,0.2)';
+
+/** `@keyframes us-wave-draw` as its three segments, summing to the design's 2.8s. */
+const DRAW_MS = 1540;
+const HOLD_MS = 560;
+const WIPE_MS = 700;
+
+/**
+ * The wave drawn in left to right, held, then wiped away the same way, over a ghost of
+ * itself that never leaves.
+ *
+ * The design uses `clip-path: inset(…)`, which RN has no equivalent for, so the solid
+ * copy shows through a window that first widens from the left edge and then walks that
+ * edge across — `phase` runs 0→1 drawing and 1→2 wiping. The copy inside is offset back
+ * by however far the window has moved, so the artwork stays put as the window travels.
+ */
+function WaveMark() {
+  const reduceMotion = useReducedMotion();
+  const phase = useSharedValue(0);
+
+  useEffect(() => {
+    if (reduceMotion) return;
+    const easing = Easing.bezier(...MOTION.easeStandard);
+
+    phase.value = withRepeat(
+      withSequence(
+        withTiming(0, { duration: 0 }),
+        withTiming(1, { duration: DRAW_MS, easing }),
+        withTiming(1, { duration: HOLD_MS }),
+        withTiming(2, { duration: WIPE_MS, easing }),
+      ),
+      -1,
+    );
+  }, [phase, reduceMotion]);
+
+  // Every layout prop is returned from the hook: Reanimated drops the static half of a
+  // `[static, animated]` style array.
+  const windowStyle = useAnimatedStyle(() => {
+    const left = WAVE_WIDTH * Math.max(0, phase.value - 1);
+    return {
+      position: 'absolute',
+      top: 0,
+      height: WAVE_HEIGHT,
+      overflow: 'hidden',
+      left,
+      width: WAVE_WIDTH * Math.min(phase.value, 1) - left,
+    };
+  });
+
+  const innerStyle = useAnimatedStyle(() => ({
+    position: 'absolute',
+    top: 0,
+    width: WAVE_WIDTH,
+    height: WAVE_HEIGHT,
+    left: -WAVE_WIDTH * Math.max(0, phase.value - 1),
+  }));
+
+  // Both copies carry the asset's own mask ids, which collide on web — harmless only
+  // because they are the same artwork at the same size, so both resolve to one mask.
+  return (
+    <View style={{ width: WAVE_WIDTH, height: WAVE_HEIGHT }}>
+      <Wave width={WAVE_WIDTH} height={WAVE_HEIGHT} color={WAVE_GHOST} />
+
+      {reduceMotion ? (
+        <View style={{ position: 'absolute', top: 0 }}>
+          <Wave width={WAVE_WIDTH} height={WAVE_HEIGHT} color="#FFFFFF" />
+        </View>
+      ) : (
+        <Animated.View style={windowStyle}>
+          <Animated.View style={innerStyle}>
+            <Wave width={WAVE_WIDTH} height={WAVE_HEIGHT} color="#FFFFFF" />
+          </Animated.View>
+        </Animated.View>
+      )}
+    </View>
+  );
+}
+
 export function ScoringProgress({
   gradient,
   title,
@@ -142,8 +231,11 @@ export function ScoringProgress({
             height: SQUARE,
             borderRadius: RADIUS.card,
             boxShadow: shadows.soft,
-          }}
-        />
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+          <WaveMark />
+        </LinearGradient>
       </AnimatedView>
 
       <Text className="text-center font-display text-[24px] leading-[29px] text-foreground">

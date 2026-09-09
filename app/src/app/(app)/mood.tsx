@@ -13,12 +13,12 @@ import {
   type ReadingContext,
   type Setting,
 } from '@underscore/shared';
-import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
+import { BookCover } from '@/components/book-cover';
+import { MoodWash } from '@/components/mood-wash';
 import { OptionGroup } from '@/components/option-group';
 import { ScoringProgress } from '@/components/scoring-progress';
 import { OtherInput } from '@/components/other-input';
@@ -31,26 +31,25 @@ import { useBook } from '@/features/books/use-book';
 import { useMoodProfile } from '@/features/mood/use-mood-profile';
 import { isApiError } from '@/lib/api-client';
 import { MOOD_INK, PACING_LABELS, moodGradient } from '@/lib/gradients';
-import { MOTION, RADIUS } from '@/lib/theme';
-import { useTheme } from '@/lib/use-theme';
 
 /**
- * The mood step — Claude's read said back in one sentence over a gradient panel, with
- * the chips that correct it. Everything above `Fine-tune` is the profile that goes to
- * the Playlist Builder verbatim; everything below is optional context that only shapes
- * the tracks.
+ * The mood step — Claude's read said back beside the jacket, with the chips that correct
+ * it. Everything above `Fine-tune` is the profile that goes to the Playlist Builder
+ * verbatim; everything below is optional context that only shapes the tracks.
+ *
+ * The colour is `MoodWash`, behind everything, rather than a panel the read sits in.
  */
 
 /** Wider than the design's 14: with the fine-tune block below it, 14 ran the sections together. */
 const CONTENT_GAP = 22;
 
-/** The design's band, used when there is no cover to give the panel a shape of its own. */
-const PANEL_HEIGHT = 118;
+const COVER_WIDTH = 118;
+/** The design's `aspect-ratio: 2/3`. */
+const COVER_HEIGHT = 177;
+/** The banner draws the cover at 10px, where book detail uses 8. */
+const COVER_RADIUS = 10;
 
-/** Over a cover the gradient tints rather than replaces it. */
-const GRADIENT_OVER_COVER = 0.5;
-
-/** The correctable half of a profile — what `Reset` puts back. */
+/** The correctable half of a profile. */
 type Correction = Pick<MoodProfile, 'mood' | 'pacing'>;
 
 /** Read off the schema rather than restated, so the pills cannot drift from the wire. */
@@ -71,12 +70,11 @@ const ANALYZE_STEPS = [
 export default function MoodScreen() {
   const { googleBooksId } = useLocalSearchParams<{ googleBooksId: string }>();
   const { data: profile, error } = useMoodProfile(googleBooksId);
-  // Usually already cached by book detail; the panel just falls back to the gradient.
+  // Usually already cached by book detail; the banner just falls back to the swatch.
   const { data: book } = useBook(googleBooksId);
-  const { shadows } = useTheme();
 
-  // Held as an override rather than seeded from the profile, so `Reset` is dropping it
-  // and no effect is needed to resync when the query resolves.
+  // Held as an override rather than seeded from the profile, so no effect is needed to
+  // resync when the query resolves.
   const [override, setOverride] = useState<Correction | null>(null);
   const [context, setContext] = useState<ReadingContext>(NO_CONTEXT);
 
@@ -85,7 +83,7 @@ export default function MoodScreen() {
     const isMissing = isApiError(error) && error.code === 'BOOK_NOT_FOUND';
 
     return (
-      <ScoringScreen contentGap={CONTENT_GAP} eyebrow="STEP 02 · MOOD">
+      <ScoringScreen contentGap={CONTENT_GAP}>
         <View className="gap-[10px] pt-2">
           <Text className="font-display text-[19px] leading-[25px] text-foreground">
             {isMissing ? 'This book has gone missing.' : "We couldn't read this one."}
@@ -108,9 +106,8 @@ export default function MoodScreen() {
     override ??
     (profile ? { mood: profile.mood, pacing: profile.pacing } : { mood: [], pacing: 'steady' });
 
-  const cover = book?.thumbnailUrl;
-  const gradient = moodGradient(current.mood);
-  const sentence = [...current.mood.map(capitalize), PACING_LABELS[current.pacing]].join(' · ');
+  // A line each, not one `·`-joined sentence — the design stacks them beside the jacket.
+  const moodLines = [...current.mood.map(capitalize), PACING_LABELS[current.pacing]];
 
   // A third pick drops the oldest rather than being refused: the design's chips give no
   // signal that the cap has been hit, so a dead press would read as a broken control.
@@ -126,9 +123,9 @@ export default function MoodScreen() {
 
   if (!profile) {
     return (
-      <ScoringScreen contentGap={CONTENT_GAP} eyebrow="STEP 02 · MOOD">
+      <ScoringScreen contentGap={CONTENT_GAP}>
         <ScoringProgress
-          gradient={gradient}
+          gradient={moodGradient(current.mood)}
           title={book ? `Reading ${book.title}…` : 'Reading the book…'}
           steps={ANALYZE_STEPS}
         />
@@ -137,46 +134,50 @@ export default function MoodScreen() {
   }
 
   return (
-    <ScoringScreen contentGap={CONTENT_GAP} eyebrow="STEP 02 · MOOD">
+    <ScoringScreen contentGap={CONTENT_GAP}>
+      <MoodWash moods={current.mood} />
+
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ gap: CONTENT_GAP }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
-        <Text className="font-display text-[30px] leading-[34px] tracking-tight text-foreground">
-          Here&apos;s how it reads.
-        </Text>
+        <View className="w-full flex-none flex-row gap-3">
+          <BookCover
+            googleBooksId={googleBooksId}
+            thumbnailUrl={book?.thumbnailUrl ?? null}
+            title={book?.title ?? ''}
+            width={COVER_WIDTH}
+            height={COVER_HEIGHT}
+            radius={COVER_RADIUS}
+          />
 
-        <View
-          style={{
-            height: PANEL_HEIGHT,
-            borderRadius: RADIUS.card,
-            overflow: 'hidden',
-            boxShadow: shadows.soft,
-          }}>
-          <LinearGradient {...gradient} style={StyleSheet.absoluteFill} />
+          {/* One ink throughout, the design carrying the hierarchy in opacity — the
+              column used to sit on a gradient, where muted greys had nothing to sit on. */}
+          <View className="min-w-0 flex-1 gap-[5px] self-stretch">
+            <Text className="font-display text-[22px] leading-[26px] tracking-tight text-foreground">
+              {book?.title}
+            </Text>
 
-          {!!cover && (
-            <>
-              {/* `contain`, so a jacket keeps its proportions instead of being cropped
-                  to the band; the gradient fills what it does not cover. */}
-              <Image
-                source={cover}
-                alt={book?.title}
-                contentFit="contain"
-                cachePolicy="memory-disk"
-                transition={MOTION.durMed}
-                style={StyleSheet.absoluteFill}
-              />
-              <LinearGradient
-                {...gradient}
-                style={[StyleSheet.absoluteFill, { opacity: GRADIENT_OVER_COVER }]}
-              />
-            </>
-          )}
+            <Text className="font-body text-body-sm text-foreground opacity-[0.82]">
+              {book?.authors.join(', ')}
+            </Text>
+
+            <Text className="pt-[2px] font-mono text-eyebrow tracking-eyebrow text-foreground opacity-80">
+              {profile.genre[0]}
+            </Text>
+
+            <View className="mt-auto gap-[2px]">
+              {moodLines.map((line) => (
+                <Text
+                  key={line}
+                  className="font-display text-[15px] leading-[20px] text-foreground opacity-[0.92]">
+                  {line}
+                </Text>
+              ))}
+            </View>
+          </View>
         </View>
-
-        <Text className="font-display text-[19px] leading-[26px] text-foreground">{sentence}</Text>
 
         {!!profile.summary && (
           <Text className="font-body text-body-sm text-ink-muted">{profile.summary}</Text>
@@ -188,17 +189,12 @@ export default function MoodScreen() {
           Fine-tune to sharpen the score
         </Text>
 
-        {/* `Mood`, and no divider under the pacing pills: both asked for directly, both
-            still `MOOD · CHANGE IF IT'S OFF` and a divider in the prototype. */}
+        {/* No divider under the pacing pills: asked for directly, and still one in the
+            prototype. */}
         <View className="gap-[9px]">
-          <View className="flex-row items-center justify-between">
-            <Text className="font-mono text-eyebrow uppercase tracking-eyebrow text-ink-faint">
-              Mood
-            </Text>
-            <Button variant="text" size="sm" onPress={() => setOverride(null)}>
-              <Text>Reset</Text>
-            </Button>
-          </View>
+          <Text className="font-mono text-eyebrow uppercase tracking-eyebrow text-ink-faint">
+            Mood · change if it&apos;s off
+          </Text>
 
           <View className="flex-row flex-wrap gap-[9px]">
             {MOODS.map((mood) => (
@@ -229,7 +225,7 @@ export default function MoodScreen() {
             <OtherInput
               value={context.moodOther}
               onChangeText={(moodOther) => setDetail({ moodOther })}
-              placeholder="How would you put it?"
+              placeholder="How does it feel?"
             />
           )}
         </View>
