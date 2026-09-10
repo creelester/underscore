@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/ui/text';
 import { GRAD_WARM, type GradientSpec } from '@/lib/gradients';
-import { RADIUS } from '@/lib/theme';
+import { BORDER, RADIUS } from '@/lib/theme';
 import { useTheme } from '@/lib/use-theme';
 import { pressedStyle } from '@/lib/pressed';
 
@@ -26,8 +26,6 @@ import { pressedStyle } from '@/lib/pressed';
  * themes — the same reason `Skeleton` avoids it.
  */
 
-/** 2px rather than the design's 1.5: at 1.5 the ring reads as a hairline on the backdrop. */
-const BORDER_WIDTH = 2;
 const CHECK = ' ✓';
 
 export function Chip({
@@ -47,6 +45,11 @@ export function Chip({
 }) {
   const { theme, isLight } = useTheme();
   const isFilled = isSelected && !!gradient;
+  const interior = isLight ? theme.background : theme.surface;
+
+  let labelColor: string | undefined = theme.inkMuted;
+  if (isFilled) labelColor = ink;
+  else if (isSelected) labelColor = theme.ink;
 
   const paint: GradientSpec = isSelected
     ? (gradient ?? GRAD_WARM)
@@ -61,20 +64,8 @@ export function Chip({
       style={(state) => [styles.press, state.pressed && pressedStyle]}>
       <LinearGradient {...paint} style={styles.ring}>
         <View
-          style={[
-            styles.inner,
-            // A fill has nothing to reveal underneath, so the interior steps out of the way.
-            {
-              backgroundColor: isFilled
-                ? 'transparent'
-                : isLight
-                  ? theme.background
-                  : theme.surface,
-            },
-          ]}>
-          <Text
-            className="font-display text-sm"
-            style={{ color: isFilled ? ink : isSelected ? theme.ink : theme.inkMuted }}>
+          style={[styles.inner, { backgroundColor: isFilled ? 'transparent' : interior }]}>
+          <Text className="font-display text-sm" style={{ color: labelColor }}>
             {isSelected ? label + CHECK : label}
           </Text>
         </View>
@@ -85,10 +76,10 @@ export function Chip({
 
 const styles = StyleSheet.create({
   press: { borderRadius: RADIUS.pill, overflow: 'hidden' },
-  ring: { padding: BORDER_WIDTH, borderRadius: RADIUS.pill },
+  ring: { padding: BORDER.ring, borderRadius: RADIUS.pill },
   inner: {
-    paddingHorizontal: 18 - BORDER_WIDTH,
-    paddingVertical: 10 - BORDER_WIDTH,
+    paddingHorizontal: 18 - BORDER.ring,
+    paddingVertical: 10 - BORDER.ring,
     borderRadius: RADIUS.pill,
   },
 });

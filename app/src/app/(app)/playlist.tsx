@@ -15,6 +15,7 @@ import { useBook } from '@/features/books/use-book';
 import { useGeneratePlaylist } from '@/features/playlists/use-generate-playlist';
 import { isApiError } from '@/lib/api-client';
 import { moodGradient } from '@/lib/gradients';
+import { CONTENT_GAP } from '@/lib/theme';
 
 /**
  * The generation step. The design's waiting screen is built; the result it lands on is
@@ -25,13 +26,27 @@ import { moodGradient } from '@/lib/gradients';
  * itself, which is why `moodProfile` is optional on the request.
  */
 
-const CONTENT_GAP = 22;
-
-/** The design's `generating` steps, standing in for one request that reports no milestones. */
 const GENERATE_STEPS = [
   'Read the book’s register',
   'Matched the mood',
-  'Finding thirty tracks…',
+  'Finding the right tracks…',
+] as const;
+
+/**
+ * Generation runs for a minute or more, so the last step cycles through these rather
+ * than sitting still behind the spinner.
+ */
+const GENERATE_ASIDES = [
+  'Auditioning a few opening bars…',
+  'Skipping anything too on the nose…',
+  'Weighing a track against the last chapter…',
+  'Turning down the ones that try too hard…',
+  'Listening for the sound between the lines…',
+  'Making sure the quiet parts stay quiet…',
+  'Sequencing it so it reads in order…',
+  'Cutting the one that wanted the spotlight…',
+  'Checking nothing breaks the spell…',
+  'Letting the ending arrive slowly…',
 ] as const;
 
 /** A draft that fails to parse is dropped rather than sent — the server can re-derive it. */
@@ -78,7 +93,7 @@ export default function PlaylistScreen() {
     const message = isApiError(error) ? error.message : 'Something went wrong.';
 
     return (
-      <ScoringScreen contentGap={CONTENT_GAP}>
+      <ScoringScreen>
         <View className="gap-[10px] pt-2">
           <Text className="font-display text-[19px] leading-[25px] text-foreground">
             We couldn&apos;t score this one.
@@ -91,18 +106,19 @@ export default function PlaylistScreen() {
 
   if (!playlist) {
     return (
-      <ScoringScreen contentGap={CONTENT_GAP}>
+      <ScoringScreen>
         <ScoringProgress
           gradient={moodGradient(moodProfile?.mood ?? [])}
           title={book ? `Scoring ${book.title}…` : 'Scoring it now…'}
           steps={GENERATE_STEPS}
+          asides={GENERATE_ASIDES}
         />
       </ScoringScreen>
     );
   }
 
   return (
-    <ScoringScreen contentGap={CONTENT_GAP}>
+    <ScoringScreen>
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ gap: CONTENT_GAP }}

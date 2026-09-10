@@ -28,10 +28,12 @@ import { useTheme } from '@/lib/use-theme';
  * than being driven by a prop no screen could honestly supply.
  */
 
-// The drift rides on a wrapper rather than the gradient itself: NativeWind's animation
-// path only reaches components it wraps, and a Reanimated-wrapped `LinearGradient`
-// throws on `animationName`. The gradient inside keeps its own size and radius, since an
-// absolutely positioned one is not clipped by a rounded parent on iOS.
+/**
+ * The drift rides on a wrapper rather than the gradient itself: NativeWind's animation
+ * path only reaches components it wraps, and a Reanimated-wrapped `LinearGradient`
+ * throws on `animationName`. The gradient inside keeps its own size and radius, since an
+ * absolutely positioned one is not clipped by a rounded parent on iOS.
+ */
 const AnimatedView = cssInterop(Animated.View, { className: 'style' });
 
 const SQUARE = 210;
@@ -56,6 +58,9 @@ const PENDING = '◌';
 
 /** Steps not yet reached are dimmed rather than hidden, so the list never reflows. */
 const PENDING_OPACITY = 0.4;
+
+/** How long each aside holds before the last step moves on to the next. */
+const ASIDE_MS = 3500;
 
 /**
  * The step in flight spins instead of sitting under `◌`. The design has no such state —
@@ -192,14 +197,18 @@ export function ScoringProgress({
   gradient,
   title,
   steps,
+  asides = [],
 }: {
   gradient: GradientSpec;
   title: string;
   steps: readonly string[];
+  /** Cycled through on the last step, which is held until the caller unmounts this. */
+  asides?: readonly string[];
 }) {
   const { theme, shadows } = useTheme();
   const reduceMotion = useReducedMotion();
   const [reached, setReached] = useState(0);
+  const [aside, setAside] = useState(-1);
 
   useEffect(() => {
     if (reached >= steps.length - 1) return;
@@ -209,6 +218,20 @@ export function ScoringProgress({
     );
     return () => clearTimeout(timer);
   }, [reached, steps.length]);
+
+  const onLastStep = reached >= steps.length - 1;
+
+  useEffect(() => {
+    if (!onLastStep || asides.length === 0) return;
+    const timer = setInterval(() => setAside((index) => index + 1), ASIDE_MS);
+    return () => clearInterval(timer);
+  }, [onLastStep, asides.length]);
+
+  /** The last step says its own line first, then borrows the asides in turn. */
+  const labelFor = (step: string, index: number) =>
+    index === steps.length - 1 && aside >= 0 && asides.length > 0
+      ? asides[aside % asides.length]
+      : step;
 
   return (
     <View className="flex-1 items-center justify-center gap-[30px] px-[30px] pb-[70px]">
@@ -245,7 +268,7 @@ export function ScoringProgress({
       <View className="w-full max-w-[260px] gap-[10px]">
         {steps.map((step, index) => (
           <View
-            key={step}
+            key={index}
             className="flex-row items-center gap-3"
             style={index <= reached ? undefined : { opacity: PENDING_OPACITY }}>
             <StepMarker
@@ -254,7 +277,9 @@ export function ScoringProgress({
               // is working, and the ring already tells it apart from a tick.
               color={index <= reached ? theme.primary : theme.inkFaint}
             />
-            <Text className="font-body text-body-sm text-foreground">{step}</Text>
+            <Text className="font-body text-body-sm text-foreground">
+              {labelFor(step, index)}
+            </Text>
           </View>
         ))}
       </View>

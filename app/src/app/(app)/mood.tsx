@@ -31,22 +31,10 @@ import { useBook } from '@/features/books/use-book';
 import { useMoodProfile } from '@/features/mood/use-mood-profile';
 import { isApiError } from '@/lib/api-client';
 import { MOOD_INK, PACING_LABELS, moodGradient } from '@/lib/gradients';
-
-/**
- * The mood step — Claude's read said back beside the jacket, with the chips that correct
- * it. Everything above `Fine-tune` is the profile that goes to the Playlist Builder
- * verbatim; everything below is optional context that only shapes the tracks.
- *
- * The colour is `MoodWash`, behind everything, rather than a panel the read sits in.
- */
-
-/** Wider than the design's 14: with the fine-tune block below it, 14 ran the sections together. */
-const CONTENT_GAP = 22;
+import { CONTENT_GAP } from '@/lib/theme';
 
 const COVER_WIDTH = 118;
-/** The design's `aspect-ratio: 2/3`. */
 const COVER_HEIGHT = 177;
-/** The banner draws the cover at 10px, where book detail uses 8. */
 const COVER_RADIUS = 10;
 
 /** The correctable half of a profile. */
@@ -83,15 +71,15 @@ export default function MoodScreen() {
     const isMissing = isApiError(error) && error.code === 'BOOK_NOT_FOUND';
 
     return (
-      <ScoringScreen contentGap={CONTENT_GAP}>
+      <ScoringScreen>
         <View className="gap-[10px] pt-2">
           <Text className="font-display text-[19px] leading-[25px] text-foreground">
             {isMissing ? 'This book has gone missing.' : "We couldn't read this one."}
           </Text>
           <Text className="font-body text-body-sm text-ink-muted">
             {isMissing
-              ? 'Google Books no longer lists it. Search again, or add it by hand.'
-              : 'The analysis did not come back. Try again in a moment.'}
+              ? "We couldn't find this volume. Search again, or add it by hand."
+              : 'There was a problem. Try again in a moment.'}
           </Text>
 
           {/* TODO(next iteration): offer the mood controls here so a book the catalogue
@@ -106,24 +94,21 @@ export default function MoodScreen() {
     override ??
     (profile ? { mood: profile.mood, pacing: profile.pacing } : { mood: [], pacing: 'steady' });
 
-  // A line each, not one `·`-joined sentence — the design stacks them beside the jacket.
   const moodLines = [...current.mood.map(capitalize), PACING_LABELS[current.pacing]];
 
-  // A third pick drops the oldest rather than being refused: the design's chips give no
-  // signal that the cap has been hit, so a dead press would read as a broken control.
   const toggleMood = (mood: Mood) =>
     setOverride({
       ...current,
       mood: current.mood.includes(mood)
         ? current.mood.filter((selected) => selected !== mood)
-        : [...current.mood.slice(1 - MAX_MOODS), mood],
+        : [...current.mood, mood].slice(-MAX_MOODS),
     });
 
   const setDetail = (next: Partial<ReadingContext>) => setContext({ ...context, ...next });
 
   if (!profile) {
     return (
-      <ScoringScreen contentGap={CONTENT_GAP}>
+      <ScoringScreen>
         <ScoringProgress
           gradient={moodGradient(current.mood)}
           title={book ? `Reading ${book.title}…` : 'Reading the book…'}
@@ -134,7 +119,7 @@ export default function MoodScreen() {
   }
 
   return (
-    <ScoringScreen contentGap={CONTENT_GAP}>
+    <ScoringScreen>
       <MoodWash moods={current.mood} />
 
       <ScrollView
@@ -152,8 +137,6 @@ export default function MoodScreen() {
             radius={COVER_RADIUS}
           />
 
-          {/* One ink throughout, the design carrying the hierarchy in opacity — the
-              column used to sit on a gradient, where muted greys had nothing to sit on. */}
           <View className="min-w-0 flex-1 gap-[5px] self-stretch">
             <Text className="font-display text-[22px] leading-[26px] tracking-tight text-foreground">
               {book?.title}
@@ -189,11 +172,9 @@ export default function MoodScreen() {
           Fine-tune to sharpen the score
         </Text>
 
-        {/* No divider under the pacing pills: asked for directly, and still one in the
-            prototype. */}
         <View className="gap-[9px]">
           <Text className="font-mono text-eyebrow uppercase tracking-eyebrow text-ink-faint">
-            Mood · change if it&apos;s off
+            Mood
           </Text>
 
           <View className="flex-row flex-wrap gap-[9px]">
@@ -208,8 +189,6 @@ export default function MoodScreen() {
               />
             ))}
 
-            {/* Additive, not a third pick: its text rides in the reading context,
-                  so the closed vocabulary behind the gradient stays closed. */}
             <Chip
               label={OTHER}
               isSelected={context.moodOther !== undefined}
@@ -287,8 +266,6 @@ export default function MoodScreen() {
           onPress={() =>
             router.push({
               pathname: '/playlist',
-              // The profile the user actually saw, corrections included, so generation
-              // never runs a second read of the book that could differ from this screen.
               params: {
                 googleBooksId,
                 profile: JSON.stringify({ ...profile, ...current }),

@@ -10,6 +10,7 @@ import { Text } from '@/components/ui/text';
 import { useBook } from '@/features/books/use-book';
 import { isApiError } from '@/lib/api-client';
 import { bookDetailMetaLine, bookFacts, plainText } from '@/lib/book-display';
+import { CONTENT_GAP } from '@/lib/theme';
 
 /**
  * Book detail — the first step of the scoring flow. It asks for nothing: the mood
@@ -19,10 +20,7 @@ import { bookDetailMetaLine, bookFacts, plainText } from '@/lib/book-display';
 
 const COVER_WIDTH = 108;
 const COVER_HEIGHT = 158;
-/** Book detail draws the cover at 8px, where a library row uses 6px. */
 const COVER_RADIUS = 8;
-
-const CONTENT_GAP = 18;
 
 /** The design collapses the blurb to three lines, with `More` to open it out. */
 const BLURB_LINES = 3;
@@ -36,7 +34,7 @@ export default function BookDetailScreen() {
     const isMissing = isApiError(error) && error.code === 'BOOK_NOT_FOUND';
 
     return (
-      <ScoringScreen contentGap={CONTENT_GAP}>
+      <ScoringScreen>
         <View className="gap-[10px] pt-2">
           <Text className="text-foreground font-display text-[19px] leading-[25px]">
             {isMissing ? 'This book has gone missing.' : 'This book is unavailable right now.'}
@@ -52,14 +50,14 @@ export default function BookDetailScreen() {
   }
 
   // No spinner: arriving from a search row seeds this from cache and paints at once.
-  if (!book) return <ScoringScreen contentGap={CONTENT_GAP} />;
+  if (!book) return <ScoringScreen />;
 
   const author = book.authors.join(', ');
   const meta = bookDetailMetaLine(book);
   const facts = bookFacts(book);
 
   return (
-    <ScoringScreen contentGap={CONTENT_GAP}>
+    <ScoringScreen>
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ gap: CONTENT_GAP }}

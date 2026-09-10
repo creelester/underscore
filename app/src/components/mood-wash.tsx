@@ -4,16 +4,6 @@ import Svg, { Defs, LinearGradient, Mask, Rect, Stop } from 'react-native-svg';
 
 import { moodGradient, type Mood } from '@/lib/gradients';
 
-/**
- * The mood gradient bleeding down from behind the header, fading out over the top of
- * the screen.
- *
- * SVG, not `expo-linear-gradient`: the colour runs at 160° while the fade runs straight
- * down, and one gradient cannot do both. The fade is a luminance `Mask` rather than a
- * second gradient over the first, which would need an opaque colour and so would cover
- * `AppBackdrop` instead of letting it through.
- */
-
 const TOP = -58;
 const HEIGHT = 392;
 const OPACITY = 0.42;
@@ -28,12 +18,10 @@ const FADE = [
 
 export function MoodWash({ moods }: { moods: readonly Mood[] }) {
   const { colors, locations, start, end } = moodGradient(moods);
-  // Every coordinate is in pixels, as in `AppBackdrop`: percentages on an `Svg` with no
-  // `viewBox` resolve against nothing and the whole wash comes out empty.
+  // Sizes below are in pixels: a percentage on an `Svg` with no `viewBox` renders nothing.
   const { width } = useWindowDimensions();
 
-  // Gradient ids are document-global on web and the stack keeps two scoring screens
-  // mounted, so fixed ids collide — see the same guard in `AppBackdrop`.
+  // Ids are document-global on web, where two screens stay mounted — as in `AppBackdrop`.
   const instance = useId().replace(/:/g, '');
   const fillId = `wash-${instance}`;
   const maskId = `wash-mask-${instance}`;

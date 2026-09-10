@@ -7,24 +7,20 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { MOTION } from '@/lib/theme';
+import { BORDER, MOTION } from '@/lib/theme';
 import { useTheme } from '@/lib/use-theme';
 
 /**
- * The design's pill toggle. Sized 52 × 32 from book detail's inline copy rather than
- * the DS component's 52 × 30, per the precedence rule that an inlining screen wins.
- *
  * Every style prop lives inside `useAnimatedStyle`, layout included: Reanimated 4 drops
- * static styles sitting in an array beside an animated one, which rendered the track and
- * knob at zero size.
+ * static styles sitting in an array beside an animated one.
  */
 
 const WIDTH = 52;
 const HEIGHT = 32;
 const PADDING = 3;
-const BORDER = 1;
-const KNOB = HEIGHT - 2 * PADDING - 2 * BORDER;
-const TRAVEL = WIDTH - 2 * PADDING - 2 * BORDER - KNOB;
+
+const KNOB = HEIGHT - 2 * PADDING - 2 * BORDER.hairline;
+const TRAVEL = WIDTH - 2 * PADDING - 2 * BORDER.hairline - KNOB;
 
 export function Switch({
   checked,
@@ -48,7 +44,7 @@ export function Switch({
     width: WIDTH,
     height: HEIGHT,
     padding: PADDING,
-    borderWidth: BORDER,
+    borderWidth: BORDER.hairline,
     borderRadius: 999,
     borderColor: theme.border,
     backgroundColor: interpolateColor(progress.value, [0, 1], [theme.surface2, theme.primary]),

@@ -6,16 +6,9 @@ import { Chip } from '@/components/ui/chip';
 import { Text } from '@/components/ui/text';
 
 /**
- * An eyebrow over a wrapping row of chips — the mood screen's `PACING`, `BOOK FORMAT`,
- * `SETTING` and `ERA`.
- *
- * Single-select, and pressing the chosen option again clears it: the fine-tune groups
- * are optional, and without the second press there would be no way back to having
- * answered nothing. `required` turns that off for pacing, which always has a value.
- *
- * Picking `Something else` opens a free-text field beneath the row. The closed list is
- * what the model reads best, so the escape hatch stays one option deep rather than
- * being offered as a field up front.
+ * A labelled row of single-select chips. Pressing the selected chip clears it, since
+ * these groups are optional; `required` turns that off for pacing, which always has a
+ * value. Picking `Something else` opens a free-text field below the row.
  */
 export function OptionGroup<T extends string>({
   label,
@@ -39,7 +32,7 @@ export function OptionGroup<T extends string>({
   onOtherChange?: (value: string) => void;
   otherPlaceholder?: string;
 }) {
-  const isOtherOpen = !!onOtherChange && value === OTHER;
+  const showFreeText = !!onOtherChange && value === OTHER;
 
   return (
     <View className="gap-[9px]">
@@ -58,7 +51,7 @@ export function OptionGroup<T extends string>({
         ))}
       </View>
 
-      {isOtherOpen && (
+      {showFreeText && (
         <OtherInput
           value={otherValue ?? ''}
           onChangeText={onOtherChange}
