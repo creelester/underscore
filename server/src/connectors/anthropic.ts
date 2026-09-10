@@ -7,6 +7,7 @@ import {
   type AnchorSuggestion,
   type BookDetail,
   type MoodProfile,
+  type ReadingContext,
 } from "@underscore/shared";
 import { env } from "../config/env";
 import { ApiError } from "../lib/apiError";
@@ -155,15 +156,19 @@ export async function analyzeMood(book: BookDetail): Promise<MoodAnalysis> {
   });
 }
 
-/** ~30 anchors for a profile. `book` is absent on the manual-genre path. */
+/**
+ * ~30 anchors for a profile. `book` is absent on the manual-genre path; `context` is
+ * absent whenever the caller had no fine-tune answers to pass on.
+ */
 export async function suggestAnchors(
   profile: MoodProfile,
   book?: Pick<BookDetail, "title" | "authors">,
+  context?: ReadingContext,
 ): Promise<AnchorSuggestion[]> {
   const { tracks } = await requestStructured({
     label: "track list",
     system: ANCHOR_SYSTEM,
-    prompt: anchorPrompt(profile, book),
+    prompt: anchorPrompt(profile, book, context),
     format: ANCHORS_FORMAT,
     // Recalling real catalogue entries is where the quality of a playlist is decided.
     effort: "medium",

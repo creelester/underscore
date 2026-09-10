@@ -57,6 +57,18 @@ export async function logInAsSeededUser(page: Page) {
   await expectSignedInApp(page);
 }
 
+/**
+ * Types a term into the library home's search field.
+ *
+ * Located by role rather than by its placeholder: the placeholder is a full sentence of
+ * marketing copy, and the library screen carries the only text field in the signed-in
+ * app, so `textbox` is both stabler and unambiguous. One line to change to
+ * `getByTestId("library-search")` if the field ever gains a `testID`.
+ */
+export async function searchLibrary(page: Page, term: string) {
+  await page.getByRole("textbox").fill(term);
+}
+
 /** Signs out from the Profile tab, where the design puts the control. */
 export async function signOut(page: Page) {
   await page.getByRole("tab", { name: "Profile" }).click();

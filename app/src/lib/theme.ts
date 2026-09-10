@@ -65,6 +65,12 @@ export const PALETTE = {
 
 export const RADIUS = { sm: 10, card: 20, lg: 28, pill: 999 } as const;
 
+/** `ring` is the chip's gradient border; `hairline` is a control's own edge. */
+export const BORDER = { ring: 2, hairline: 1 } as const;
+
+/** The space between sections on every scoring screen. */
+export const CONTENT_GAP = 22;
+
 /** Motion tokens. `EASE_STANDARD` is the design's cubic-bezier(.32,.72,0,1). */
 export const MOTION = {
   easeStandard: [0.32, 0.72, 0, 1] as const,
