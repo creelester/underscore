@@ -2,18 +2,24 @@ import { Platform, TextInput } from 'react-native';
 
 import { cn } from '@/lib/utils';
 
-/**
- * The design's pill field: 52px tall, `--radius-pill`, `--surface` fill,
- * 1px `--border`, 20px horizontal padding.
- */
+const SIZES = {
+  /** The design's standalone field: 52px tall on `--surface`. */
+  default: 'h-[52px] bg-surface px-5 font-body text-base',
+  /** Sized and coloured to sit under a row of chips. */
+  sm: 'h-[42px] bg-surface-2 px-[18px] font-display text-sm',
+} as const;
+
 function Input({
   className,
+  size = 'default',
   ...props
-}: React.ComponentProps<typeof TextInput> & React.RefAttributes<TextInput>) {
+}: React.ComponentProps<typeof TextInput> &
+  React.RefAttributes<TextInput> & { size?: keyof typeof SIZES }) {
   return (
     <TextInput
       className={cn(
-        'border-border bg-surface text-foreground font-body flex h-[52px] w-full min-w-0 flex-row items-center rounded-pill border px-5 text-base',
+        'border-border text-foreground rounded-pill flex w-full min-w-0 flex-row items-center border',
+        SIZES[size],
         props.editable === false && 'opacity-50',
         Platform.select({
           web: cn(
