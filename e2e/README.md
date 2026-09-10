@@ -126,9 +126,34 @@ await page.goto("/login");
 ```
 
 Fixtures shared across specs — `SEEDED_USER`, `uniqueEmail()`,
-`logInAsSeededUser()`, `expectSignedInApp()`, `signOut()`, `signOutToLogin()` —
-live in `helpers.ts`. It is not a `*.spec.ts`, so Playwright's default
-`testMatch` never collects it as a suite.
+`logInAsSeededUser()`, `expectSignedInApp()`, `searchLibrary()`, `signOut()`,
+`signOutToLogin()` — live in `helpers.ts`. It is not a `*.spec.ts`, so
+Playwright's default `testMatch` never collects it as a suite.
+
+### Locators and copy
+
+A locator that matches product copy breaks when a writer changes a word, so the
+order of preference is: a value the spec already owns (a fixture book's title, a
+closed vocabulary from `@underscore/shared`) → a role or an accessible name → a
+`testID` → the copy itself.
+
+`tsconfig.json` at the root maps `@underscore/shared`, which Playwright honours,
+so a spec can import `MOODS`, `OTHER`, `BOOK_FORMATS`, `SETTINGS` and `ERAS`
+instead of retyping the chip labels. Type-annotating a single option
+(`const CITY: Setting = "City"`) is the cheap version: renaming the option in
+shared then fails `typecheck` rather than a run.
+
+Copy is the last resort, not the first. Where it is unavoidable — the waiting
+screen's title, the free-text placeholders — keep every such string in one
+`COPY`-style block at the top of the file, naming the `testID` that would retire
+it, so a wording change is a one-line fix. Prose that only decorates a screen
+(a section heading, an eyebrow) is not worth asserting at all: assert the thing
+it labels instead. Match a CTA on its verb (`/^Analyze/`) so a decorative arrow
+can move.
+
+Adding a `testID` to a component is a legitimate fix, not test pollution:
+react-native-web renders RN `testID` as `data-testid`, Playwright's default
+test-id attribute. Nothing in the app carries one yet.
 
 Both projects (`chromium` desktop, `mobile-chrome` Pixel 7) run every file.
 Scope a test to one with `test.skip(({ browserName }) => ...)` or a `testMatch`
