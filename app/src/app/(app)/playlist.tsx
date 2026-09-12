@@ -124,7 +124,7 @@ export default function PlaylistScreen() {
         contentContainerStyle={{ gap: CONTENT_GAP }}
         showsVerticalScrollIndicator={false}>
         <Text className="font-display text-[30px] leading-[34px] tracking-tight text-foreground">
-          {playlist.book.title}
+          {playlist.name}
         </Text>
 
         {/* Plain text until the design's result screen is built. */}

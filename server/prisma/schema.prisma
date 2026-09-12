@@ -136,6 +136,10 @@ model Playlist {
   bookId String
   book   Book   @relation(fields: [bookId], references: [id])
 
+  // Claude's, written as it picks the tracks — an image from the book rather than a
+  // description of it. Falls back to `defaultPlaylistName` when it comes back without one.
+  name String
+
   // Claude's read of one book, valid only for this generation — generating the
   // same book twice yields two independent profiles, so it belongs to the
   // playlist rather than to the book. Only ever read whole; MoodProfileSchema

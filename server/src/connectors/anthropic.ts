@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import {
   AnchorSuggestionsSchema,
+  MAX_PLAYLIST_NAME_LENGTH,
   MOODS,
   MoodProfileSchema,
   type AnchorSuggestion,
@@ -22,7 +23,11 @@ const FALLBACK_BETA = "server-side-fallback-2026-07-01";
 const MoodAnalysisSchema = MoodProfileSchema.omit({ genre: true });
 export type MoodAnalysis = z.infer<typeof MoodAnalysisSchema>;
 
-const AnchorResponseSchema = z.object({ tracks: AnchorSuggestionsSchema });
+// `name` stays optional: a missing title must not throw away thirty resolved tracks.
+const AnchorResponseSchema = z.object({
+  name: z.string().trim().min(1).max(MAX_PLAYLIST_NAME_LENGTH).optional(),
+  tracks: AnchorSuggestionsSchema,
+});
 
 /**
  * The enum keeps Claude inside the closed vocabulary the UI has gradients for; the cap
@@ -43,12 +48,12 @@ const MOOD_ANALYSIS_FORMAT: Anthropic.JSONOutputFormat = {
   },
 };
 
-// Structured output must be a JSON object, hence the `tracks` wrapper around the list.
 const ANCHORS_FORMAT: Anthropic.JSONOutputFormat = {
   type: "json_schema",
   schema: {
     type: "object",
     properties: {
+      name: { type: "string" },
       tracks: {
         type: "array",
         items: {
@@ -59,7 +64,7 @@ const ANCHORS_FORMAT: Anthropic.JSONOutputFormat = {
         },
       },
     },
-    required: ["tracks"],
+    required: ["name", "tracks"],
     additionalProperties: false,
   },
 };
@@ -157,15 +162,16 @@ export async function analyzeMood(book: BookDetail): Promise<MoodAnalysis> {
 }
 
 /**
- * ~30 anchors for a profile. `book` is absent on the manual-genre path; `context` is
- * absent whenever the caller had no fine-tune answers to pass on.
+ * ~30 anchors for a profile, and the name of the playlist they make. `book` is absent on
+ * the manual-genre path; `context` is absent whenever the caller had no fine-tune
+ * answers to pass on.
  */
 export async function suggestAnchors(
   profile: MoodProfile,
   book?: Pick<BookDetail, "title" | "authors">,
   context?: ReadingContext,
-): Promise<AnchorSuggestion[]> {
-  const { tracks } = await requestStructured({
+): Promise<{ name?: string; tracks: AnchorSuggestion[] }> {
+  return requestStructured({
     label: "track list",
     system: ANCHOR_SYSTEM,
     prompt: anchorPrompt(profile, book, context),
@@ -175,6 +181,4 @@ export async function suggestAnchors(
     maxTokens: 8000,
     schema: AnchorResponseSchema,
   });
-
-  return tracks;
 }

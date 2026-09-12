@@ -34,3 +34,10 @@ export const MoodProfileSchema = z.object({
   summary: z.string(),
 });
 export type MoodProfile = z.infer<typeof MoodProfileSchema>;
+
+/** Display labels only; the wire values stay `MoodProfile.pacing`. */
+export const PACING_LABELS: Record<MoodProfile['pacing'], string> = {
+  slow: 'Slow burn',
+  steady: 'Steady',
+  fast: 'Breakneck',
+};
