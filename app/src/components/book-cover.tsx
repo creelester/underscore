@@ -1,3 +1,4 @@
+import type { Mood } from '@underscore/shared';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, View } from 'react-native';
@@ -11,16 +12,21 @@ import { useTheme } from '@/lib/use-theme';
  * A book's artwork, or the mood swatch that stands in for it. The gradient sits
  * underneath the image rather than beside it, which also covers the gap while a
  * thumbnail loads and the case where it fails outright.
+ *
+ * A search hit has no mood yet, so `googleBooksId` hashes one; a saved playlist passes
+ * its own. One of the two is always present — a manual-genre book has no volume id.
  */
 export function BookCover({
   googleBooksId,
+  mood,
   thumbnailUrl,
   title,
   width,
   height,
   radius = 6,
 }: {
-  googleBooksId: string;
+  googleBooksId?: string;
+  mood?: Mood;
   thumbnailUrl: string | null;
   title: string;
   width: number;
@@ -28,6 +34,7 @@ export function BookCover({
   radius?: number;
 }) {
   const { shadows } = useTheme();
+  const swatch = mood ?? (googleBooksId ? coverMood(googleBooksId) : undefined);
 
   return (
     <View
@@ -38,7 +45,10 @@ export function BookCover({
         overflow: 'hidden',
         boxShadow: shadows.soft,
       }}>
-      <LinearGradient {...moodGradient([coverMood(googleBooksId)])} style={StyleSheet.absoluteFill} />
+      <LinearGradient
+        {...moodGradient(swatch ? [swatch] : [])}
+        style={StyleSheet.absoluteFill}
+      />
 
       {thumbnailUrl && (
         <Image
