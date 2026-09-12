@@ -1,6 +1,7 @@
+import type { Playlist } from '@underscore/shared';
 import { router } from 'expo-router';
 import { Plus } from 'lucide-react-native';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { BookCover } from '@/components/book-cover';
@@ -13,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';
 import { Text } from '@/components/ui/text';
+import { useBookshelf } from '@/features/bookshelf/use-bookshelf';
 import {
   MIN_QUERY_LENGTH,
   useBookSearch,
@@ -23,15 +25,18 @@ import { useTheme } from '@/lib/use-theme';
 
 /**
  * The library home and the entry point to a new score; there is no separate grid or
- * pushed search screen. The saved half needs the scoring flow and `GET /api/bookshelf`,
- * so for now the shelf is empty for everyone and only the search half renders — a state
- * the design already covers rather than a stand-in.
+ * pushed search screen. Saved playlists come first — the three newest under `RECENT`,
+ * the rest under `YOUR PLAYLISTS` — and Google Books is the fallback, reached only
+ * once the shelf has nothing matching the query.
  */
 
 const SEARCH_DEBOUNCE_MS = 700;
 
 const BOOK_COVER_WIDTH = 48;
 const BOOK_COVER_HEIGHT = 70;
+
+/** The design's `RECENT`, which holds three rows before the rest spill below it. */
+const RECENT_COUNT = 3;
 
 /**
  * Enough to read as a list without standing in for a count the search has not
@@ -40,16 +45,21 @@ const BOOK_COVER_HEIGHT = 70;
  */
 const SKELETON_ROWS = 3;
 
-/**
- * TODO: replace with the filtered count from `GET /api/bookshelf` once the
- * bookshelf endpoint exists. Typed rather than left literal so the gating below
- * stays a real rule instead of an expression TypeScript folds away.
- */
-const savedMatchCount: number = 0;
+/** `Book · Author`, the design's meta line under a playlist's name. */
+function playlistMetaLine(playlist: Playlist): string {
+  return [playlist.book.title, playlist.book.authors[0]]
+    .filter((part): part is string => !!part)
+    .join(' · ');
+}
 
-/** TODO: from `GET /api/bookshelf` too. Distinct from `savedMatchCount`: a shelf whose
- *  books all fail the query is a search miss, not an empty library. */
-const isLibraryEmpty: boolean = true;
+/** A playlist matches on its own name as readily as on the book behind it. */
+function matches(playlist: Playlist, query: string): boolean {
+  const haystack = [playlist.name, playlist.book.title, ...playlist.book.authors]
+    .join(' ')
+    .toLowerCase();
+
+  return haystack.includes(query);
+}
 
 export default function LibraryScreen() {
   const { theme } = useTheme();
@@ -58,10 +68,24 @@ export default function LibraryScreen() {
   const trimmed = query.trim();
   const settled = useDebouncedValue(trimmed, SEARCH_DEBOUNCE_MS);
 
+  const bookshelf = useBookshelf();
+  const saved = useMemo(() => {
+    const playlists = bookshelf.data ?? [];
+    const needle = trimmed.toLowerCase();
+    return needle ? playlists.filter((playlist) => matches(playlist, needle)) : playlists;
+  }, [bookshelf.data, trimmed]);
+
+  // Filtered first, then split: refining a query re-fills `RECENT` from what is left
+  // rather than leaving the three newest pinned above rows that match better.
+  const recent = saved.slice(0, RECENT_COUNT);
+  const rest = saved.slice(RECENT_COUNT);
+
   const isLongEnough = trimmed.length >= MIN_QUERY_LENGTH;
-  // The catalogue is the fallback: it runs only once the shelf has no match.
+  // The catalogue is the fallback, and an unloaded shelf is not the same as an empty
+  // one: searching Google before it lands would skip over a book already saved.
+  const isShelfSettled = !bookshelf.isPending;
   const isFallbackActive =
-    settled.length >= MIN_QUERY_LENGTH && savedMatchCount === 0;
+    isShelfSettled && settled.length >= MIN_QUERY_LENGTH && saved.length === 0;
   const search = useBookSearch(isFallbackActive ? settled : '');
   const results = isFallbackActive ? (search.data ?? []) : [];
 
@@ -69,12 +93,12 @@ export default function LibraryScreen() {
   // while `MIN_QUERY_LENGTH` still holds the request back.
   const isSearching =
     !!trimmed &&
-    savedMatchCount === 0 &&
-    (!isLongEnough || settled !== trimmed || search.isFetching);
+    saved.length === 0 &&
+    (!isShelfSettled || !isLongEnough || settled !== trimmed || search.isFetching);
   const isFailed = isFallbackActive && !search.isFetching && search.isError;
   const isNoMatch =
     isLongEnough &&
-    savedMatchCount === 0 &&
+    saved.length === 0 &&
     !isSearching &&
     !isFailed &&
     results.length === 0;
@@ -82,7 +106,7 @@ export default function LibraryScreen() {
   let sectionLabel: string;
   if (!trimmed) {
     sectionLabel = 'Your playlists';
-  } else if (savedMatchCount > 0) {
+  } else if (saved.length > 0) {
     sectionLabel = 'In your library';
   } else if (isSearching) {
     sectionLabel = 'Searching…';
@@ -98,11 +122,15 @@ export default function LibraryScreen() {
   // Gated on there being nothing to show rather than on `isSearching` alone, so
   // refining a term keeps the previous rows up until the debounce settles
   // instead of dropping to placeholders between every edit.
-  const isSkeletonVisible = isSearching && results.length === 0;
+  const isSkeletonVisible =
+    (isSearching && results.length === 0) || (!isShelfSettled && !trimmed);
 
-  const isSectionVisible = savedMatchCount > 0 || !!trimmed;
+  // A shelf whose every match already fits in `RECENT` leaves nothing below it, so the
+  // second section only earns its label once there are rows or a search to report.
+  const isSectionVisible =
+    rest.length > 0 || isSkeletonVisible || (!!trimmed && saved.length === 0);
   // A query replaces the empty state, so the two are never on screen together.
-  const isEmptyLibraryVisible = isLibraryEmpty && !trimmed;
+  const isEmptyLibraryVisible = isShelfSettled && saved.length === 0 && !trimmed;
 
   return (
     <View className='flex-1 gap-4'>
@@ -127,7 +155,13 @@ export default function LibraryScreen() {
       >
         {isEmptyLibraryVisible && <EmptyLibrary />}
 
-        {/* `RECENT` slots in here once the bookshelf endpoint exists. */}
+        {recent.length > 0 && (
+          <LibrarySection label='Recent'>
+            {recent.map((playlist) => (
+              <SavedPlaylistRow key={playlist.id} playlist={playlist} />
+            ))}
+          </LibrarySection>
+        )}
 
         {isSectionVisible && (
           <LibrarySection label={sectionLabel}>
@@ -135,6 +169,10 @@ export default function LibraryScreen() {
               Array.from({ length: SKELETON_ROWS }, (_, index) => (
                 <LibraryRowSkeleton key={index} />
               ))}
+
+            {rest.map((playlist) => (
+              <SavedPlaylistRow key={playlist.id} playlist={playlist} />
+            ))}
 
             {results.map((book) => (
               <LibraryRow
@@ -197,6 +235,25 @@ export default function LibraryScreen() {
         </Button>
       )}
     </View>
+  );
+}
+
+function SavedPlaylistRow({ playlist }: { playlist: Playlist }) {
+  return (
+    <LibraryRow
+      title={playlist.name}
+      meta={playlistMetaLine(playlist)}
+      onPress={() => router.push(`/playlist/${playlist.id}`)}
+      cover={
+        <BookCover
+          mood={playlist.moodProfile.mood[0]}
+          thumbnailUrl={playlist.book.thumbnailUrl}
+          title={playlist.book.title}
+          width={BOOK_COVER_WIDTH}
+          height={BOOK_COVER_HEIGHT}
+        />
+      }
+    />
   );
 }
 

@@ -1,6 +1,7 @@
+import { bookshelfKeys } from '@/features/bookshelf/keys';
 import { apiClient } from '@/lib/api-client';
 import { PlaylistSchema, type GeneratePlaylistRequest, type Playlist } from '@underscore/shared';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 /**
  * Far past the client's default: this one request is Claude's ~30 anchors plus a Spotify
@@ -21,5 +22,11 @@ async function generatePlaylist(request: GeneratePlaylistRequest): Promise<Playl
  * re-run by a refetch or a remount the way a cached read would be.
  */
 export function useGeneratePlaylist() {
-  return useMutation({ mutationFn: generatePlaylist });
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: generatePlaylist,
+    // The new playlist heads `RECENT` on the way back to the library.
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: bookshelfKeys.all }),
+  });
 }
