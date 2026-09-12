@@ -46,33 +46,37 @@ starts from a clean cache rather than a stale inline of the old one.
 
 ## Third-party upstreams
 
-Google Books and Claude are served from `fixtures/upstream-server.ts`, a third
-`webServer` on port 3101. `playwright.config.ts` points the API at it with
-`GOOGLE_BOOKS_BASE_URL` and `ANTHROPIC_BASE_URL` — both already overridable in
-`server/src/config/env.ts` — plus a placeholder `ANTHROPIC_API_KEY`, since the
-connector refuses to build a client without one.
+Google Books, Claude and Spotify are served from `fixtures/upstream-server.ts`, a
+third `webServer` on port 3101. `playwright.config.ts` points the API at it with
+`GOOGLE_BOOKS_BASE_URL`, `ANTHROPIC_BASE_URL`, `SPOTIFY_ACCOUNTS_BASE_URL` and
+`SPOTIFY_API_BASE_URL` — all already overridable in `server/src/config/env.ts` —
+plus placeholder credentials, since those connectors refuse to run without them.
 
-Only the two upstreams are replaced, and only at their own network boundary: the
+Only the third parties are replaced, and only at their own network boundary: the
 server, its routes and its zod schemas are all still under test. That is why no
 spec stubs `/api/*` with `page.route` — mocking our own API would mock the
 contract the test exists to exercise. A run therefore never leaves localhost,
 never spends Anthropic credit, and gets the same mood profile every time, which
 is what makes the mood screen assertable at all.
 
-The books and their reads live in `fixtures/catalog.ts`, imported by both the
-fixture server and the specs so the two cannot drift. Titles are invented on
-purpose: a real one would let a run that had escaped to the live API still look
-like it passed. Add a book there, not in a spec.
+The books and their reads live in `fixtures/catalog.ts`, and the anchors Claude
+suggests plus the tracks Spotify resolves them to in `fixtures/tracks.ts`. Both are
+imported by the fixture server and by the specs, so the two cannot drift. Titles are
+invented on purpose: a real one would let a run that had escaped to the live API
+still look like it passed. Add a book there, not in a spec.
 
-Spotify is deliberately not fixtured. No spec generates a playlist to completion,
-and `SPOTIFY_CLIENT_ID` is unset, so `POST /api/playlists/generate` fails fast and
-locally with "Spotify is not configured" — the `[upstream] Spotify is not
-configured` line in the server log during a mood run is that, and is expected.
-Covering the playlist result screen means serving Spotify's token and search
-endpoints from the same fixture server.
+Claude's playlist title comes from the same place: a book's optional `playlistName`
+is what the fixture answers an anchor request with. A book that has none answers
+without one, which is the path `defaultPlaylistName` exists for, so both naming
+paths are reachable by choosing a book. `expectedPlaylistName()` in `helpers.ts`
+resolves either from the fixture and `@underscore/shared`, so no spec writes a
+playlist name down.
 
-`server/.env.test` carries the same two base URLs, so running the e2e stack by
-hand needs the fixture server running too:
+Only the user-level Spotify OAuth — sign-in and export — is unfixtured; nothing
+drives it.
+
+`server/.env.test` carries the same base URLs, so running the e2e stack by hand
+needs the fixture server running too:
 
 ```sh
 bun run e2e/fixtures/upstream-server.ts
@@ -125,10 +129,28 @@ navigate with relative paths:
 await page.goto("/login");
 ```
 
-Fixtures shared across specs — `SEEDED_USER`, `uniqueEmail()`,
+Fixtures shared across specs — `SEEDED_USER`, `uniqueEmail()`, `logIn()`,
 `logInAsSeededUser()`, `expectSignedInApp()`, `searchLibrary()`, `signOut()`,
-`signOutToLogin()` — live in `helpers.ts`. It is not a `*.spec.ts`, so
-Playwright's default `testMatch` never collects it as a suite.
+`signOutToLogin()`, `createShelf()`, `expectedPlaylistName()` — live in
+`helpers.ts`, and the worker fixture that holds a shared shelf in `shelf.ts`.
+Neither is a `*.spec.ts`, so Playwright's default `testMatch` never collects them
+as suites.
+
+### Accounts with saved playlists
+
+`createShelf(label, books)` mints an account and scores each book on it over HTTP,
+through `POST /api/playlists/generate` — the whole pipeline, answered by the same
+upstream fixtures a browser's request would reach. It is setup, not coverage: the
+library home only gets interesting at four or five saved playlists, and each one
+driven through the UI is three navigations. The books are scored in order, so the
+shelf's order is known; `GET /api/bookshelf` serves the reverse.
+
+`shelf.ts` wraps one five-playlist account in a **worker-scoped** fixture, because
+every test that reads it only reads. A test that writes — scoring a book, or
+needing an empty library — calls `createShelf` for an account of its own. Generation
+persists a row, so any test that reaches it must not use the seeded account: a
+playlist on that shelf would answer another spec's search from the library instead
+of from the catalogue.
 
 ### Locators and copy
 
@@ -206,6 +228,13 @@ locator:
   visible text at all, so its state is only observable through what the next
   request carries. Both are real accessibility gaps on web, not just test
   friction.
+- A dynamic route has no page of its own in the export. `web.output` is `static`
+  and neither `/book/[googleBooksId]` nor `/playlist/[playlistId]` declares
+  `generateStaticParams`, so `expo serve` answers `/playlist/<id>` with 404 — a deep
+  link is only reachable on a host that rewrites to the app shell. Reach those
+  screens by pressing the row or the CTA that pushes them, as a reader would. The
+  cost is that the screen underneath stays mounted, so a playlist's name is on
+  screen twice; scope the heading rather than matching it bare.
 - `keyboardType="email-address"` becomes `<input type="email">`, and Chromium
   runs the HTML value-sanitization algorithm on that type — leading and trailing
   whitespace is stripped before the app ever sees it. So a `fill("  a@b.c  ")`

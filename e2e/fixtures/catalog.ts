@@ -35,6 +35,12 @@ export type FixtureBook = {
   pageCount: number;
   publisher: string;
   language: string;
+  /**
+   * The title the fixture's Claude gives a playlist for this book. Absent on purpose
+   * for some books: a generation that comes back without one falls through to
+   * `defaultPlaylistName`, and both paths are worth a spec.
+   */
+  playlistName?: string;
   /** What the fixture answers a mood request about this book with, verbatim. */
   analysis: {
     /** At most two: `MAX_MOODS`, which the real Claude is held to by the same schema. */
@@ -77,10 +83,91 @@ export const FIXTURE_BOOKS: FixtureBook[] = [
     pageCount: 401,
     publisher: "Coldwater Press",
     language: "en",
+    playlistName: "Night Train Signals",
     analysis: {
       mood: ["tense", "haunting"],
       pacing: "fast",
       summary: "Momentum first: the dread is in how little time anyone is given.",
+    },
+  },
+  {
+    googleBooksId: "e2e-orchard",
+    title: "The Orchard at Vesper Hill",
+    authors: ["Marisol Vane"],
+    categories: ["Fiction / Literary / General"],
+    genre: "Literary",
+    description:
+      "Three sisters inherit a failing orchard and the ledger their mother kept of everything she never said.",
+    publishedDate: "2021-09-02",
+    publishedYear: "2021",
+    pageCount: 288,
+    publisher: "Harbour & Vale",
+    language: "en",
+    playlistName: "Windfall Season",
+    analysis: {
+      mood: ["nostalgic", "cozy"],
+      pacing: "steady",
+      summary: "Warm at the edges, with a long argument running underneath it.",
+    },
+  },
+  {
+    googleBooksId: "e2e-tessellate",
+    title: "Tessellate",
+    authors: ["Ines Harrow"],
+    categories: ["Fiction / Science Fiction / Hard Science Fiction"],
+    genre: "Hard Science Fiction",
+    description:
+      "A cartographer of impossible rooms is hired to map a building that finishes her sentences.",
+    publishedDate: "2024-01-30",
+    publishedYear: "2024",
+    pageCount: 356,
+    publisher: "Meridian House",
+    language: "en",
+    playlistName: "Cut Glass Dawn",
+    analysis: {
+      mood: ["dreamy", "tense"],
+      pacing: "steady",
+      summary: "Geometry as dread: the unease is architectural, never loud.",
+    },
+  },
+  {
+    googleBooksId: "e2e-saltmarsh",
+    title: "Saltmarsh Almanac",
+    authors: ["Marisol Vane"],
+    categories: ["Nature / Ecology"],
+    genre: "Ecology",
+    description:
+      "A year of tide charts, bird counts and the slow disappearance of a coastline nobody is measuring.",
+    publishedDate: "2018-06-11",
+    publishedYear: "2018",
+    pageCount: 224,
+    publisher: "Harbour & Vale",
+    language: "en",
+    playlistName: "Tide Tables",
+    analysis: {
+      mood: ["cozy", "melancholy"],
+      pacing: "slow",
+      summary: "Patient observation, and an elegy the author never admits to writing.",
+    },
+  },
+  {
+    googleBooksId: "e2e-quarry",
+    title: "The Quarry Sings at Night",
+    authors: ["Marisol Vane"],
+    categories: ["Fiction / Mystery & Detective / General"],
+    genre: "Mystery & Detective",
+    description:
+      "A flooded quarry gives up a car with no driver, and a village agrees on the wrong story.",
+    publishedDate: "2025-03-18",
+    publishedYear: "2025",
+    pageCount: 342,
+    publisher: "Coldwater Press",
+    language: "en",
+    playlistName: "Deep Water Marks",
+    analysis: {
+      mood: ["haunting", "tense"],
+      pacing: "steady",
+      summary: "A quiet place keeping a loud secret, and everyone rehearsing their part.",
     },
   },
 ];

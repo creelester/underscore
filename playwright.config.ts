@@ -24,6 +24,13 @@ const API_URL = `http://localhost:${API_PORT}`;
 const UPSTREAM_URL = `http://localhost:${UPSTREAM_PORT}`;
 const WEB_URL = `http://localhost:${WEB_PORT}`;
 
+/**
+ * For e2e/helpers.ts, which builds a test's saved playlists straight through the API.
+ * Exported from here so the port has one definition; Playwright reads only the default
+ * export, so a named one is inert to the runner.
+ */
+export const E2E_API_URL = API_URL;
+
 const E2E_DATABASE_URL =
   process.env.E2E_DATABASE_URL ??
   "postgresql://underscore:underscore@localhost:5432/underscore_e2e?schema=public";
@@ -123,6 +130,14 @@ export default defineConfig({
         GOOGLE_BOOKS_BASE_URL: UPSTREAM_URL,
         ANTHROPIC_BASE_URL: UPSTREAM_URL,
         ANTHROPIC_API_KEY: "e2e-fixture-key-not-a-real-key",
+        // Spotify too, so a generation runs to completion and leaves a saved playlist
+        // for the bookshelf specs to read. The credentials only have to be non-empty:
+        // the connector refuses to ask for a token without them, and the fixture that
+        // answers never looks at them.
+        SPOTIFY_CLIENT_ID: "e2e-fixture-client-id",
+        SPOTIFY_CLIENT_SECRET: "e2e-fixture-client-secret",
+        SPOTIFY_ACCOUNTS_BASE_URL: UPSTREAM_URL,
+        SPOTIFY_API_BASE_URL: UPSTREAM_URL,
       },
     },
     {
