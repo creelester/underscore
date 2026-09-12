@@ -27,7 +27,7 @@ export const SPLASH_TAGLINE = "a soundtrack to all your stories";
  * destination. Only "sends the app root to the tab a session opens on" in
  * auth.spec.ts pins the exact target.
  */
-export const APP_TAB_URL = /\/(now|library|profile)$/;
+export const APP_TAB_URL = /\/(now|library|settings)$/;
 
 /** A never-before-seen address, so parallel workers can never collide on one account. */
 export function uniqueEmail(label: string) {
@@ -69,10 +69,10 @@ export async function searchLibrary(page: Page, term: string) {
   await page.getByRole("textbox").fill(term);
 }
 
-/** Signs out from the Profile tab, where the design puts the control. */
+/** Signs out from the Settings tab, where the design puts the control. */
 export async function signOut(page: Page) {
-  await page.getByRole("tab", { name: "Profile" }).click();
-  await expect(page).toHaveURL(/\/profile$/);
+  await page.getByRole("tab", { name: "Settings" }).click();
+  await expect(page).toHaveURL(/\/settings$/);
 
   await page.getByRole("button", { name: "Sign out" }).click();
 }

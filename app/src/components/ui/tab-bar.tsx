@@ -7,7 +7,7 @@ import { Text } from '@/components/ui/text';
 import { useTheme } from '@/lib/use-theme';
 
 /**
- * The design's tab bar — Now / Library / Profile. The bar follows the DS component;
+ * The design's tab bar — Play / Library / Settings. The bar follows the DS component;
  * the items follow the prototype, which hand-writes its own (icon above label, both
  * one colour) rather than importing the bundle's older dot-and-label version.
  *
