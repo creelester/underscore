@@ -1,3 +1,4 @@
+import { type Mood } from '@underscore/shared';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Redirect, router } from 'expo-router';
 import { useRef, useState } from 'react';
@@ -15,7 +16,7 @@ import { AppBackdrop } from '@/components/app-backdrop';
 import { Button } from '@/components/ui/button';
 import { ProgressDots } from '@/components/ui/progress-dots';
 import { Text } from '@/components/ui/text';
-import { moodGradient, type Mood } from '@/lib/gradients';
+import { moodGradient } from '@/lib/gradients';
 import { useTheme } from '@/lib/use-theme';
 
 /**

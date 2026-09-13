@@ -1,8 +1,9 @@
+import { type Mood } from '@underscore/shared';
 import { useId } from 'react';
 import { useWindowDimensions, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Mask, Rect, Stop } from 'react-native-svg';
 
-import { moodGradient, type Mood } from '@/lib/gradients';
+import { moodGradient } from '@/lib/gradients';
 
 const TOP = -58;
 const HEIGHT = 392;

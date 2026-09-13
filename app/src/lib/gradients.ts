@@ -1,8 +1,6 @@
-import { DEFAULT_MOOD, MOODS, PACING_LABELS, type Mood } from '@underscore/shared';
+import { DEFAULT_MOOD, type Mood } from '@underscore/shared';
 
 import { PALETTE } from '@/lib/theme';
-
-export { MOODS, PACING_LABELS, type Mood };
 
 // NativeWind has no gradient classes, so gradients are data. Values feed
 // `<LinearGradient>`; colours come from the design system's tokens.
