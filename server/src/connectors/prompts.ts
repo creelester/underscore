@@ -28,7 +28,10 @@ that sit behind a book without competing with it.
 Suggest real, released tracks a listener could find on Spotify — exact artist and track
 names, no compilations, no invented titles, no two tracks by the same artist.
 If the book has a film, television or game adaptation with a released score, draw a few
-tracks from it.`;
+tracks from it.
+Name the playlist too: two to four words, an image or a phrase the book earns rather
+than a description of it — "Tides and Statues", "Small Town, Long Fuse", "Coal and
+Frost". Never the book's title, never the mood or pacing word, never the word playlist.`;
 
 /** The chip unless it was the escape hatch, in which case whatever was typed under it. */
 function resolveDetail(choice?: string, other?: string): string | undefined {

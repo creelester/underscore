@@ -5,6 +5,10 @@ import { MAX_GENRE_LENGTH } from "./book";
 import { MoodProfileSchema } from "./moodProfile";
 import { ReadingContextSchema } from "./readingContext";
 
+/** A page of the bookshelf. The app asks for the maximum; it has no paging affordance yet. */
+export const DEFAULT_BOOKSHELF_LIMIT = 20;
+export const MAX_BOOKSHELF_LIMIT = 50;
+
 export const BookSearchQuerySchema = z.object({
   q: z.string().trim().min(1, "A search term is required"),
 });
@@ -71,6 +75,13 @@ export const GeneratePlaylistRequestSchema = z
     message: "Exactly one of googleBooksId or manualGenre must be set",
   });
 export type GeneratePlaylistRequest = z.infer<typeof GeneratePlaylistRequestSchema>;
+
+/** Coerced, not piped: `limit` arrives as a query string. */
+export const BookshelfQuerySchema = z.object({
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(MAX_BOOKSHELF_LIMIT).default(DEFAULT_BOOKSHELF_LIMIT),
+});
+export type BookshelfQuery = z.infer<typeof BookshelfQuerySchema>;
 
 export const BookshelfResponseSchema = z.object({
   playlists: z.array(PlaylistSchema),

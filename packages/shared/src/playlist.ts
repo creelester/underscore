@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { BookSchema } from "./book";
-import { MoodProfileSchema } from "./moodProfile";
+import { MoodProfileSchema, PACING_LABELS, type MoodProfile } from "./moodProfile";
 
 export const TrackSchema = z.object({
   spotifyTrackId: z.string(),
@@ -18,8 +18,25 @@ export const PlaylistTrackSchema = z.object({
 });
 export type PlaylistTrack = z.infer<typeof PlaylistTrackSchema>;
 
+/** A title is a label, not prose — and it has one line of a library row to fit in. */
+export const MAX_PLAYLIST_NAME_LENGTH = 60;
+
+/**
+ * Claude names a playlist as it builds one. This is the fallback for the generation
+ * that came back without a title, and for the manual-genre path, which has no book to
+ * take an image from.
+ */
+export function defaultPlaylistName(profile: MoodProfile): string {
+  const pacing = PACING_LABELS[profile.pacing];
+  const mood = profile.mood[0];
+  if (!mood) return pacing;
+
+  return `${mood[0].toUpperCase()}${mood.slice(1)} ${pacing.toLowerCase()}`;
+}
+
 export const PlaylistSchema = z.object({
   id: z.string(),
+  name: z.string().trim().min(1).max(MAX_PLAYLIST_NAME_LENGTH),
   book: BookSchema,
   moodProfile: MoodProfileSchema,
   tracks: z.array(PlaylistTrackSchema),

@@ -1,9 +1,11 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 
 import { FIXTURE_BOOKS, type FixtureBook } from "./catalog";
+import { FIXTURE_ANCHORS, parseSearchQuery, toSpotifyTrack } from "./tracks";
 
 /**
- * The third-party edge of the e2e stack: Google Books and Claude, served from fixtures.
+ * The third-party edge of the e2e stack: Google Books, Claude and Spotify, served from
+ * fixtures.
  *
  * The API server points at it through `GOOGLE_BOOKS_BASE_URL` and `ANTHROPIC_BASE_URL`,
  * both already overridable in server/src/config/env.ts, so everything under test is
@@ -15,15 +17,13 @@ import { FIXTURE_BOOKS, type FixtureBook } from "./catalog";
  * A run therefore never leaves localhost, never spends Anthropic credit, and returns
  * the same mood profile every time — which is what makes the mood screen assertable.
  *
- * Spotify is deliberately not served here. No spec generates a playlist to completion,
- * and `SPOTIFY_CLIENT_ID` is unset, so generation fails fast and locally with
- * "Spotify is not configured" rather than reaching the real API.
+ * Spotify's client-credentials token and catalogue search are here too, which is what
+ * lets generation run to completion: the bookshelf specs need saved playlists, and a
+ * playlist only exists once its anchors resolve. The user-level OAuth Spotify — sign-in
+ * and export — is still unfixtured; nothing drives it.
  */
 
 const PORT = Number(process.env.E2E_UPSTREAM_PORT ?? 3101);
-
-/** `ANCHOR_COUNT` in server/src/connectors/prompts.ts — what the prompt asks for. */
-const ANCHOR_COUNT = 30;
 
 function sendJson(res: ServerResponse, status: number, body: unknown) {
   const payload = JSON.stringify(body);
@@ -88,26 +88,26 @@ function isAnchorRequest(body: MessagesRequest) {
   return !!body.output_config?.format?.schema?.properties?.tracks;
 }
 
-function anchorTracks() {
-  return {
-    tracks: Array.from({ length: ANCHOR_COUNT }, (_, index) => ({
-      artist: `Fixture Ensemble ${index + 1}`,
-      title: `Fixture Movement ${index + 1}`,
-    })),
-  };
+/**
+ * The same thirty anchors every time, under whichever title the book carries. A book
+ * with no `playlistName` answers without one, which is the path `defaultPlaylistName`
+ * exists for — and the reason `name` is optional on the response schema.
+ */
+function anchorTracks(book?: FixtureBook) {
+  return { name: book?.playlistName, tracks: FIXTURE_ANCHORS };
 }
 
 function handleMessages(res: ServerResponse, raw: string) {
   const body = JSON.parse(raw) as MessagesRequest;
-
-  if (isAnchorRequest(body)) {
-    sendJson(res, 200, toMessage(anchorTracks()));
-    return;
-  }
-
-  // `moodPrompt` leads with `Title: …`, so the book is identifiable without parsing it.
+  // Both prompts name the book; `anchorPrompt` as `Book: …`, `moodPrompt` as `Title: …`.
   const prompt = body.messages?.[0]?.content ?? "";
   const book = FIXTURE_BOOKS.find((candidate) => prompt.includes(candidate.title));
+
+  if (isAnchorRequest(body)) {
+    // No book on the manual-genre path, which is a nameless generation too.
+    sendJson(res, 200, toMessage(anchorTracks(book)));
+    return;
+  }
 
   if (!book) {
     // Loud rather than a stand-in profile: a spec that reaches an unfixtured book
@@ -152,6 +152,23 @@ const server = createServer(async (req, res) => {
       return;
     }
     sendJson(res, 200, toVolume(book));
+    return;
+  }
+
+  // Spotify accounts, rooted where SPOTIFY_ACCOUNTS_BASE_URL points. The connector
+  // caches this for `expires_in` less a minute, so one token covers a whole run.
+  if (req.method === "POST" && url.pathname === "/api/token") {
+    await readBody(req);
+    sendJson(res, 200, { access_token: "e2e-fixture-app-token", expires_in: 3600 });
+    return;
+  }
+
+  // Spotify catalogue search, rooted where SPOTIFY_API_BASE_URL points. Anything that
+  // parses as an anchor resolves; a query in any other shape is a miss, which is how
+  // the generator learns a suggested track does not exist.
+  if (req.method === "GET" && url.pathname === "/search") {
+    const anchor = parseSearchQuery(url.searchParams.get("q") ?? "");
+    sendJson(res, 200, { tracks: { items: anchor ? [toSpotifyTrack(anchor)] : [] } });
     return;
   }
 

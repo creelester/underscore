@@ -6,6 +6,7 @@ import { auth } from "./lib/auth";
 import { env } from "./config/env";
 import { isApiError } from "./lib/apiError";
 import { requireSession } from "./middleware/requireSession";
+import { bookshelfRouter } from "./routes/bookshelf";
 import { booksRouter } from "./routes/books";
 import { moodProfileRouter } from "./routes/moodProfile";
 import { playlistsRouter } from "./routes/playlists";
@@ -27,6 +28,7 @@ export function createApp() {
   });
 
   app.use("/api/books", booksRouter);
+  app.use("/api/bookshelf", bookshelfRouter);
   app.use("/api/mood-profile", moodProfileRouter);
   app.use("/api/playlists", playlistsRouter);
 

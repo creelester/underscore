@@ -3,6 +3,7 @@ import {
   ERAS,
   MAX_MOODS,
   MOODS,
+  PACING_LABELS,
   SETTINGS,
   OTHER,
   type BookFormat,
@@ -30,7 +31,7 @@ import { Text } from '@/components/ui/text';
 import { useBook } from '@/features/books/use-book';
 import { useMoodProfile } from '@/features/mood/use-mood-profile';
 import { isApiError } from '@/lib/api-client';
-import { MOOD_INK, PACING_LABELS, moodGradient } from '@/lib/gradients';
+import { MOOD_INK, moodGradient } from '@/lib/gradients';
 import { CONTENT_GAP } from '@/lib/theme';
 
 const COVER_WIDTH = 118;

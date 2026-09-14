@@ -1,8 +1,6 @@
-import { DEFAULT_MOOD, MOODS, type Mood, type MoodProfile } from '@underscore/shared';
+import { DEFAULT_MOOD, type Mood } from '@underscore/shared';
 
 import { PALETTE } from '@/lib/theme';
-
-export { MOODS, type Mood };
 
 // NativeWind has no gradient classes, so gradients are data. Values feed
 // `<LinearGradient>`; colours come from the design system's tokens.
@@ -104,10 +102,3 @@ export function moodGradient(moods: readonly Mood[]): GradientSpec {
   const middle = a[1] === b[1] ? b[0] : a[1];
   return { colors: [a[0], middle, b[1]], locations: [0, 0.46, 1], ...points };
 }
-
-/** Display labels only; the wire values stay `MoodProfile.pacing`. */
-export const PACING_LABELS: Record<MoodProfile['pacing'], string> = {
-  slow: 'Slow burn',
-  steady: 'Steady',
-  fast: 'Breakneck',
-};
