@@ -13,6 +13,7 @@ import { resolveAnchors } from "../connectors/spotify";
 import { ApiError } from "../lib/apiError";
 import { prisma } from "../lib/prisma";
 import { buildMoodProfile } from "./moodEngine";
+import { toApiBook } from "./playlistMapper";
 
 /** Below this, the suggestion step is worth re-running before shipping what resolved. */
 const REGENERATE_BELOW = 8;
@@ -100,20 +101,6 @@ async function upsertTracks(tx: Transaction, tracks: Track[]): Promise<string[]>
     );
   }
   return rows.map((row) => row.id);
-}
-
-function toApiBook(row: BookRow) {
-  return {
-    id: row.id,
-    googleBooksId: row.googleBooksId,
-    title: row.title,
-    authors: row.authors,
-    description: row.description,
-    categories: row.categories,
-    pageCount: row.pageCount,
-    thumbnailUrl: row.thumbnailUrl,
-    source: row.source,
-  };
 }
 
 export async function generatePlaylist(
