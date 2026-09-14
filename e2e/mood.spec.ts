@@ -10,7 +10,7 @@ import {
 } from "@underscore/shared";
 
 import { fixtureBook } from "./fixtures/catalog";
-import { logInAsSeededUser, searchLibrary } from "./helpers";
+import { createShelf, logIn, logInAsSeededUser, searchLibrary } from "./helpers";
 
 /**
  * The mood screen — Claude's read of a book beside its jacket, and the chips that
@@ -26,8 +26,8 @@ import { logInAsSeededUser, searchLibrary } from "./helpers";
  * itself from the fixture, so almost nothing here matches copy the app owns. What is
  * left is in `COPY`.
  *
- * Every test here only reads: the mood step persists nothing, so the seeded account is
- * safe to share with the parallel worker running the other project.
+ * The mood step itself persists nothing, so those tests share the seeded account. The
+ * one that goes on to generate writes a playlist, so it gets an account of its own.
  */
 
 const BOOK = fixtureBook("e2e-lantern");
@@ -268,6 +268,19 @@ test.describe("the read Claude sent back", () => {
     // Pressing it again closes the field it opened.
     await somethingElse.first().click();
     await expect(moodOther).toBeHidden();
+  });
+
+});
+
+/**
+ * Generation writes a `Playlist` row, so this one cannot share the seeded account the
+ * rest of the file reads: a saved playlist on that shelf would answer the searches
+ * above from the library instead of from the catalogue.
+ */
+test.describe("handing over to generation", () => {
+  test.beforeEach(async ({ page }) => {
+    await logIn(page, await createShelf("mood-generates", []));
+    await openMoodScreen(page);
   });
 
   test("hands the corrected read, not the original, to the playlist step", async ({ page }) => {

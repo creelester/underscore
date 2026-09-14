@@ -276,6 +276,14 @@ test.describe("session and route guards", () => {
     await expect(page.getByRole("tab", { name: "Library" })).toBeVisible();
   });
 
+  test("opens the app on the three tabs, in order", async ({ page }) => {
+    await logInAsSeededUser(page);
+
+    // The bar itself, which `expectSignedInApp` only checks one trigger of. Copy, but
+    // it is a tab's whole accessible name — there is nothing else to match one on.
+    await expect(page.getByRole("tab")).toHaveText(["Play", "Library", "Settings"]);
+  });
+
   test("keeps the session across a page reload", async ({ page }) => {
     await logInAsSeededUser(page);
 
