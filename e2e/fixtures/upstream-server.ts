@@ -1,5 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 
+import { ANCHOR_COUNT } from "@underscore/shared";
+
 import { FIXTURE_BOOKS, type FixtureBook } from "./catalog";
 import { FIXTURE_ANCHORS, parseSearchQuery, toSpotifyTrack } from "./tracks";
 

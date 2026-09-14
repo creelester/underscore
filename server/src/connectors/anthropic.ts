@@ -162,7 +162,7 @@ export async function analyzeMood(book: BookDetail): Promise<MoodAnalysis> {
 }
 
 /**
- * ~30 anchors for a profile, and the name of the playlist they make. `book` is absent on
+ * ~20 anchors for a profile, and the name of the playlist they make. `book` is absent on
  * the manual-genre path; `context` is absent whenever the caller had no fine-tune
  * answers to pass on.
  */

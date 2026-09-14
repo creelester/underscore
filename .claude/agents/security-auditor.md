@@ -32,7 +32,7 @@ Unless the user narrows it, audit the whole repo. Default to depth over breadth 
 - Use context7 to confirm current security guidance for Better Auth, Prisma, Expo, and the Spotify Web API before asserting that a config is wrong — these APIs change, and a confidently wrong finding costs the user more than a missed one.
 - **Verify before reporting.** For each candidate finding, construct a concrete exploit path: what does an attacker send, and what do they get? If you cannot, either mark it clearly as unverified or drop it. Do not report theoretical issues, style preferences, or defense-in-depth wishes as vulnerabilities.
 - Check whether a control exists elsewhere (a global middleware, a Prisma extension, a Better Auth default) before calling it missing.
-- Respect project scope: ratings/feedback are out of MVP scope, and playlists are a fixed ~30-track Claude-curated list resolved against Spotify search. Don't audit features that don't exist.
+- Respect project scope: ratings/feedback are out of MVP scope, and playlists are a fixed ~20-track Claude-curated list resolved against Spotify search. Don't audit features that don't exist.
 
 ## Output
 

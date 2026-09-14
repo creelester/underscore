@@ -44,7 +44,8 @@ const PAGES: readonly {
   {
     eyebrow: 'Step 03 · How it works',
     title: 'Press play.',
-    body: 'Thirty tracks, scored to where you are in the story, sent straight to your favorite streaming platform. Elevate your book to a cinematic experience.',
+    // No track count, unlike the prototype's "Thirty" — the number is tuned server-side.
+    body: 'A full soundtrack, scored to where you are in the story — sent straight to your favorite streaming platform.',
     mood: 'cozy',
   },
 ];
