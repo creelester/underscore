@@ -1,6 +1,7 @@
 import type { PrismaClient, Book as BookRow } from "@prisma/client";
 import {
   PlaylistSchema,
+  defaultPlaylistName,
   type BookDetail,
   type GeneratePlaylistRequest,
   type Playlist,
@@ -124,18 +125,22 @@ export async function generatePlaylist(
 
   const context = request.readingContext;
 
-  let tracks = await resolveAnchors(await suggestAnchors(profile, bookRef, context));
+  let suggested = await suggestAnchors(profile, bookRef, context);
+  let tracks = await resolveAnchors(suggested.tracks);
 
   // Claude names tracks that turn out not to exist in the catalog; too few surviving
   // means the suggestions were the problem, so ask once more before settling.
   const regenerated = tracks.length < REGENERATE_BELOW;
   if (regenerated) {
-    tracks = await resolveAnchors(await suggestAnchors(profile, bookRef, context));
+    suggested = await suggestAnchors(profile, bookRef, context);
+    tracks = await resolveAnchors(suggested.tracks);
   }
 
   if (tracks.length === 0) {
     throw ApiError.upstreamUnavailable("No suggested track could be found on Spotify");
   }
+
+  const name = suggested.name ?? defaultPlaylistName(profile);
 
   // The transaction opens only once the network work is done, so no connection is held
   // across a Claude round-trip.
@@ -146,6 +151,7 @@ export async function generatePlaylist(
     const playlist = await tx.playlist.create({
       data: {
         userId,
+        name,
         bookId: bookRow.id,
         moodProfile: profile,
         totalRuntimeMs: tracks.reduce((total, track) => total + track.durationMs, 0),
@@ -159,6 +165,7 @@ export async function generatePlaylist(
     // Parsed, so a row-to-API mismatch fails here rather than in the client.
     return PlaylistSchema.parse({
       id: playlist.id,
+      name: playlist.name,
       book: toApiBook(bookRow),
       moodProfile: profile,
       tracks: tracks.map((track, position) => ({ track, position, isAnchor: true })),
