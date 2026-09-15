@@ -19,7 +19,7 @@ import { toApiBook } from "./playlistMapper";
 const REGENERATE_BELOW = 8;
 
 /** After a regeneration, a playlist this short is flagged to the user as unusually small. */
-const TOO_SHORT_BELOW = 20;
+const TOO_SHORT_BELOW = 13;
 
 type Transaction = Parameters<Parameters<PrismaClient["$transaction"]>[0]>[0];
 

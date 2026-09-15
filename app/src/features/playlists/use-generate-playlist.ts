@@ -4,7 +4,7 @@ import { PlaylistSchema, type GeneratePlaylistRequest, type Playlist } from '@un
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 /**
- * Far past the client's default: this one request is Claude's ~30 anchors plus a Spotify
+ * Far past the client's default: this one request is Claude's ~20 anchors plus a Spotify
  * lookup each, run twice if too few resolve. At the default 15s it always aborted
  * mid-pipeline and surfaced as `UPSTREAM_UNAVAILABLE`.
  */

@@ -1,13 +1,10 @@
-import { OTHER, type BookDetail, type MoodProfile, type ReadingContext } from "@underscore/shared";
+import { ANCHOR_COUNT, OTHER, type BookDetail, type MoodProfile, type ReadingContext } from "@underscore/shared";
 
 /**
  * What Claude is asked, kept apart from how it is asked. `anthropic.ts` owns the
  * transport and the schemas; the wording lives here, where it can be read and tuned
  * without the request plumbing around it.
  */
-
-/** The design's "~30 tracks". Asked for in the prompt — a JSON schema takes no length bound. */
-export const ANCHOR_COUNT = 30;
 
 export const MOOD_SYSTEM = `You read a book's metadata and report the mood a soundtrack for it should carry.
 Choose at most two moods, the ones a reader would recognise from the first chapter.

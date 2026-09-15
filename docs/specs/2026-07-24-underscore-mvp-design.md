@@ -14,8 +14,8 @@ Underscore is a mobile app that generates a cinematic, mood-matched playlist for
 
 - **Book search**: manual search by title/author (no cover scanning in v1). If no match is found, the user can instead manually enter a genre/description (e.g. "sci-fi") to generate a genre-based ambient playlist not tied to a specific book
 - **Mood/genre analysis**: one overall genre + mood/energy profile per book (no chapter-level granularity in v1)
-- **Playlist generation**: LLM (Claude) suggests a fixed set of ~30 real "anchor" tracks/artists/OSTs matching the book's profile; each is resolved against the Spotify catalog (using app-level Spotify API credentials, not the user's personal login) to confirm it's real and fetch artwork/duration/artwork metadata. Generation requires no user Spotify connection at all. If fewer than 8 anchors resolve, the suggestion step is retried once before shipping a smaller-than-usual playlist.
-- **Playlist duration**: not targeted or scaled to the book's length. The playlist is whatever runtime the ~30 resolved tracks add up to; total runtime is shown to the user as information only. (Spotify's Recommendation API and audio-features endpoints — which would have been needed to extend a playlist to a target runtime — were deprecated for all apps created after November 2024, which ruled out the runtime-matching approach originally considered for MVP.)
+- **Playlist generation**: LLM (Claude) suggests a fixed set of ~20 real "anchor" tracks/artists/OSTs matching the book's profile; each is resolved against the Spotify catalog (using app-level Spotify API credentials, not the user's personal login) to confirm it's real and fetch artwork/duration/artwork metadata. Generation requires no user Spotify connection at all. If fewer than 8 anchors resolve, the suggestion step is retried once before shipping a smaller-than-usual playlist.
+- **Playlist duration**: not targeted or scaled to the book's length. The playlist is whatever runtime the ~20 resolved tracks add up to; total runtime is shown to the user as information only. (Spotify's Recommendation API and audio-features endpoints — which would have been needed to extend a playlist to a target runtime — were deprecated for all apps created after November 2024, which ruled out the runtime-matching approach originally considered for MVP.)
 - **Playback**: playlist is played by opening/creating it in the user's connected Spotify account. Connecting Spotify is only requested at this point — when the user taps play (or otherwise tries to export/open the playlist) — not before.
 - **Accounts**: Better Auth handles login (email, Google, Spotify, etc. as interchangeable providers)
 - **Music connector**: a separate, pluggable layer from auth; Spotify is the first (and only, for MVP) connector. It is used for two distinct purposes with two distinct credential types:
@@ -78,11 +78,11 @@ sequenceDiagram
         C-->>BE: Genre + mood/energy profile
     end
     BE->>C: Profile (Playlist Builder)
-    C-->>BE: ~30 anchor tracks
+    C-->>BE: ~20 anchor tracks
     BE->>SP: Resolve anchors (search by artist+title)
     SP-->>BE: Matched tracks + metadata
     Note over BE: If fewer than 8 resolve, retry suggestion step once
-    BE-->>App: Final playlist (~30 tracks, runtime shown as info only)
+    BE-->>App: Final playlist (~20 tracks, runtime shown as info only)
     App-->>U: Browse / save to bookshelf (no Spotify link needed)
 
     U->>App: Tap play / export
@@ -97,7 +97,7 @@ sequenceDiagram
 1. User logs in (Better Auth, any provider). No Spotify connection required yet.
 2. User searches for a book by title/author → Book Search service queries Google Books API → user picks the matching result (or, if no match, manually enters a genre — see Error Handling).
 3. Backend sends book metadata (title, author, description, categories) to Claude (Mood Engine) → returns a genre + mood/energy profile.
-4. Backend prompts Claude (Playlist Builder) with the profile to suggest ~30 anchor tracks/artists (including an existing film/OST adaptation if one exists).
+4. Backend prompts Claude (Playlist Builder) with the profile to suggest ~20 anchor tracks/artists (including an existing film/OST adaptation if one exists).
 5. Backend resolves each anchor against the Spotify Web API using app-level credentials (search by artist + title) to confirm it's real and fetch artwork/duration metadata; unmatched suggestions are dropped. If fewer than 8 resolve, the suggestion step (4) is retried once.
 6. Backend assembles the final ordered track list, creates/saves the playlist, and returns it to the app, with total runtime shown as information only (not a target). The user can browse it and save it to their bookshelf (default: auto-saved on generation) — all without connecting Spotify.
 7. When the user taps play (or otherwise tries to open/export the playlist), the app checks for a linked personal Spotify account. If none is linked, it prompts to connect one via the Music Connector service (user-level OAuth) before proceeding.
@@ -121,4 +121,4 @@ sequenceDiagram
 
 - **Hosting/DB**: Railway (managed Node + Postgres).
 - **Bookshelf model**: app-only track lists stored in our DB (Spotify track IDs + metadata); nothing is created in the user's Spotify account until they press play.
-- **Playlist Recommendation API dependency**: Spotify deprecated the Recommendation API and audio-features endpoints for apps created after November 2024, which is why playlist generation (above) produces a fixed ~30-track list instead of an audio-feature-seeded extension to a target runtime.
+- **Playlist Recommendation API dependency**: Spotify deprecated the Recommendation API and audio-features endpoints for apps created after November 2024, which is why playlist generation (above) produces a fixed ~20-track list instead of an audio-feature-seeded extension to a target runtime.

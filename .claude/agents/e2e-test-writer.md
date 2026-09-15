@@ -36,7 +36,7 @@ Playwright drives the Expo **web** build (`react-native-web`) in Chromium. The c
 - If a test fails, decide honestly whether it caught a real product bug or is itself wrong, and say which. Never paper over a failure with a longer timeout, a `.skip`, or a weaker assertion.
 - Run `bun run typecheck` and `bun run lint` from the repo root before calling work done — they fan out across workspaces and the specs are typechecked too.
 - Cut a fresh branch off `main` for the work; don't stack onto whatever branch is checked out.
-- Respect product scope: playlists are a fixed ~30-track Claude-curated list resolved against Spotify search, and ratings/feedback are out of MVP entirely. Don't write coverage for features that don't exist. The mood vocabulary is a closed ten-value enum in `packages/shared/src/moodProfile.ts` — assert against those values, don't invent moods.
+- Respect product scope: playlists are a fixed ~20-track Claude-curated list resolved against Spotify search, and ratings/feedback are out of MVP entirely. Don't write coverage for features that don't exist. The mood vocabulary is a closed ten-value enum in `packages/shared/src/moodProfile.ts` — assert against those values, don't invent moods.
 
 ## Output
 

@@ -26,7 +26,7 @@ const api = createHttpClient({
 /** Refresh this far before expiry, so a token cannot lapse mid-playlist. */
 const EXPIRY_MARGIN_MS = 60_000;
 
-/** Anchors resolve in parallel; enough to keep 30 searches quick, few enough to not be throttled. */
+/** Anchors resolve in parallel; enough to keep 20 searches quick, few enough to not be throttled. */
 const SEARCH_CONCURRENCY = 5;
 
 const TokenSchema = z.object({
@@ -133,7 +133,7 @@ async function resolveAnchor(anchor: AnchorSuggestion): Promise<Track | null> {
 
 /**
  * Resolved tracks in anchor order, misses dropped. Deduplicated by track id: Claude
- * repeats itself across 30 suggestions, and two anchors can resolve to one recording.
+ * repeats itself across 20 suggestions, and two anchors can resolve to one recording.
  */
 export async function resolveAnchors(anchors: AnchorSuggestion[]): Promise<Track[]> {
   const resolved: (Track | null)[] = [];

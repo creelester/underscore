@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+/** How many tracks Claude is asked for — a JSON schema takes no length bound. */
+export const ANCHOR_COUNT = 20;
+
 export const AnchorSuggestionSchema = z.object({
   artist: z.string(),
   title: z.string(),

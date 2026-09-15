@@ -79,7 +79,7 @@ Closed vocabularies, for the reason `mood` is closed: every value needs a chip, 
 | ---------- | --------- | ----------------------------------------------------------------------------------------- |
 | `track`    | `Track`   |                                                                                           |
 | `position` | `number`  | 0-indexed order                                                                           |
-| `isAnchor` | `boolean` | True for the initial ~30 Claude-suggested tracks (always true in MVP — no extension tier) |
+| `isAnchor` | `boolean` | True for the initial ~20 Claude-suggested tracks (always true in MVP — no extension tier) |
 
 ### `Playlist`
 
@@ -90,7 +90,7 @@ Closed vocabularies, for the reason `mood` is closed: every value needs a chip, 
 | `moodProfile`       | `MoodProfile`       |                                                                                      |
 | `tracks`            | `PlaylistTrack[]`   | Ordered                                                                              |
 | `totalRuntimeMs`    | `number`            | Sum of track durations — informational only                                          |
-| `isTooShort`        | `boolean`           | True if the &lt;8-anchor regeneration path was hit and fewer than 20 tracks resolved |
+| `isTooShort`        | `boolean`           | True if the &lt;8-anchor regeneration path was hit and fewer than 13 tracks resolved |
 | `spotifyPlaylistId` | `string \| null`    | Set after first successful export (Phase 7)                                          |
 | `createdAt`         | `string` (ISO date) |                                                                                      |
 
@@ -202,7 +202,7 @@ Manual-genre fallback path:
 
 `readingContext` carries the same screen's fine-tune answers. It is appended to the anchor prompt and nothing else — no schema field, no row, no effect on the mood read.
 
-Side effects: on the `googleBooksId` path, re-fetches the volume from Google Books and upserts the `Book` row (this is the only place a `GOOGLE_BOOKS` book is created — search does not write one) → runs Mood Engine → Playlist Builder (Claude, ~30 anchors) → Spotify app-level resolution (regenerates once if &lt;8 resolve) → persists `Playlist` + `PlaylistTrack` + upserted `Track` rows in a single transaction. The `manualGenre` path upserts a `MANUAL_GENRE` book whose `title` is the user's text and skips the Mood Engine. No partial `Playlist` row is ever left on failure.
+Side effects: on the `googleBooksId` path, re-fetches the volume from Google Books and upserts the `Book` row (this is the only place a `GOOGLE_BOOKS` book is created — search does not write one) → runs Mood Engine → Playlist Builder (Claude, ~20 anchors) → Spotify app-level resolution (regenerates once if &lt;8 resolve) → persists `Playlist` + `PlaylistTrack` + upserted `Track` rows in a single transaction. The `manualGenre` path upserts a `MANUAL_GENRE` book whose `title` is the user's text and skips the Mood Engine. No partial `Playlist` row is ever left on failure.
 
 ---
 
