@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import { expect, request, type Page } from "@playwright/test";
+import { expect, request, type APIRequestContext, type Page } from "@playwright/test";
 import { PlaylistSchema, defaultPlaylistName } from "@underscore/shared";
 
 import { E2E_API_URL } from "../playwright.config";
@@ -49,7 +49,29 @@ export type SavedPlaylist = { id: string; book: FixtureBook };
 export type Shelf = Account & { playlists: SavedPlaylist[] };
 
 /** Generation is thirty catalogue lookups; well inside this, but not inside the 30s default. */
-const GENERATE_TIMEOUT_MS = 120_000;
+export const GENERATE_TIMEOUT_MS = 120_000;
+
+/**
+ * A brand-new account and an APIRequestContext carrying its session and nothing else —
+ * so two accounts can be driven side by side. The caller disposes it.
+ */
+export async function signUpOverApi(
+  label: string,
+): Promise<{ account: Account; api: APIRequestContext }> {
+  const account: Account = { email: uniqueEmail(label), password: TEST_ACCOUNT_PASSWORD };
+  const api = await request.newContext({ baseURL: E2E_API_URL });
+
+  const signUp = await api.post("/api/auth/sign-up/email", {
+    data: { ...account, name: "Test Account" },
+  });
+  if (!signUp.ok()) {
+    const body = await signUp.text();
+    await api.dispose();
+    throw new Error(`Sign-up failed for ${account.email}: ${body}`);
+  }
+
+  return { account, api };
+}
 
 /**
  * An account with `books` already scored, built over HTTP rather than through the UI.
@@ -60,18 +82,9 @@ const GENERATE_TIMEOUT_MS = 120_000;
  * the browser's requests would reach, so the rows under test are rows the product wrote.
  */
 export async function createShelf(label: string, books: FixtureBook[]): Promise<Shelf> {
-  const account: Account = { email: uniqueEmail(label), password: TEST_ACCOUNT_PASSWORD };
-  // Its own cookie jar, held only for this setup and disposed below.
-  const api = await request.newContext({ baseURL: E2E_API_URL });
+  const { account, api } = await signUpOverApi(label);
 
   try {
-    const signUp = await api.post("/api/auth/sign-up/email", {
-      data: { ...account, name: "Shelf Owner" },
-    });
-    if (!signUp.ok()) {
-      throw new Error(`Sign-up failed for ${account.email}: ${await signUp.text()}`);
-    }
-
     const playlists: SavedPlaylist[] = [];
     // One at a time: `createdAt` is what orders the shelf, and the specs assert on it.
     for (const book of books) {
