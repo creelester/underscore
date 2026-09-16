@@ -2,6 +2,7 @@ import { Router } from "express";
 import { MoodProfileRequestSchema, MoodProfileResponseSchema } from "@underscore/shared";
 import { ApiError } from "../lib/apiError";
 import { asyncHandler } from "../lib/asyncHandler";
+import { perUserLimit } from "../middleware/rateLimit";
 import { requireSession } from "../middleware/requireSession";
 import { buildMoodProfile } from "../services/moodEngine";
 
@@ -14,6 +15,7 @@ export const moodProfileRouter = Router();
 moodProfileRouter.post(
   "/",
   requireSession,
+  perUserLimit(20),
   asyncHandler(async (req, res) => {
     const body = MoodProfileRequestSchema.safeParse(req.body);
     if (!body.success) {

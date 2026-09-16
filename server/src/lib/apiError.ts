@@ -13,6 +13,7 @@ const STATUS_BY_CODE: Record<ErrorCode, number> = {
   PLAYLIST_NOT_FOUND: 404,
   EMAIL_EXISTS: 409,
   SPOTIFY_NOT_LINKED: 409,
+  RATE_LIMITED: 429,
   UPSTREAM_UNAVAILABLE: 502,
 };
 
@@ -32,6 +33,8 @@ export class ApiError extends Error {
     this.code = code;
     this.status = STATUS_BY_CODE[code];
     // Every other code describes something the client must change before retrying.
+    // RATE_LIMITED is deliberately not retryable: the flag drives React Query's automatic
+    // retry, which would go straight back into the same limit.
     this.retryable = code === "UPSTREAM_UNAVAILABLE";
   }
 
@@ -53,6 +56,10 @@ export class ApiError extends Error {
 
   static forbidden(message = "You do not have access to this resource") {
     return new ApiError("FORBIDDEN", message);
+  }
+
+  static rateLimited(message = "Too many requests. Try again later.") {
+    return new ApiError("RATE_LIMITED", message);
   }
 
   static upstreamUnavailable(message: string, cause?: unknown) {

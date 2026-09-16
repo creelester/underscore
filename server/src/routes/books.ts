@@ -7,6 +7,7 @@ import {
 import { fetchVolume, searchVolumes } from '../connectors/googleBooks';
 import { ApiError } from '../lib/apiError';
 import { asyncHandler } from '../lib/asyncHandler';
+import { perUserLimit } from '../middleware/rateLimit';
 import { requireSession } from '../middleware/requireSession';
 
 export const booksRouter = Router();
@@ -18,6 +19,8 @@ export const booksRouter = Router();
 booksRouter.get(
   '/search',
   requireSession,
+  // Search-as-you-type, so a burst is normal; this only stops a script.
+  perUserLimit(60),
   asyncHandler(async (req, res) => {
     const query = BookSearchQuerySchema.safeParse(req.query);
     if (!query.success) {
