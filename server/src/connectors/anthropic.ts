@@ -14,7 +14,11 @@ import { env } from "../config/env";
 import { ApiError } from "../lib/apiError";
 import { ANCHOR_SYSTEM, MOOD_SYSTEM, anchorPrompt, moodPrompt } from "./prompts";
 
-const MODEL = "claude-opus-5";
+/** Reading a mood off a blurb is the light half of a generation, and a fifth of the price. */
+const MOOD_MODEL = "claude-sonnet-5";
+
+/** Recalling real catalogue entries decides playlist quality, so it stays on the big model. */
+const ANCHOR_MODEL = "claude-opus-5";
 
 /** Without it a policy decline ends a generation outright; `"default"` routes the retry. */
 const FALLBACK_BETA = "server-side-fallback-2026-07-01";
@@ -88,6 +92,7 @@ type StructuredRequest<T> = {
   system: string;
   prompt: string;
   format: Anthropic.JSONOutputFormat;
+  model: typeof MOOD_MODEL | typeof ANCHOR_MODEL;
   effort: "low" | "medium";
   maxTokens: number;
   schema: z.ZodType<T>;
@@ -97,11 +102,17 @@ async function createMessage(
   request: Omit<StructuredRequest<unknown>, "label" | "schema">,
 ): Promise<Anthropic.Beta.BetaMessage> {
   try {
+    // Fallbacks exist for Opus 5's safety classifiers and route to Opus targets; sending
+    // them on a Sonnet request is unproven, and a 400 would take the whole mood path down.
+    const fallback =
+      request.model === ANCHOR_MODEL
+        ? { betas: [FALLBACK_BETA], fallbacks: "default" as const }
+        : {};
+
     return await anthropic().beta.messages.create({
-      model: MODEL,
+      model: request.model,
       max_tokens: request.maxTokens,
-      betas: [FALLBACK_BETA],
-      fallbacks: "default",
+      ...fallback,
       system: request.system,
       output_config: { effort: request.effort, format: request.format },
       messages: [{ role: "user", content: request.prompt }],
@@ -154,6 +165,7 @@ export async function analyzeMood(book: BookDetail): Promise<MoodAnalysis> {
     system: MOOD_SYSTEM,
     prompt: moodPrompt(book),
     format: MOOD_ANALYSIS_FORMAT,
+    model: MOOD_MODEL,
     // Reading a mood off a blurb is a light task; the effort is better spent on tracks.
     effort: "low",
     maxTokens: 2000,
@@ -176,6 +188,7 @@ export async function suggestAnchors(
     system: ANCHOR_SYSTEM,
     prompt: anchorPrompt(profile, book, context),
     format: ANCHORS_FORMAT,
+    model: ANCHOR_MODEL,
     // Recalling real catalogue entries is where the quality of a playlist is decided.
     effort: "medium",
     maxTokens: 8000,
