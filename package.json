@@ -28,5 +28,8 @@
   },
   "overrides": {
     "better-auth": "1.6.25"
+  },
+  "dependencies": {
+    "expo": "^57.0.23"
   }
 }
