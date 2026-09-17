@@ -138,6 +138,11 @@ export default defineConfig({
         SPOTIFY_CLIENT_SECRET: "e2e-fixture-client-secret",
         SPOTIFY_ACCOUNTS_BASE_URL: UPSTREAM_URL,
         SPOTIFY_API_BASE_URL: UPSTREAM_URL,
+        // Empty on purpose, and injected rather than left out: unset here, server/.env's
+        // key leaks in and every sign-up in the suite posts a real email to Resend. Empty
+        // takes the mailer's console branch instead.
+        RESEND_API_KEY: "",
+        EMAIL_FROM: "",
       },
     },
     {
