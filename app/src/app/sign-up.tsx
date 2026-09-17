@@ -65,6 +65,10 @@ export default function SignUpScreen() {
         <Button size="lg" disabled={isSubmitting} onPress={handleSubmit(onSubmit)}>
           <Text>Sign up</Text>
         </Button>
+        <Text className="text-ink-faint font-body text-body-sm">
+          We&apos;ll email you a six-digit code. Confirming it in Settings is what lets you add
+          Google or Spotify to this account later.
+        </Text>
         <SocialSignInButtons onError={(message) => setError('root', { message })} />
 
         <Link href="/login" className="mt-2">
