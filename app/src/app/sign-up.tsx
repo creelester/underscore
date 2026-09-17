@@ -8,7 +8,7 @@ import { ControlledInput } from '@/components/controlled-input';
 import { SocialSignInButtons } from '@/components/social-sign-in-buttons';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
-import { authClient } from '@/lib/auth-client';
+import { EMAIL_VERIFIED_URL, authClient } from '@/lib/auth-client';
 import { signUpSchema, type SignUpValues } from '@/lib/auth-schemas';
 
 export default function SignUpScreen() {
@@ -23,7 +23,12 @@ export default function SignUpScreen() {
   });
 
   const onSubmit = async ({ name, email, password }: SignUpValues) => {
-    const { error: signUpError } = await authClient.signUp.email({ email, password, name });
+    const { error: signUpError } = await authClient.signUp.email({
+      email,
+      password,
+      name,
+      callbackURL: EMAIL_VERIFIED_URL,
+    });
     if (signUpError) {
       setError('root', { message: signUpError.message ?? 'Failed to sign up' });
       return;
@@ -65,6 +70,10 @@ export default function SignUpScreen() {
         <Button size="lg" disabled={isSubmitting} onPress={handleSubmit(onSubmit)}>
           <Text>Sign up</Text>
         </Button>
+        <Text className="text-ink-faint font-body text-body-sm">
+          We&apos;ll email you a link to confirm your address. Confirming it is what lets you
+          add Google or Spotify to this account later.
+        </Text>
         <SocialSignInButtons onError={(message) => setError('root', { message })} />
 
         <Link href="/login" className="mt-2">

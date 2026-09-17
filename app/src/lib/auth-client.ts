@@ -15,9 +15,29 @@ const expoAuthPlugin = expoClient({
   storage: SecureStore,
 }) as unknown as BetterAuthClientPlugin;
 
+const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
+
+/**
+ * Absolute on purpose. The Expo plugin rewrites any `callbackURL` starting with `/` into
+ * an `underscore://` deep link, which is right for an OAuth round trip and dead in the
+ * desktop mail client a verification link may well be opened in.
+ */
+export const EMAIL_VERIFIED_URL = `${API_URL}/verified`;
+
 export const authClient = createAuthClient({
-  baseURL: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000',
+  baseURL: API_URL,
   plugins: [expoAuthPlugin],
 });
 
 export const { signIn, signUp, signOut, useSession } = authClient;
+
+/**
+ * The session's `data` infers as `never` through the plugin cast above, so the fields we
+ * actually read are named here rather than asserted at each call site.
+ */
+export type SessionUser = { email: string; emailVerified: boolean };
+
+export function useSessionUser(): SessionUser | undefined {
+  const { data } = useSession();
+  return (data as { user?: SessionUser } | null | undefined)?.user;
+}
