@@ -30,6 +30,10 @@ const EnvSchema = z
     SPOTIFY_CLIENT_SECRET: z.string().default(""),
     ANTHROPIC_API_KEY: z.string().optional(),
     GOOGLE_BOOKS_API_KEY: z.string().optional(),
+    // Empty too: without them the mailer logs the code instead of sending it, which is
+    // what development and the e2e stack want.
+    RESEND_API_KEY: z.string().default(""),
+    EMAIL_FROM: z.string().default(""),
     // Overridable so the e2e stack can point at a fixture server and never reach a live
     // third-party API. Unset means the real endpoint.
     GOOGLE_BOOKS_BASE_URL: z.string().url().default("https://www.googleapis.com/books/v1"),
@@ -45,6 +49,12 @@ const EnvSchema = z
   .refine((e) => e.NODE_ENV !== "production" || e.BETTER_AUTH_URL.startsWith("https://"), {
     path: ["BETTER_AUTH_URL"],
     message: "must be https:// in production, or session cookies lose the Secure flag",
+  })
+  // Falling back to the console in production means confirmation and reset codes are
+  // never actually delivered, and nothing downstream would report it.
+  .refine((e) => e.NODE_ENV !== "production" || (!!e.RESEND_API_KEY && !!e.EMAIL_FROM), {
+    path: ["RESEND_API_KEY"],
+    message: "RESEND_API_KEY and EMAIL_FROM are both required in production",
   });
 
 const parsed = EnvSchema.safeParse({ ...process.env, NODE_ENV });
