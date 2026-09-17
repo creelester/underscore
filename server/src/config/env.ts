@@ -26,6 +26,8 @@ export const env = {
   SPOTIFY_CLIENT_SECRET: process.env.SPOTIFY_CLIENT_SECRET ?? "",
   ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
   GOOGLE_BOOKS_API_KEY: process.env.GOOGLE_BOOKS_API_KEY,
+  RESEND_API_KEY: process.env.RESEND_API_KEY ?? "",
+  EMAIL_FROM: process.env.EMAIL_FROM ?? "",
   // Overridable so the e2e stack can point at a fixture server and never reach a live
   // third-party API. Unset means the real endpoint.
   GOOGLE_BOOKS_BASE_URL:
@@ -38,3 +40,9 @@ export const env = {
   SEED_USER_EMAIL: process.env.SEED_USER_EMAIL,
   SEED_USER_PASSWORD: process.env.SEED_USER_PASSWORD,
 };
+
+// Absent, the mailer falls back to logging, which in production means verification
+// emails are never actually sent.
+if (env.NODE_ENV === "production" && (!env.RESEND_API_KEY || !env.EMAIL_FROM)) {
+  throw new Error("RESEND_API_KEY and EMAIL_FROM are required in production");
+}

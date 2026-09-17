@@ -2,6 +2,7 @@ import { expo } from "@better-auth/expo";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { env } from "../config/env";
+import { sendEmail } from "./mailer";
 import { prisma } from "./prisma";
 
 export const auth = betterAuth({
@@ -32,6 +33,20 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
+  },
+  // Sign-in is deliberately not gated on this. Verifying is what lets a social provider
+  // link into an existing password account: Better Auth refuses that link while the local
+  // address is unverified, which is what made Google sign-in fail with `account_not_linked`.
+  emailVerification: {
+    sendOnSignUp: true,
+    expiresIn: 3600,
+    sendVerificationEmail: async ({ user, url }) => {
+      await sendEmail({
+        to: user.email,
+        subject: "Verify your email for Under Score",
+        text: `Confirm your address to finish setting up Under Score:\n\n${url}\n\nThe link expires in an hour.`,
+      });
+    },
   },
   socialProviders: {
     google: {
