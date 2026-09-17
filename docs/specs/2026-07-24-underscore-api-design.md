@@ -143,7 +143,7 @@ Example bodies — `POST /api/auth/sign-up/email`:
 
 | Endpoint                | Auth             | Request                           | Response (200)                                               | Errors                                                 |
 | ----------------------- | ---------------- | --------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------ |
-| `GET /api/books/search` | session-required | query: `q: string` (title/author) | `{ results: BookCandidate[] }` (empty array = no match, not an error) | `400 INVALID_INPUT` (blank `q`), `502 UPSTREAM_UNAVAILABLE` (Google Books down/timeout) |
+| `GET /api/books/search` | session-required | query: `q: string` (title/author) | `{ results: BookCandidate[] }` (empty array = no match, not an error) | `400 INVALID_INPUT` (blank `q`), `429 RATE_LIMITED` (60/hour), `502 UPSTREAM_UNAVAILABLE` (Google Books down/timeout) |
 | `GET /api/books/:googleBooksId` | session-required | path: `googleBooksId` | `{ book: BookCandidate }` | `404 BOOK_NOT_FOUND` (Google does not know the id), `502 UPSTREAM_UNAVAILABLE` (Google Books down/timeout) |
 
 `GOOGLE_BOOKS_BASE_URL` overrides the upstream root, defaulting to the real endpoint. It exists so the e2e stack can point at a local fixture server — the suite must never reach a live third-party API. The key (`GOOGLE_BOOKS_API_KEY`) is optional: the volumes endpoint is public, though keyless requests are rate-limited hard enough to 429 in practice.
@@ -158,7 +158,7 @@ Read-only: search performs no database writes. Persisting every hit would write 
 
 | Endpoint                 | Auth             | Request                                                             | Response (200)             | Errors                                                                                                                                       |
 | ------------------------ | ---------------- | ------------------------------------------------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `POST /api/mood-profile` | session-required | `{ googleBooksId: string }` **or** `{ manualGenre: string }` (exactly one) | `{ profile: MoodProfile }` | `400 INVALID_INPUT` (neither/both fields set), `404 BOOK_NOT_FOUND`, `502 UPSTREAM_UNAVAILABLE` (Claude down or returned unparseable output) |
+| `POST /api/mood-profile` | session-required | `{ googleBooksId: string }` **or** `{ manualGenre: string }` (exactly one) | `{ profile: MoodProfile }` | `400 INVALID_INPUT` (neither/both fields set), `404 BOOK_NOT_FOUND`, `429 RATE_LIMITED` (20/hour), `502 UPSTREAM_UNAVAILABLE` (Claude down or returned unparseable output) |
 
 Example bodies — book path:
 
@@ -184,7 +184,7 @@ Notes: `manualGenre` path never calls Claude — profile is constructed directly
 
 | Endpoint                       | Auth             | Request                                               | Response (200)                                     | Errors                                                                                                |
 | ------------------------------ | ---------------- | ----------------------------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `POST /api/playlists/generate` | session-required | `{ googleBooksId: string }` **or** `{ manualGenre: string }`, plus optional `moodProfile: MoodProfile` and `readingContext: ReadingContext` | `Playlist` (auto-saved; `spotifyPlaylistId: null`) | `400 INVALID_INPUT`, `404 BOOK_NOT_FOUND`, `502 UPSTREAM_UNAVAILABLE` (Claude or Spotify search down) |
+| `POST /api/playlists/generate` | session-required | `{ googleBooksId: string }` **or** `{ manualGenre: string }`, plus optional `moodProfile: MoodProfile` and `readingContext: ReadingContext` | `Playlist` (auto-saved; `spotifyPlaylistId: null`) | `400 INVALID_INPUT`, `404 BOOK_NOT_FOUND`, `429 RATE_LIMITED` (10/hour), `502 UPSTREAM_UNAVAILABLE` (Claude or Spotify search down) |
 
 Example bodies — identical shape to `POST /api/mood-profile`, book path:
 
@@ -238,4 +238,5 @@ Side effects: on the `googleBooksId` path, re-fetches the volume from Google Boo
 | `PLAYLIST_NOT_FOUND`    | 404         | `playlistId` doesn't exist                                      |
 | `EMAIL_EXISTS`          | 409         | Sign-up with already-registered email                           |
 | `SPOTIFY_NOT_LINKED`    | 409         | Export attempted with no linked Spotify account                 |
+| `RATE_LIMITED`          | 429         | Per-user hourly limit on a billed route; `retryable: false`      |
 | `UPSTREAM_UNAVAILABLE`  | 502         | Claude, Google Books, or Spotify API failure; `retryable: true` |

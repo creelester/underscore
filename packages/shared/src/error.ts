@@ -9,6 +9,7 @@ export const ErrorCodeSchema = z.enum([
   "PLAYLIST_NOT_FOUND",
   "EMAIL_EXISTS",
   "SPOTIFY_NOT_LINKED",
+  "RATE_LIMITED",
   "UPSTREAM_UNAVAILABLE",
 ]);
 export type ErrorCode = z.infer<typeof ErrorCodeSchema>;

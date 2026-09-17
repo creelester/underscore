@@ -120,6 +120,14 @@ Auth rate limiting is off here: it is gated to `NODE_ENV === "production"` in
 `server/src/lib/auth.ts`, and the e2e API runs as `test`. Tests can make as many
 deliberate bad-password attempts as they need.
 
+The **billed-route** limiters are a different thing and they *are* on: `perUserLimit`
+(`server/src/middleware/rateLimit.ts`) allows one account 10 generations, 20 mood
+profiles and 60 catalogue searches an hour. Its store is in memory and its window is
+an hour, so a budget is spent for the rest of the run once a test spends it — the API
+process restarting between runs is the only thing that clears it. Another reason a
+test that generates uses an account of its own: eleven generations on a shared
+fixture account would lock out every later test that touches it.
+
 ## Writing tests
 
 Add `*.spec.ts` files in this directory. `baseURL` is the e2e Expo server, so
@@ -131,8 +139,9 @@ await page.goto("/login");
 
 Fixtures shared across specs — `SEEDED_USER`, `uniqueEmail()`, `logIn()`,
 `logInAsSeededUser()`, `expectSignedInApp()`, `searchLibrary()`, `signOut()`,
-`signOutToLogin()`, `createShelf()`, `expectedPlaylistName()` — live in
-`helpers.ts`, and the worker fixture that holds a shared shelf in `shelf.ts`.
+`signOutToLogin()`, `signUpOverApi()`, `createShelf()`, `expectedPlaylistName()`
+— live in `helpers.ts`, and the worker fixture that holds a shared shelf in
+`shelf.ts`.
 Neither is a `*.spec.ts`, so Playwright's default `testMatch` never collects them
 as suites.
 
@@ -177,9 +186,12 @@ Adding a `testID` to a component is a legitimate fix, not test pollution:
 react-native-web renders RN `testID` as `data-testid`, Playwright's default
 test-id attribute. Nothing in the app carries one yet.
 
-Both projects (`chromium` desktop, `mobile-chrome` Pixel 7) run every file.
-Scope a test to one with `test.skip(({ browserName }) => ...)` or a `testMatch`
-on the project.
+Both projects (`chromium` desktop, `mobile-chrome` Pixel 7) run every file, and
+`browserName` is `chromium` in both — so what tells them apart is `isMobile`:
+`test.skip(({ isMobile }) => isMobile, "…")`. Scope deliberately and say why;
+`rate-limit.spec.ts` is the one file that does, because it drives the API over
+HTTP and never opens a page, so a second device emulation of it is duplication
+rather than coverage.
 
 Signed-out visitors land on `/splash`, not on `/login`: `splash` is registered
 first in the signed-out group in `app/src/app/_layout.tsx`, which makes it that
