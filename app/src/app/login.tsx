@@ -57,6 +57,9 @@ export default function LoginScreen() {
           secureTextEntry
           onSubmitEditing={handleSubmit(onSubmit)}
         />
+        <Link href="/reset-password" className="items-start">
+          <Text className="text-ink-muted font-body text-body-sm">Forgot password?</Text>
+        </Link>
         {errors.root && (
           <Text className="text-destructive font-body text-body-sm">{errors.root.message}</Text>
         )}

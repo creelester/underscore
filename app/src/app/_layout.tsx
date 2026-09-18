@@ -107,6 +107,10 @@ export default function RootLayout() {
                 />
                 <Stack.Screen name='login' options={{ animation: 'fade' }} />
                 <Stack.Screen name='sign-up' options={{ animation: 'fade' }} />
+                <Stack.Screen
+                  name='reset-password'
+                  options={{ animation: 'fade' }}
+                />
               </Stack.Protected>
             </Stack>
           )}

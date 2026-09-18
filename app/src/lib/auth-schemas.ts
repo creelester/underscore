@@ -19,5 +19,14 @@ export const signUpSchema = loginSchema.extend({
   password: z.string().min(8, 'Use at least 8 characters'),
 });
 
+export const requestResetSchema = loginSchema.pick({ email: true });
+
+export const resetPasswordSchema = requestResetSchema.extend({
+  otp: z.string().length(6, 'Enter the six-digit code'),
+  password: z.string().min(8, 'Use at least 8 characters'),
+});
+
 export type LoginValues = z.infer<typeof loginSchema>;
 export type SignUpValues = z.infer<typeof signUpSchema>;
+export type RequestResetValues = z.infer<typeof requestResetSchema>;
+export type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;

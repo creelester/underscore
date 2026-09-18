@@ -24,11 +24,15 @@ export const auth = betterAuth({
       overrideDefaultEmailVerification: true,
       // Defaults to "plain", which leaves a live code readable in the database.
       storeOTP: "hashed",
-      sendVerificationOTP: async ({ email, otp }) => {
+      sendVerificationOTP: async ({ email, otp, type }) => {
+        // A reset that reads as an address confirmation teaches people to ignore both.
+        const reset = type === "forget-password";
         await sendEmail({
           to: email,
-          subject: "Your Under Score confirmation code",
-          text: `Your confirmation code is ${otp}.\n\nIt expires in five minutes.`,
+          subject: reset
+            ? "Your Under Score password reset code"
+            : "Your Under Score confirmation code",
+          text: `${reset ? "Your password reset code" : "Your confirmation code"} is ${otp}.\n\nIt expires in five minutes.`,
         });
       },
     }),
