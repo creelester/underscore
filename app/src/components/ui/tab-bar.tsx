@@ -51,7 +51,7 @@ export const TabBarButton = forwardRef<
 
   return (
     <Pressable ref={ref} role="tab" aria-selected={isFocused} {...props} style={styles.item}>
-      <Icon size={22} strokeWidth={1.8} color={color} />
+      <Icon size={26} strokeWidth={1.8} color={color} />
       <Text
         style={{ color }}
         className={isFocused ? 'font-display text-[12px]' : 'font-body text-[12px]'}>

@@ -22,7 +22,7 @@ const buttonVariants = cva(
     'group shrink-0 flex-row items-center justify-center gap-2 rounded-pill',
     Platform.select({
       web: "whitespace-nowrap outline-none transition-all disabled:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
-    })
+    }),
   ),
   {
     variants: {
@@ -49,7 +49,7 @@ const buttonVariants = cva(
       variant: 'primary',
       size: 'default',
     },
-  }
+  },
 );
 
 // `font-display`, not body: the bundle's label spec is `500 16px var(--font-display)`.
@@ -75,7 +75,7 @@ const buttonTextVariants = cva(
       variant: 'primary',
       size: 'default',
     },
-  }
+  },
 );
 
 type ButtonProps = Omit<React.ComponentProps<typeof Pressable>, 'children'> &
@@ -86,25 +86,44 @@ type ButtonProps = Omit<React.ComponentProps<typeof Pressable>, 'children'> &
     children?: React.ReactNode;
   };
 
-function Button({ className, variant = 'primary', size, style, children, ...props }: ButtonProps) {
+function Button({
+  className,
+  variant = 'primary',
+  size,
+  style,
+  children,
+  ...props
+}: ButtonProps) {
   const { shadows } = useTheme();
 
   const boxShadow =
-    variant === 'primary' ? shadows.glow : variant === 'tertiary' ? shadows.tertiary : undefined;
+    variant === 'primary'
+      ? shadows.glow
+      : variant === 'tertiary'
+        ? shadows.tertiary
+        : undefined;
 
   return (
     <TextClassContext.Provider value={buttonTextVariants({ variant, size })}>
       <Pressable
-        className={cn(props.disabled && 'opacity-50', buttonVariants({ variant, size }), className)}
-        role="button"
+        className={cn(
+          props.disabled && 'opacity-50',
+          buttonVariants({ variant, size }),
+          className,
+        )}
+        role='button'
         style={(state) => [
           boxShadow ? { boxShadow } : null,
           state.pressed && pressedStyle,
           typeof style === 'function' ? style(state) : style,
         ]}
-        {...props}>
+        {...props}
+      >
         {variant === 'primary' && (
-          <LinearGradient {...GRAD_WARM} style={[StyleSheet.absoluteFill, styles.gradient]} />
+          <LinearGradient
+            {...GRAD_WARM}
+            style={[StyleSheet.absoluteFill, styles.gradient]}
+          />
         )}
         {children}
       </Pressable>

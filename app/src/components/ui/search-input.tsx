@@ -23,20 +23,19 @@ function SearchInput({
     <View
       className={cn(
         'border-border bg-surface-2 rounded-pill h-[52px] w-full flex-row items-center gap-3 border px-5',
-        className
-      )}>
-      <View className="bg-primary rounded-pill h-2 w-2 shrink-0" />
+        className,
+      )}
+    >
+      <View className='bg-primary rounded-pill h-2 w-2 shrink-0' />
 
       <TextInput
         className={cn(
-          // `text-body`, not `text-base`: the bundle's line height is 25px, not 24px.
-          'text-foreground font-body text-body flex-1',
-          // The clear button overlays the field rather than sitting in the row.
+          'text-foreground font-body h-[52px] flex-1 text-[16px]',
           isClearable && 'pr-9',
           Platform.select({
             web: 'placeholder:text-ink-faint selection:bg-primary selection:text-primary-foreground outline-none',
             native: 'placeholder:text-ink-faint',
-          })
+          }),
         )}
         style={styles.input}
         {...props}
@@ -45,11 +44,12 @@ function SearchInput({
       {isClearable && (
         <Pressable
           onPress={onClear}
-          role="button"
-          accessibilityLabel="Clear search"
-          className="rounded-pill absolute right-2 h-[38px] w-[38px] items-center justify-center"
-          style={pressed}>
-          <Text className="text-ink-faint font-display text-[17px]">✕</Text>
+          role='button'
+          accessibilityLabel='Clear search'
+          className='rounded-pill absolute right-2 h-[38px] w-[38px] items-center justify-center'
+          style={pressed}
+        >
+          <Text className='text-ink-faint font-display text-[17px]'>✕</Text>
         </Pressable>
       )}
     </View>
@@ -59,6 +59,7 @@ function SearchInput({
 export { SearchInput };
 
 const styles = StyleSheet.create({
-  // Without this iOS's own padding lands the text off the dot's centre line.
-  input: { paddingVertical: 0 },
+  // Matches `ui/input.tsx`: a bare font size and no `text-*` scale class, because the
+  // lineHeight those carry is what lands the text off the dot's centre line on iOS.
+  input: { paddingVertical: 0, textAlignVertical: 'center' },
 });

@@ -54,7 +54,11 @@ function playlistMetaLine(playlist: Playlist): string {
 
 /** A playlist matches on its own name as readily as on the book behind it. */
 function matches(playlist: Playlist, query: string): boolean {
-  const haystack = [playlist.name, playlist.book.title, ...playlist.book.authors]
+  const haystack = [
+    playlist.name,
+    playlist.book.title,
+    ...playlist.book.authors,
+  ]
     .join(' ')
     .toLowerCase();
 
@@ -72,7 +76,9 @@ export default function LibraryScreen() {
   const saved = useMemo(() => {
     const playlists = bookshelf.data ?? [];
     const needle = trimmed.toLowerCase();
-    return needle ? playlists.filter((playlist) => matches(playlist, needle)) : playlists;
+    return needle
+      ? playlists.filter((playlist) => matches(playlist, needle))
+      : playlists;
   }, [bookshelf.data, trimmed]);
 
   // Filtered first, then split: refining a query re-fills `RECENT` from what is left
@@ -94,7 +100,10 @@ export default function LibraryScreen() {
   const isSearching =
     !!trimmed &&
     saved.length === 0 &&
-    (!isShelfSettled || !isLongEnough || settled !== trimmed || search.isFetching);
+    (!isShelfSettled ||
+      !isLongEnough ||
+      settled !== trimmed ||
+      search.isFetching);
   const isFailed = isFallbackActive && !search.isFetching && search.isError;
   const isNoMatch =
     isLongEnough &&
@@ -130,14 +139,11 @@ export default function LibraryScreen() {
   const isSectionVisible =
     rest.length > 0 || isSkeletonVisible || (!!trimmed && saved.length === 0);
   // A query replaces the empty state, so the two are never on screen together.
-  const isEmptyLibraryVisible = isShelfSettled && saved.length === 0 && !trimmed;
+  const isEmptyLibraryVisible =
+    isShelfSettled && saved.length === 0 && !trimmed;
 
   return (
     <View className='flex-1 gap-4'>
-      <Text className='text-foreground font-display text-[28px] leading-[31px] tracking-tight'>
-        Your library
-      </Text>
-
       <SearchInput
         value={query}
         onChangeText={setQuery}

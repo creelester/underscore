@@ -23,43 +23,50 @@ export function EmptyLibrary() {
   const { theme } = useTheme();
 
   return (
-    <View className="w-full flex-1 items-center justify-evenly gap-[51px] px-1 pt-2 pb-10">
-      <View className="items-center gap-[10px]">
-        <Text className="text-foreground font-display text-[22px] leading-[28px] tracking-tight">
+    <View className='w-full flex-1 items-center justify-evenly gap-[51px] px-1 pt-2 pb-10'>
+      <View className='items-center gap-[10px]'>
+        <Text className='text-foreground font-display text-[22px] leading-[28px] tracking-tight'>
           Your library is empty.
         </Text>
-        {/* The prototype's `max-width:30ch`, ~240px at Inter 14. */}
-        <Text className="text-ink-muted font-body text-body-sm max-w-[240px] text-center">
+
+        <Text className='text-ink-muted font-body text-body-sm max-w-[240px] text-center'>
           Search for a book you&rsquo;re reading and start scoring it.
         </Text>
       </View>
 
-      <View className="aspect-[300/220] w-full max-w-[300px]">
-        <Svg width="100%" height="100%" viewBox="0 0 300 220" fill="none">
+      <View className='aspect-[300/220] w-full max-w-[300px]'>
+        <Svg width='100%' height='100%' viewBox='0 0 300 220' fill='none'>
           <Defs>
             {/* The shelf dissolves downward rather than ending on a hard edge. A
                 luminance mask wants white→black. */}
-            <SvgLinearGradient id="shelf-fade" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="42%" stopColor="#fff" stopOpacity={1} />
-              <Stop offset="96%" stopColor="#000" stopOpacity={1} />
+            <SvgLinearGradient id='shelf-fade' x1='0' y1='0' x2='0' y2='1'>
+              <Stop offset='42%' stopColor='#fff' stopOpacity={1} />
+              <Stop offset='90%' stopColor='#000' stopOpacity={1} />
             </SvgLinearGradient>
-            <Mask id="shelf-mask">
-              <Rect x={0} y={0} width={300} height={220} fill="url(#shelf-fade)" />
+            <Mask id='shelf-mask'>
+              <Rect
+                x={0}
+                y={0}
+                width={300}
+                height={220}
+                fill='url(#shelf-fade)'
+              />
             </Mask>
           </Defs>
 
           <G
-            mask="url(#shelf-mask)"
+            mask='url(#shelf-mask)'
             stroke={theme.inkFaint}
             strokeWidth={8}
-            strokeLinecap="round"
-            opacity={0.5}>
+            strokeLinecap='round'
+            opacity={0.5}
+          >
             {/* Uprights, then the shelves, then the two half-height dividers. */}
-            <Path d="M22 14v196M278 14v196" />
-            <Path d="M22 14h256" />
-            <Path d="M22 82h256M22 150h256M22 210h256" />
-            <Path d="M150 14v68" strokeOpacity={0.5} />
-            <Path d="M150 150v60" strokeOpacity={0.5} />
+            <Path d='M22 14v196M278 14v196' />
+            <Path d='M22 14h256' />
+            <Path d='M22 82h256M22 150h256M22 210h256' />
+            <Path d='M150 14v68' strokeOpacity={0.5} />
+            <Path d='M150 150v60' strokeOpacity={0.5} />
           </G>
         </Svg>
       </View>
