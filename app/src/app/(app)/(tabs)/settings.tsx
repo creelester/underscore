@@ -1,3 +1,4 @@
+import { Link } from 'expo-router';
 import { View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
@@ -23,7 +24,12 @@ export default function SettingsScreen() {
 
       {user && !user.emailVerified && <VerifyEmailCard email={user.email} />}
 
-      <View className="items-start">
+      <View className="items-start gap-3">
+        <Link href="/change-password" asChild>
+          <Button variant="secondary">
+            <Text>Reset password</Text>
+          </Button>
+        </Link>
         <Button variant="secondary" onPress={() => authClient.signOut()}>
           <Text>Sign out</Text>
         </Button>
