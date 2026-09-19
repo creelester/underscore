@@ -9,9 +9,9 @@ import { useTheme } from '@/lib/use-theme';
 /** Split because a password field puts the box on a row and the text on the input inside it. */
 const SIZES = {
   /** The design's standalone field: 52px tall on `--surface`. */
-  default: { box: 'h-[52px] bg-surface px-5', text: 'font-body text-base' },
+  default: { box: 'h-[52px] bg-surface px-5', text: 'font-body text-[16px]' },
   /** Sized and coloured to sit under a row of chips. */
-  sm: { box: 'h-[42px] bg-surface-2 px-[18px]', text: 'font-display text-sm' },
+  sm: { box: 'h-[42px] bg-surface-2 px-[18px]', text: 'font-display text-[14px]' },
 } as const;
 
 const BOX = 'border-border rounded-pill w-full min-w-0 flex-row items-center border';
@@ -95,7 +95,12 @@ function PasswordInput({ className, size = 'default', ...props }: InputProps) {
 export { Input };
 
 const styles = StyleSheet.create({
-  // iOS gives a TextInput vertical padding of its own, which lands the text below the
-  // centre of a fixed-height field. The same correction `SearchInput` makes.
-  text: Platform.select({ ios: { paddingVertical: 0 }, default: {} }),
+  // A bare font size above, never a `text-*` scale class: those carry a lineHeight, and
+  // iOS lays a TextInput's single line out against the bottom of that box rather than
+  // centring in it, which drops the text ~6pt in a fixed-height field. Android needs to
+  // be told to centre at all.
+  text: {
+    paddingVertical: 0,
+    textAlignVertical: 'center',
+  },
 });
