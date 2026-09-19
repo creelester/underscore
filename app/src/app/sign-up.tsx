@@ -23,7 +23,11 @@ export default function SignUpScreen() {
   });
 
   const onSubmit = async ({ name, email, password }: SignUpValues) => {
-    const { error: signUpError } = await authClient.signUp.email({ email, password, name });
+    const { error: signUpError } = await authClient.signUp.email({
+      email,
+      password,
+      name,
+    });
     if (signUpError) {
       setError('root', { message: signUpError.message ?? 'Failed to sign up' });
       return;
@@ -32,50 +36,60 @@ export default function SignUpScreen() {
   };
 
   return (
-    <View className="bg-background flex-1">
-      <SafeAreaView className="px-screen flex-1 justify-center gap-4">
-        <Text className="text-ink-faint font-mono text-eyebrow tracking-eyebrow uppercase">
-          Under Score
-        </Text>
-        <Text className="text-foreground font-display text-display-md tracking-tight mb-2">
+    <View className='bg-background flex-1'>
+      <SafeAreaView className='px-screen flex-1 justify-center gap-4'>
+        <Text className='text-foreground font-display text-display-md tracking-tight mb-2'>
           Start a score.
         </Text>
 
-        <ControlledInput control={control} name="name" placeholder="Name" autoComplete="name" />
         <ControlledInput
           control={control}
-          name="email"
-          placeholder="Email"
-          autoCapitalize="none"
-          autoComplete="email"
-          keyboardType="email-address"
+          name='name'
+          placeholder='Name'
+          autoComplete='name'
         />
         <ControlledInput
           control={control}
-          name="password"
-          placeholder="Password"
-          autoComplete="new-password"
+          name='email'
+          placeholder='Email'
+          autoCapitalize='none'
+          autoComplete='email'
+          keyboardType='email-address'
+        />
+        <ControlledInput
+          control={control}
+          name='password'
+          placeholder='Password'
+          autoComplete='new-password'
           secureTextEntry
           onSubmitEditing={handleSubmit(onSubmit)}
         />
         {errors.root && (
-          <Text className="text-destructive font-body text-body-sm">{errors.root.message}</Text>
+          <Text className='text-destructive font-body text-body-sm'>
+            {errors.root.message}
+          </Text>
         )}
 
-        <Button size="lg" disabled={isSubmitting} onPress={handleSubmit(onSubmit)}>
+        <Button
+          size='lg'
+          disabled={isSubmitting}
+          onPress={handleSubmit(onSubmit)}
+        >
           <Text>Sign up</Text>
         </Button>
-        <Text className="text-ink-faint font-body text-body-sm">
-          We&apos;ll email you a six-digit code. Confirming it in Settings is what lets you add
-          Google or Spotify to this account later.
-        </Text>
-        <SocialSignInButtons onError={(message) => setError('root', { message })} />
 
-        <Link href="/login" className="mt-2">
-          <Text className="text-ink-muted font-body text-body-sm">
-            Already have an account? <Text className="text-primary">Log in</Text>
-          </Text>
-        </Link>
+        <SocialSignInButtons
+          onError={(message) => setError('root', { message })}
+        />
+
+        <View className='items-center'>
+          <Link href='/login' className='mt-2'>
+            <Text className='text-ink-muted font-body text-body-sm'>
+              Already have an account?{' '}
+              <Text className='text-primary'>Log in</Text>
+            </Text>
+          </Link>
+        </View>
       </SafeAreaView>
     </View>
   );

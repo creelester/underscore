@@ -12,7 +12,10 @@ type SocialSignInButtonsProps = {
 };
 
 export function SocialSignInButtons({ onError }: SocialSignInButtonsProps) {
-  const handleSocialLogin = async ({ id, name }: (typeof PROVIDERS)[number]) => {
+  const handleSocialLogin = async ({
+    id,
+    name,
+  }: (typeof PROVIDERS)[number]) => {
     const { error: signInError } = await authClient.signIn.social({
       provider: id,
       callbackURL: '/',
@@ -38,8 +41,8 @@ export function SocialSignInButtons({ onError }: SocialSignInButtonsProps) {
       {PROVIDERS.map((provider) => (
         <Button
           key={provider.id}
-          variant="secondary"
-          size="lg"
+          variant='secondary'
+          size='lg'
           onPress={() => handleSocialLogin(provider)}
         >
           <Text>Continue with {provider.name}</Text>
