@@ -1,42 +1,57 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { View } from 'react-native';
 
+import { ControlledInput } from '@/components/controlled-input';
+import { ResendCodeLink, useResendCooldown } from '@/components/resend-code-link';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
 import { authClient } from '@/lib/auth-client';
-
-const CODE_LENGTH = 6;
+import { verifyCodeSchema, type VerifyCodeValues } from '@/lib/auth-schemas';
 
 export function VerifyEmailCard({ email }: { email: string }) {
-  const [code, setCode] = useState('');
   const [sent, setSent] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string>();
+  // Sending isn't a form submit, so it needs its own flag to guard against a double tap.
+  const [sending, setSending] = useState(false);
+  const { secondsLeft, arm } = useResendCooldown();
+
+  const {
+    control,
+    handleSubmit,
+    setError,
+    clearErrors,
+    formState: { errors, isSubmitting },
+  } = useForm<VerifyCodeValues>({
+    resolver: zodResolver(verifyCodeSchema),
+    defaultValues: { otp: '' },
+  });
 
   const send = async () => {
-    setBusy(true);
-    setError(undefined);
-    const { error: sendError } = await authClient.emailOtp.sendVerificationOtp({
+    clearErrors('root');
+    setSending(true);
+    const { error } = await authClient.emailOtp.sendVerificationOtp({
       email,
       type: 'email-verification',
     });
-    setBusy(false);
-    if (sendError) {
-      setError(sendError.message ?? 'Could not send a code just now.');
+    setSending(false);
+    if (error) {
+      setError('root', {
+        message: error.message ?? 'Could not send a code just now.',
+      });
       return;
     }
+    arm();
     setSent(true);
   };
 
   // Nothing to do on success: verifying signals $sessionSignal, so the session refetches
   // and this card unmounts itself.
-  const confirm = async () => {
-    setBusy(true);
-    setError(undefined);
-    const { error: confirmError } = await authClient.emailOtp.verifyEmail({ email, otp: code });
-    setBusy(false);
-    if (confirmError) setError(confirmError.message ?? "That code didn't work.");
+  const confirm = async ({ otp }: VerifyCodeValues) => {
+    const { error } = await authClient.emailOtp.verifyEmail({ email, otp });
+    if (error) {
+      setError('root', { message: error.message ?? "That code didn't work." });
+    }
   };
 
   return (
@@ -47,35 +62,43 @@ export function VerifyEmailCard({ email }: { email: string }) {
 
       {sent ? (
         <>
-          <Input
-            value={code}
-            onChangeText={setCode}
+          <ControlledInput
+            control={control}
+            name="otp"
             placeholder="6-digit code"
             keyboardType="number-pad"
             textContentType="oneTimeCode"
             autoComplete="one-time-code"
-            maxLength={CODE_LENGTH}
-            onSubmitEditing={confirm}
+            maxLength={6}
+            onSubmitEditing={handleSubmit(confirm)}
           />
           <View className="items-start">
             <Button
               variant="secondary"
-              disabled={busy || code.length < CODE_LENGTH}
-              onPress={confirm}
-            >
+              disabled={isSubmitting}
+              onPress={handleSubmit(confirm)}>
               <Text>Confirm</Text>
             </Button>
           </View>
+          <ResendCodeLink
+            secondsLeft={secondsLeft}
+            disabled={sending || isSubmitting}
+            onPress={send}
+          />
         </>
       ) : (
         <View className="items-start">
-          <Button variant="secondary" disabled={busy} onPress={send}>
+          <Button variant="secondary" disabled={sending} onPress={send}>
             <Text>Send me a code</Text>
           </Button>
         </View>
       )}
 
-      {error && <Text className="text-destructive font-body text-body-sm">{error}</Text>}
+      {errors.root && (
+        <Text className="text-destructive font-body text-body-sm">
+          {errors.root.message}
+        </Text>
+      )}
     </View>
   );
 }
