@@ -175,6 +175,8 @@ function CodeStep({
   sendCode: SendCode;
   onVerified: (otp: string) => void;
 }) {
+  // Resending isn't a form submit, so it needs its own flag to guard against a double tap.
+  const [sending, setSending] = useState(false);
   const {
     control,
     handleSubmit,
@@ -201,7 +203,9 @@ function CodeStep({
 
   const resend = async () => {
     clearErrors('root');
+    setSending(true);
     const message = await sendCode(email);
+    setSending(false);
     if (message) setError('root', { message });
   };
 
@@ -229,7 +233,7 @@ function CodeStep({
       </Button>
       <ResendCodeLink
         secondsLeft={secondsLeft}
-        disabled={isSubmitting}
+        disabled={sending || isSubmitting}
         onPress={resend}
       />
     </>

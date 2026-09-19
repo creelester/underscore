@@ -30,7 +30,7 @@ function SearchInput({
 
       <TextInput
         className={cn(
-          'text-foreground font-body text-body flex-1',
+          'text-foreground font-body h-[52px] flex-1 text-[16px]',
           isClearable && 'pr-9',
           Platform.select({
             web: 'placeholder:text-ink-faint selection:bg-primary selection:text-primary-foreground outline-none',
@@ -59,6 +59,7 @@ function SearchInput({
 export { SearchInput };
 
 const styles = StyleSheet.create({
-  // Without this iOS's own padding lands the text off the dot's centre line.
-  input: { paddingVertical: 0, paddingBottom: 5 },
+  // Matches `ui/input.tsx`: a bare font size and no `text-*` scale class, because the
+  // lineHeight those carry is what lands the text off the dot's centre line on iOS.
+  input: { paddingVertical: 0, textAlignVertical: 'center' },
 });
