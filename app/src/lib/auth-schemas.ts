@@ -21,12 +21,15 @@ export const signUpSchema = loginSchema.extend({
 
 export const requestResetSchema = loginSchema.pick({ email: true });
 
-export const resetPasswordSchema = requestResetSchema.extend({
+// One per step of the code flow, so each screen validates only what it shows.
+export const verifyCodeSchema = z.object({
   otp: z.string().length(6, 'Enter the six-digit code'),
-  password: z.string().min(8, 'Use at least 8 characters'),
 });
+
+export const newPasswordSchema = signUpSchema.pick({ password: true });
 
 export type LoginValues = z.infer<typeof loginSchema>;
 export type SignUpValues = z.infer<typeof signUpSchema>;
 export type RequestResetValues = z.infer<typeof requestResetSchema>;
-export type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;
+export type VerifyCodeValues = z.infer<typeof verifyCodeSchema>;
+export type NewPasswordValues = z.infer<typeof newPasswordSchema>;

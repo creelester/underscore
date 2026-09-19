@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, router } from 'expo-router';
 import { useForm } from 'react-hook-form';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ControlledInput } from '@/components/controlled-input';
@@ -10,10 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { authClient } from '@/lib/auth-client';
 import { loginSchema, type LoginValues } from '@/lib/auth-schemas';
+import { pressed } from '@/lib/pressed';
 
 export default function LoginScreen() {
   const {
     control,
+    getValues,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
@@ -32,6 +34,16 @@ export default function LoginScreen() {
       return;
     }
     router.replace('/');
+  };
+
+  // `getValues` rather than a watch: the address is only read on the tap, and subscribing
+  // would re-render the screen on every keystroke.
+  const toReset = () => {
+    const email = getValues('email').trim();
+    router.push({
+      pathname: '/reset-password',
+      params: email ? { email } : undefined,
+    });
   };
 
   return (
@@ -71,13 +83,11 @@ export default function LoginScreen() {
         >
           <Text>Log in</Text>
         </Button>
-        <View className='items-center'>
-          <Link href='/reset-password'>
-            <Text className='text-ink-muted font-body text-body-sm'>
-              Forgot password? <Text className='text-primary'>Reset</Text>
-            </Text>
-          </Link>
-        </View>
+        <Pressable onPress={toReset} style={pressed} className='items-center'>
+          <Text className='text-ink-muted font-body text-body-sm'>
+            Forgot password? <Text className='text-primary'>Reset</Text>
+          </Text>
+        </Pressable>
         <SocialSignInButtons
           onError={(message) => setError('root', { message })}
         />
