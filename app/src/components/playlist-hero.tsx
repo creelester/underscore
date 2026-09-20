@@ -1,6 +1,7 @@
 import { type Mood } from '@underscore/shared';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -44,11 +45,15 @@ export function PlaylistHero({
 }) {
   const insets = useSafeAreaInsets();
 
-  const headerInk = moodHeaderIsLight(moods) ? DARK_INK : LIGHT_INK;
+  const headerIsLight = moodHeaderIsLight(moods);
+  const headerInk = headerIsLight ? DARK_INK : LIGHT_INK;
   const titleInk = moodTitleIsLight(moods) ? '#180310' : LIGHT_INK;
 
   return (
     <View style={{ height: HERO_HEIGHT }} className="justify-end">
+      {/* The gradient, not the theme, is what the clock and battery sit on here. */}
+      <StatusBar style={headerIsLight ? 'dark' : 'light'} />
+
       <LinearGradient {...moodGradient(moods)} style={StyleSheet.absoluteFill} />
       <LinearGradient
         {...SCRIM}
@@ -71,7 +76,7 @@ export function PlaylistHero({
           size="sm"
           aria-label="Playlist options"
           onPress={onOpenActions}>
-          <Text style={{ color: headerInk }}>•••</Text>
+          <Text className="text-[17px]" style={{ color: headerInk }}>•••</Text>
         </Button>
       </View>
 

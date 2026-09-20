@@ -167,7 +167,8 @@ export function PlaylistView({ playlist }: { playlist: Playlist }) {
             disabled={isWorking}
             style={{ width: FAB, height: FAB }}
             onPress={openInSpotify}>
-            <Text className="text-[18px]">▶</Text>
+            {/* Variation selector: bare U+25B6 renders as the blue emoji triangle. */}
+            <Text className="text-[17px]">▶︎</Text>
           </Button>
         </View>
 
