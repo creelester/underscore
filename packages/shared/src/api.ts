@@ -88,6 +88,13 @@ export const BookshelfResponseSchema = z.object({
 });
 export type BookshelfResponse = z.infer<typeof BookshelfResponseSchema>;
 
+/**
+ * The user-level scope the connector needs, and the whole of it: creating a private
+ * playlist, filling it, renaming it and unfollowing it all sit behind this one. Shared
+ * because the app asks for it at link time and the server checks for it afterwards.
+ */
+export const SPOTIFY_PLAYLIST_SCOPES = ["playlist-modify-private"] as const;
+
 export const MusicConnectorStatusResponseSchema = z.object({
   linked: z.boolean(),
   provider: z.literal("spotify"),

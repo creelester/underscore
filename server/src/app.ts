@@ -9,6 +9,7 @@ import { requireSession } from "./middleware/requireSession";
 import { bookshelfRouter } from "./routes/bookshelf";
 import { booksRouter } from "./routes/books";
 import { moodProfileRouter } from "./routes/moodProfile";
+import { musicConnectorRouter } from "./routes/musicConnector";
 import { playlistsRouter } from "./routes/playlists";
 
 export function createApp() {
@@ -30,6 +31,7 @@ export function createApp() {
   app.use("/api/books", booksRouter);
   app.use("/api/bookshelf", bookshelfRouter);
   app.use("/api/mood-profile", moodProfileRouter);
+  app.use("/api/music-connector", musicConnectorRouter);
   app.use("/api/playlists", playlistsRouter);
 
   app.get("/health", async (_req, res) => {

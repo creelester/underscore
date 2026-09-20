@@ -1,9 +1,14 @@
 import { Router } from "express";
-import { GeneratePlaylistRequestSchema, PlaylistSchema } from "@underscore/shared";
+import {
+  ExportPlaylistResponseSchema,
+  GeneratePlaylistRequestSchema,
+  PlaylistSchema,
+} from "@underscore/shared";
 import { ApiError } from "../lib/apiError";
 import { asyncHandler } from "../lib/asyncHandler";
 import { perUserLimit } from "../middleware/rateLimit";
 import { requireSession } from "../middleware/requireSession";
+import { exportPlaylist, syncPlaylist } from "../services/playlistExporter";
 import { generatePlaylist } from "../services/playlistGenerator";
 
 export const playlistsRouter = Router();
@@ -26,5 +31,31 @@ playlistsRouter.post(
     const playlist = await generatePlaylist(req.user!.id, body.data);
 
     res.json(PlaylistSchema.parse(playlist));
+  }),
+);
+
+/**
+ * POST /api/playlists/:playlistId/export — create the playlist in the reader's Spotify.
+ * PUT is the same route for one already there. Neither is metered: `perUserLimit` guards
+ * what costs us money, and these spend the reader's own token.
+ */
+playlistsRouter.post(
+  "/:playlistId/export",
+  requireSession,
+  asyncHandler(async (req, res) => {
+    const exported = await exportPlaylist(req.user!.id, req.params.playlistId);
+
+    res.json(ExportPlaylistResponseSchema.parse(exported));
+  }),
+);
+
+/** PUT /api/playlists/:playlistId/export — make Spotify's copy match ours again. */
+playlistsRouter.put(
+  "/:playlistId/export",
+  requireSession,
+  asyncHandler(async (req, res) => {
+    const synced = await syncPlaylist(req.user!.id, req.params.playlistId);
+
+    res.json(ExportPlaylistResponseSchema.parse(synced));
   }),
 );
