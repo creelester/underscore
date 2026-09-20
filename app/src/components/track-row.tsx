@@ -1,18 +1,21 @@
 import { type Mood, type Track } from '@underscore/shared';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/ui/text';
 import { moodGradient } from '@/lib/gradients';
 import { trackDuration } from '@/lib/playlist-display';
+import { MOTION } from '@/lib/theme';
 
 /**
  * One track in a playlist. Not pressable, unlike the design's row: tapping it there opens
  * the in-app player, which the MVP does not have — playback is the hand-off to Spotify.
  * The remove button it also carries waits on the track-removal endpoint.
  *
- * The tile stands in for album art the way a mood gradient stands in for a cover
- * elsewhere, alternating across the profile's moods as the design does.
+ * The mood gradient is the fallback, not the default: Spotify resolves album art for
+ * every track it matches, and the design's plain swatch was only ever standing in for it.
+ * It still covers the load gap and a track that came back without artwork.
  */
 
 const TILE = 42;
@@ -24,7 +27,18 @@ export function TrackRow({ track, mood }: { track: Track; mood: Mood }) {
       <View
         className="shrink-0 overflow-hidden"
         style={{ width: TILE, height: TILE, borderRadius: TILE_RADIUS }}>
-        <LinearGradient {...moodGradient([mood])} style={{ flex: 1 }} />
+        <LinearGradient {...moodGradient([mood])} style={StyleSheet.absoluteFill} />
+
+        {track.albumArtUrl && (
+          <Image
+            source={track.albumArtUrl}
+            alt=""
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            transition={MOTION.durMed}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
       </View>
 
       <View className="min-w-0 flex-1">

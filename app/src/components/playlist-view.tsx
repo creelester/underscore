@@ -129,6 +129,7 @@ export function PlaylistView({ playlist }: { playlist: Playlist }) {
 
       <PlaylistHero
         moods={moods}
+        coverUrl={playlist.book.thumbnailUrl}
         eyebrow={playlistEyebrow(playlist)}
         title={playlist.name}
         onOpenActions={() => setActionsOpen(true)}

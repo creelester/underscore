@@ -81,45 +81,36 @@ export const MOOD_INK: Record<Mood, string> = {
 
 const MOOD_ANGLE = 160;
 
-/** WCAG relative luminance of a `#rrggbb`, for picking ink over a gradient. */
-function luminance(hex: string): number {
+/** Linear blend of two `#rrggbb`. */
+function mix(from: string, to: string, amount: number): string {
   const channel = (offset: number) => {
-    const value = parseInt(hex.slice(offset, offset + 2), 16) / 255;
-    return value <= 0.03928 ? value / 12.92 : Math.pow((value + 0.055) / 1.055, 2.4);
+    const a = parseInt(from.slice(offset, offset + 2), 16);
+    const b = parseInt(to.slice(offset, offset + 2), 16);
+    return Math.round(a + (b - a) * amount)
+      .toString(16)
+      .padStart(2, '0');
   };
 
-  return 0.2126 * channel(1) + 0.7152 * channel(3) + 0.0722 * channel(5);
+  return `#${channel(1)}${channel(3)}${channel(5)}`;
 }
 
-const LIGHT_ABOVE = 0.3;
-
-/**
- * Ink over the playlist hero, read where each block actually sits rather than once for
- * the whole gradient — the header is a third of the way down under a dark scrim, the
- * title most of the way along. Both weightings are the design prototype's own.
- *
- * `MOOD_INK` is no use here: it is picked for a chip the gradient fills edge to edge.
- */
-export function moodHeaderIsLight(moods: readonly Mood[]): boolean {
-  const [first = DEFAULT_MOOD] = moods;
-  const [from, to] = MOOD_STOPS[first];
-
-  // The scrim darkens roughly 26% at the height the header controls sit at.
-  return (luminance(from) * 0.62 + luminance(to) * 0.38) * 0.74 > LIGHT_ABOVE;
+/** Smoothstep: zero rate of change at both ends, which is what kills the crease. */
+function ease(t: number): number {
+  return t * t * (3 - 2 * t);
 }
 
-export function moodTitleIsLight(moods: readonly Mood[]): boolean {
-  const [first = DEFAULT_MOOD, second] = moods;
-  const a = MOOD_STOPS[first];
-  const b = second ? MOOD_STOPS[second] : a;
-
-  return luminance(a[1]) * 0.55 + luminance(b[1]) * 0.45 > LIGHT_ABOVE;
-}
+/** Enough samples to read as continuous without bloating the stop list. */
+const RAMP_SAMPLES = 9;
 
 /**
  * Artwork gradient for a profile's moods. Takes `MoodProfile.mood` directly so the
- * fallbacks live here rather than at every call site. A pair uses the design's
- * composite rule — one gradient, not two stacked.
+ * fallbacks live here rather than at every call site.
+ *
+ * A pair is sampled along an eased ramp rather than handed to `LinearGradient` as the
+ * design's three raw stops. Those meet at 46% with a jump in rate — plum to lilac over
+ * the first half, then almost nothing — and the eye reads that kink as a hard line
+ * across the artwork. Easing each leg to a standstill at the join removes it. Cristina
+ * asked for this; the stop positions are the design's, the sampling is not.
  */
 export function moodGradient(moods: readonly Mood[]): GradientSpec {
   const [first = DEFAULT_MOOD, second] = moods;
@@ -135,5 +126,25 @@ export function moodGradient(moods: readonly Mood[]): GradientSpec {
   // the ramp finishes at 46% and the rest is flat. Its own first stop is the nearest
   // thing the second mood has to contribute instead.
   const middle = a[1] === b[1] ? b[0] : a[1];
-  return { colors: [a[0], middle, b[1]], locations: [0, 0.46, 1], ...points };
+  const anchors = [a[0], middle, b[1]];
+  const join = 0.46;
+
+  const colors: string[] = [];
+  const locations: number[] = [];
+  for (let sample = 0; sample < RAMP_SAMPLES; sample += 1) {
+    const at = sample / (RAMP_SAMPLES - 1);
+    const [from, to, progress] =
+      at <= join
+        ? [anchors[0], anchors[1], at / join]
+        : [anchors[1], anchors[2], (at - join) / (1 - join)];
+
+    colors.push(mix(from, to, ease(progress)));
+    locations.push(at);
+  }
+
+  return {
+    colors: colors as unknown as GradientSpec['colors'],
+    locations: locations as unknown as GradientSpec['locations'],
+    ...points,
+  };
 }
