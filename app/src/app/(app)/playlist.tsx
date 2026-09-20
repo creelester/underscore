@@ -6,8 +6,9 @@ import {
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef } from 'react';
 import { z } from 'zod';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 
+import { PlaylistView } from '@/components/playlist-view';
 import { ScoringProgress } from '@/components/scoring-progress';
 import { ScoringScreen } from '@/components/scoring-screen';
 import { Text } from '@/components/ui/text';
@@ -15,11 +16,9 @@ import { useBook } from '@/features/books/use-book';
 import { useGeneratePlaylist } from '@/features/playlists/use-generate-playlist';
 import { isApiError } from '@/lib/api-client';
 import { moodGradient } from '@/lib/gradients';
-import { CONTENT_GAP } from '@/lib/theme';
 
 /**
- * The generation step. The design's waiting screen is built; the result it lands on is
- * not, so the tracks are listed as plain text until that screen exists.
+ * The generation step, and the scored playlist it lands on.
  *
  * The mood screen hands over the profile the user actually saw, corrections included.
  * When it is missing — a deep link, or a reload — the server runs the Mood Engine
@@ -117,31 +116,7 @@ export default function PlaylistScreen() {
     );
   }
 
-  return (
-    <ScoringScreen>
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ gap: CONTENT_GAP }}
-        showsVerticalScrollIndicator={false}>
-        <Text className="font-display text-[30px] leading-[34px] tracking-tight text-foreground">
-          {playlist.name}
-        </Text>
-
-        {/* Plain text until the design's result screen is built. */}
-        <View className="gap-2">
-          {playlist.tracks.map(({ track, position }) => (
-            <Text key={position} className="font-body text-body-sm text-ink-muted">
-              {track.name} - {track.artist}
-            </Text>
-          ))}
-        </View>
-
-        {playlist.isTooShort && (
-          <Text className="font-body text-body-sm text-ink-faint">
-            A smaller playlist than usual — fewer tracks than expected turned up on Spotify.
-          </Text>
-        )}
-      </ScrollView>
-    </ScoringScreen>
-  );
+  // No `ScoringScreen`: the result's artwork is full-bleed, and that shell owns the
+  // screen padding and the back control.
+  return <PlaylistView playlist={playlist} />;
 }
