@@ -9,7 +9,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { angleToPoints, moodGradient } from '@/lib/gradients';
-import { MOTION } from '@/lib/theme';
+import { APP_BACKGROUND, MOTION } from '@/lib/theme';
+import { useTheme } from '@/lib/use-theme';
 
 /**
  * The playlist's artwork: the book's cover, blurred to fill, over the mood gradient that
@@ -43,15 +44,22 @@ const TOP_SCRIM = {
   ...angleToPoints(180),
 } as const;
 
-const BOTTOM_SCRIM = {
-  colors: ['transparent', 'rgba(11,4,16,0.42)', 'rgba(11,4,16,0.82)'],
-  locations: [0, 0.5, 1],
-  ...angleToPoints(180),
-} as const;
+/**
+ * The bottom scrim ends on `AppBackdrop`'s ground — the colour the body is actually
+ * painted on, which is not `THEME.background` — so the artwork dissolves into the page
+ * instead of stopping at a seam. Cristina asked for the fade; the design has an edge there.
+ */
+const BOTTOM_SCRIM_STOPS = [0, 0.26, 0.58, 1] as const;
 
-/** Together they must stay under the hero's height, or the middle is darkened twice. */
-const TOP_SCRIM_HEIGHT = 120;
-const BOTTOM_SCRIM_HEIGHT = 150;
+/**
+ * They may meet but must not overlap where either still has weight, or the middle of the
+ * hero is darkened twice. The few pixels they share are transparent at both ends.
+ */
+const TOP_SCRIM_HEIGHT = 110;
+const BOTTOM_SCRIM_HEIGHT = 185;
+
+/** The title clears the tail where the scrim has become the page. */
+const TITLE_CLEARANCE = 34;
 
 /** Both scrims darken, so one ink reads over every cover and every mood pair. */
 const INK = '#FFF8EF';
@@ -70,6 +78,7 @@ export function PlaylistHero({
   onOpenActions: () => void;
 }) {
   const insets = useSafeAreaInsets();
+  const { scheme } = useTheme();
 
   return (
     <View style={{ height: HERO_HEIGHT }} className="justify-end">
@@ -102,7 +111,14 @@ export function PlaylistHero({
         style={[StyleSheet.absoluteFill, { height: TOP_SCRIM_HEIGHT, bottom: undefined }]}
       />
       <LinearGradient
-        {...BOTTOM_SCRIM}
+        colors={[
+          'transparent',
+          'rgba(11,4,16,0.5)',
+          'rgba(11,4,16,0.82)',
+          APP_BACKGROUND[scheme].ground,
+        ]}
+        locations={BOTTOM_SCRIM_STOPS}
+        {...angleToPoints(180)}
         pointerEvents="none"
         style={[StyleSheet.absoluteFill, { height: BOTTOM_SCRIM_HEIGHT, top: undefined }]}
       />
@@ -126,7 +142,10 @@ export function PlaylistHero({
 
       {/* `testID` so a spec can scope the name away from a library row of the same name
           behind it — e2e/playlist.spec.ts asks for this anchor by name. */}
-      <View testID="saved-playlist-header" className="px-screen pb-5">
+      <View
+        testID="saved-playlist-header"
+        className="px-screen"
+        style={{ paddingBottom: TITLE_CLEARANCE }}>
         <Text
           className="font-mono text-eyebrow tracking-eyebrow uppercase"
           style={{ color: INK, opacity: 0.85 }}>
