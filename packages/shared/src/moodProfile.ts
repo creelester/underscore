@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { MAX_GENRE_LENGTH, MAX_GENRES } from './book';
+import { MAX_GENRES } from './book';
 
 /**
  * The closed mood vocabulary. Each mood needs a gradient standing in for artwork
@@ -20,6 +20,54 @@ export const MOODS = [
 ] as const;
 export type Mood = (typeof MOODS)[number];
 
+/**
+ * The closed genre vocabulary. Claude names the genre from the book itself — Google's
+ * categories bottom out at "Fiction" for most trade fiction — and is held to this list
+ * so the label reads the same across books and the by-hand picker has something finite
+ * to render.
+ */
+export const GENRES = [
+  'Literary fiction',
+  'Science fiction',
+  'Fantasy',
+  'Horror',
+  'Thriller',
+  'Mystery',
+  'Crime',
+  'Romance',
+  'Historical fiction',
+  'Adventure',
+  'Dystopian',
+  'Magical realism',
+  'Gothic',
+  'Western',
+  'Satire',
+  'Short stories',
+  'Poetry',
+  'Graphic novel',
+  'Young adult',
+  "Children's",
+  'Memoir',
+  'Biography',
+  'History',
+  'True crime',
+  'Essays',
+  'Science',
+  'Nature writing',
+  'Philosophy',
+  'Psychology',
+  'Politics',
+  'Travel',
+  'Business',
+  'Self-help',
+  'Religion & spirituality',
+  'Art & design',
+  'Music',
+  'Sports',
+  'Food & cooking',
+] as const;
+export type Genre = (typeof GENRES)[number];
+
 /** What the correction UI lets the user pick, and so what Claude is held to. */
 export const MAX_MOODS = 2;
 
@@ -27,7 +75,7 @@ export const MAX_MOODS = 2;
 export const DEFAULT_MOOD: Mood = 'melancholy';
 
 export const MoodProfileSchema = z.object({
-  genre: z.array(z.string().min(1).max(MAX_GENRE_LENGTH)).max(MAX_GENRES),
+  genre: z.array(z.enum(GENRES)).max(MAX_GENRES),
   /** Empty on the manual-genre path. */
   mood: z.array(z.enum(MOODS)).max(MAX_MOODS),
   pacing: z.enum(['slow', 'steady', 'fast']),

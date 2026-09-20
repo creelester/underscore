@@ -1,8 +1,7 @@
 import { z } from "zod";
 import { BookCandidateSchema, BookDetailSchema } from "./book";
 import { PlaylistSchema } from "./playlist";
-import { MAX_GENRE_LENGTH } from "./book";
-import { MoodProfileSchema } from "./moodProfile";
+import { GENRES, MoodProfileSchema } from "./moodProfile";
 import { ReadingContextSchema } from "./readingContext";
 
 /** A page of the bookshelf. The app asks for the maximum; it has no paging affordance yet. */
@@ -37,8 +36,8 @@ const bookOrGenreRefinement = <T extends { googleBooksId?: string; manualGenre?:
   data: T,
 ) => (data.googleBooksId ? !data.manualGenre : !!data.manualGenre);
 
-/** Becomes the `MANUAL_GENRE` book's title, so it is capped like a genre label. */
-const manualGenreSchema = z.string().trim().min(1).max(MAX_GENRE_LENGTH);
+/** The same closed vocabulary Claude answers in; it becomes the `MANUAL_GENRE` book's title. */
+const manualGenreSchema = z.enum(GENRES);
 
 export const MoodProfileRequestSchema = z
   .object({

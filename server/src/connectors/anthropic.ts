@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import {
   AnchorSuggestionsSchema,
+  GENRES,
   MAX_PLAYLIST_NAME_LENGTH,
   MOODS,
   MoodProfileSchema,
@@ -23,10 +24,6 @@ const ANCHOR_MODEL = "claude-opus-5";
 /** Without it a policy decline ends a generation outright; `"default"` routes the retry. */
 const FALLBACK_BETA = "server-side-fallback-2026-07-01";
 
-/** Everything on a profile except `genre`, which comes from Google's categories. */
-const MoodAnalysisSchema = MoodProfileSchema.omit({ genre: true });
-export type MoodAnalysis = z.infer<typeof MoodAnalysisSchema>;
-
 // `name` stays optional: a missing title must not throw away thirty resolved tracks.
 const AnchorResponseSchema = z.object({
   name: z.string().trim().min(1).max(MAX_PLAYLIST_NAME_LENGTH).optional(),
@@ -34,8 +31,8 @@ const AnchorResponseSchema = z.object({
 });
 
 /**
- * The enum keeps Claude inside the closed vocabulary the UI has gradients for; the cap
- * of two lives in the prompt, since a JSON schema here takes no length bound. Both are
+ * The enums keep Claude inside the closed vocabularies the UI is built for; the caps on
+ * length live in the prompt, since a JSON schema here takes no length bound. Both are
  * steers, so `requestStructured`'s zod parse is what actually enforces them.
  */
 const MOOD_ANALYSIS_FORMAT: Anthropic.JSONOutputFormat = {
@@ -43,11 +40,12 @@ const MOOD_ANALYSIS_FORMAT: Anthropic.JSONOutputFormat = {
   schema: {
     type: "object",
     properties: {
+      genre: { type: "array", items: { type: "string", enum: [...GENRES] } },
       mood: { type: "array", items: { type: "string", enum: [...MOODS] } },
       pacing: { type: "string", enum: ["slow", "steady", "fast"] },
       summary: { type: "string" },
     },
-    required: ["mood", "pacing", "summary"],
+    required: ["genre", "mood", "pacing", "summary"],
     additionalProperties: false,
   },
 };
@@ -159,7 +157,7 @@ async function requestStructured<T>({ label, schema, ...request }: StructuredReq
   throw ApiError.upstreamUnavailable(`Claude returned an unusable ${label}`, lastError);
 }
 
-export async function analyzeMood(book: BookDetail): Promise<MoodAnalysis> {
+export async function analyzeMood(book: BookDetail): Promise<MoodProfile> {
   return requestStructured({
     label: "mood profile",
     system: MOOD_SYSTEM,
@@ -169,7 +167,7 @@ export async function analyzeMood(book: BookDetail): Promise<MoodAnalysis> {
     // Reading a mood off a blurb is a light task; the effort is better spent on tracks.
     effort: "low",
     maxTokens: 2000,
-    schema: MoodAnalysisSchema,
+    schema: MoodProfileSchema,
   });
 }
 

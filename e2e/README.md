@@ -65,6 +65,12 @@ imported by the fixture server and by the specs, so the two cannot drift. Titles
 invented on purpose: a real one would let a run that had escaped to the live API
 still look like it passed. Add a book there, not in a spec.
 
+A book carries two genre labels on purpose. `categories` is Google's input, and
+`displayGenre` is what `genresFromCategories()` leaves of it — the label a search
+row and book detail show. `analysis.genre` is Claude's own read, typed as the
+shared `Genre`, and it is what the mood screen renders. The fixtures keep the two
+deliberately different words so a spec cannot assert one and pass on the other.
+
 Claude's playlist title comes from the same place: a book's optional `playlistName`
 is what the fixture answers an anchor request with. A book that has none answers
 without one, which is the path `defaultPlaylistName` exists for, so both naming

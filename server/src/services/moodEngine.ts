@@ -1,9 +1,4 @@
-import {
-  genresFromCategories,
-  type BookDetail,
-  type MoodProfileRequest,
-  type MoodProfile,
-} from "@underscore/shared";
+import type { BookDetail, Genre, MoodProfileRequest, MoodProfile } from "@underscore/shared";
 import { analyzeMood } from "../connectors/anthropic";
 import { fetchVolume } from "../connectors/googleBooks";
 import { ApiError } from "../lib/apiError";
@@ -18,8 +13,8 @@ export type MoodEngineResult = {
   book: BookDetail | null;
 };
 
-/** The by-hand fallback: the user's own text, no analysis to run. */
-function manualProfile(manualGenre: string): MoodProfile {
+/** The by-hand fallback: the genre the user picked, no analysis to run. */
+function manualProfile(manualGenre: Genre): MoodProfile {
   return { genre: [manualGenre], mood: [], pacing: "steady", summary: "" };
 }
 
@@ -32,9 +27,5 @@ export async function buildMoodProfile(request: MoodProfileRequest): Promise<Moo
   const book = await fetchVolume(request.googleBooksId);
   if (!book) throw ApiError.bookNotFound();
 
-  const analysis = await analyzeMood(book);
-
-  // `genre` comes from Google's own classification, not from Claude — the catalogue
-  // already states it, and a second opinion only invites the two to disagree.
-  return { profile: { genre: genresFromCategories(book.categories), ...analysis }, book };
+  return { profile: await analyzeMood(book), book };
 }
