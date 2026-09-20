@@ -78,8 +78,34 @@ paths are reachable by choosing a book. `expectedPlaylistName()` in `helpers.ts`
 resolves either from the fixture and `@underscore/shared`, so no spec writes a
 playlist name down.
 
-Only the user-level Spotify OAuth — sign-in and export — is unfixtured; nothing
-drives it.
+### User-level Spotify
+
+Export needs the reader's *own* Spotify, not the app's client credentials, so the
+fixture server serves that side too: `POST /me/playlists` and
+`POST`/`PUT /playlists/:id/items` (the post-February-2026 `/items` paths, not
+`/tracks`). Its state lives in `fixtures/spotify-user.ts`, keyed by the bearer
+token each request arrives on, and records enough to tell a **created** playlist
+from a **filled** one — the uris in it, how many times they were appended and how
+many times replaced, and which token created it. A spec seeds a token of its own,
+so parallel workers never see each other's playlists.
+
+The same module backs a small control surface, namespaced under `/e2e/` so it can
+never shadow a Spotify path:
+
+| request                                   | what it is for                                 |
+| ----------------------------------------- | ---------------------------------------------- |
+| `GET /e2e/spotify/playlists?token=…`      | what that reader's token created, in order     |
+| `DELETE /e2e/spotify/playlists/:id`       | the reader deleting it in Spotify; next sync 404s |
+| `POST /e2e/spotify/revoke {token,status}` | make Spotify answer that token 401 or 403      |
+
+`music-connector.spec.ts` reads it through a `spotify` fixture rather than calling
+those paths inline.
+
+The one thing that stays unfixtured is Better Auth's own Spotify OAuth handshake,
+and it cannot be fixtured: Better Auth hardcodes the provider's authorize and token
+URLs, so `SPOTIFY_ACCOUNTS_BASE_URL` — which only redirects our own
+client-credentials connector — cannot point it at the fixture server. See
+[Linking Spotify in a test](#linking-spotify-in-a-test).
 
 `server/.env.test` carries the same base URLs, so running the e2e stack by hand
 needs the fixture server running too:
@@ -167,6 +193,32 @@ persists a row, so any test that reaches it must not use the seeded account: a
 playlist on that shelf would answer another spec's search from the library instead
 of from the catalogue.
 
+### Linking Spotify in a test
+
+`GET /api/music-connector/status` calls a reader linked only when their `account`
+row carries `playlist-modify-private` — signing in *with* Spotify leaves a row with
+identity scopes only, and calling that linked would hand the app an export that dies
+at the Spotify call. Covering that discrimination, and the export routes at all,
+needs a linked row, and no HTTP call the harness can make will produce one (see
+above: Better Auth's provider URLs are hardcoded).
+
+So `db.ts` writes it, over `pg` against `E2E_DATABASE_URL`:
+
+```ts
+await linkSpotifyAccount(userId, { scope: "user-read-email,playlist-modify-private", accessToken });
+```
+
+Three details in that row are load-bearing, and the function's comment says so:
+`scope` is **comma-joined**, which is how Better Auth stores granted scopes;
+`refreshToken` stays null and the expiry is an hour out, so
+`auth.api.getAccessToken` hands the token back verbatim instead of trying to refresh
+it against the real `accounts.spotify.com`; and the token is plain text because
+`account.encryptOAuthTokens` is off (the default) in `server/src/lib/auth.ts` —
+turning it on means encrypting this one too.
+
+The token is also the key the fixture server files that reader's playlists under, so
+give every test its own.
+
 ### Locators and copy
 
 A locator that matches product copy breaks when a writer changes a word, so the
@@ -195,9 +247,9 @@ test-id attribute. Nothing in the app carries one yet.
 Both projects (`chromium` desktop, `mobile-chrome` Pixel 7) run every file, and
 `browserName` is `chromium` in both — so what tells them apart is `isMobile`:
 `test.skip(({ isMobile }) => isMobile, "…")`. Scope deliberately and say why;
-`rate-limit.spec.ts` is the one file that does, because it drives the API over
-HTTP and never opens a page, so a second device emulation of it is duplication
-rather than coverage.
+`rate-limit.spec.ts` and `music-connector.spec.ts` are the files that do, because
+they drive the API over HTTP and never open a page, so a second device emulation of
+them is duplication rather than coverage.
 
 Signed-out visitors land on `/splash`, not on `/login`: `splash` is registered
 first in the signed-out group in `app/src/app/_layout.tsx`, which makes it that
