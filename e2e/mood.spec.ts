@@ -62,6 +62,15 @@ const [OLDEST_READ_MOOD, NEWEST_READ_MOOD] = READ_MOODS;
 const READ_PACING = PACING_CHIP[BOOK.analysis.pacing];
 
 /**
+ * The two genre labels this book now carries, and they are not the same string: the read
+ * names Claude's, off the closed `GENRES`, while a search row and book detail keep
+ * showing whatever Google's categories reduce to.
+ */
+const READ_GENRE = BOOK.analysis.genre[0];
+const ROW_META = `${BOOK.authors[0]} · ${BOOK.publishedYear} · ${BOOK.displayGenre}`;
+const DETAIL_META = `${BOOK.displayGenre} · ${BOOK.publishedYear}`;
+
+/**
  * The product copy this spec still matches on, because the component rendering it has no
  * handle of its own. All of it is here, once, so a wording change is a one-line fix. Each
  * entry names the `testID` that would retire it:
@@ -134,6 +143,26 @@ test.describe("reaching the mood screen", () => {
     await expect(chip(page, READ_PACING)).toHaveText(selected(READ_PACING));
   });
 
+  test("leaves the catalogue's genre on the way in and shows Claude's on the read", async ({
+    page,
+  }) => {
+    await searchLibrary(page, "lantern");
+
+    // Google's coarse label, on both catalogue surfaces. Claude has not been asked yet,
+    // and its answer is a different word for the same book once it has been.
+    const row = page.getByRole("button", { name: BOOK.title });
+    await expect(row).toContainText(ROW_META);
+    await expect(row).not.toContainText(READ_GENRE);
+
+    await row.click();
+    await expect(page.getByText(DETAIL_META, { exact: true })).toBeVisible();
+    await expect(page.getByText(READ_GENRE, { exact: true })).toHaveCount(0);
+
+    await page.getByRole("button", { name: /^Analyze/ }).click();
+
+    await expect(page.getByText(READ_GENRE, { exact: true })).toBeVisible();
+  });
+
   test("waits on a screen naming the book until the read lands", async ({ page }) => {
     // Held open rather than slept through, so the transient state can be asserted
     // without racing it. The request still goes to the real server, just later.
@@ -168,7 +197,7 @@ test.describe("the read Claude sent back", () => {
 
   test("names the book, its genre, and a line per mood plus the pacing", async ({ page }) => {
     await expect(readLine(page, BOOK.authors[0])).toBeVisible();
-    await expect(readLine(page, BOOK.genre)).toBeVisible();
+    await expect(readLine(page, READ_GENRE)).toBeVisible();
 
     for (const mood of READ_MOODS) {
       await expect(readLine(page, mood)).toBeVisible();
@@ -305,7 +334,7 @@ test.describe("handing over to generation", () => {
       // The corrections, not the read: the newer read mood survived the third pick.
       mood: [BOOK.analysis.mood[1], "tense"],
       pacing: "fast",
-      genre: [BOOK.genre],
+      genre: BOOK.analysis.genre,
       summary: BOOK.analysis.summary,
     });
     expect(body.readingContext).toMatchObject({

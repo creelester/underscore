@@ -113,15 +113,8 @@ export async function createShelf(label: string, books: FixtureBook[]): Promise<
  * asserted against a stale copy of itself.
  */
 export function expectedPlaylistName(book: FixtureBook): string {
-  return (
-    book.playlistName ??
-    defaultPlaylistName({
-      genre: [book.genre],
-      mood: book.analysis.mood,
-      pacing: book.analysis.pacing,
-      summary: book.analysis.summary,
-    })
-  );
+  // `analysis` is a whole `MoodProfile` now that Claude answers the genre too.
+  return book.playlistName ?? defaultPlaylistName(book.analysis);
 }
 
 export async function fillLoginForm(page: Page, email: string, password: string) {

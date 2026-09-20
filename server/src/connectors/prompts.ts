@@ -6,7 +6,11 @@ import { ANCHOR_COUNT, OTHER, type BookDetail, type MoodProfile, type ReadingCon
  * without the request plumbing around it.
  */
 
-export const MOOD_SYSTEM = `You read a book's metadata and report the mood a soundtrack for it should carry.
+export const MOOD_SYSTEM = `You read a book's metadata and report the genre and the mood a
+soundtrack for it should carry.
+Name one or two genres, the most representative first, always at least one — the closest
+on the list when none of them fits exactly. The categories you are given are a catalogue's,
+and are usually too coarse to be the answer.
 Choose at most two moods, the ones a reader would recognise from the first chapter.
 Pacing is the book's rhythm, not its length. The summary is one or two sentences of
 rationale, and the only place nuance outside the mood vocabulary belongs.`;

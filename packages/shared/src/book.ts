@@ -50,9 +50,9 @@ export const BookDetailSchema = BookCandidateSchema.extend({
 export type BookDetail = z.infer<typeof BookDetailSchema>;
 
 /**
- * The product rule, not a display helper: `MoodProfile.genre` comes from here
- * rather than from Claude, since Google already classifies the volume. Shared
- * because the server writes it onto the profile and the app renders it.
+ * The label a search row and book detail show. `MoodProfile.genre` no longer comes from
+ * here — Claude names that against the closed `GENRES` list, since Google's categories
+ * bottom out at "Fiction" for most trade fiction.
  */
 
 /** Google files categories as taxonomy paths — `"Fiction / Fantasy / General"`. */
@@ -63,12 +63,6 @@ const FILLER_SEGMENTS = new Set(["general", "other", "nonclassifiable"]);
 
 /** What the by-hand path lets the user pick, so both paths cap the same way. */
 export const MAX_GENRES = 3;
-
-/**
- * A genre is a label, not prose. Enforced because both a corrected profile and the
- * by-hand path put client text into a persisted column.
- */
-export const MAX_GENRE_LENGTH = 60;
 
 /** Last non-filler segment: `"Fiction / Fantasy / General"` → `"Fantasy"`. */
 function leafGenre(category: string): string | null {

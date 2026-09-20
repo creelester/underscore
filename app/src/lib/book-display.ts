@@ -9,9 +9,9 @@ import {
   type Mood,
 } from '@underscore/shared';
 
-// Display formatting only. `displayGenre` is the exception: it wraps the shared
-// `genresFromCategories` so the label on screen and `MoodProfile.genre` are the
-// same string by construction.
+// Display formatting only. `displayGenre` shows whatever Google's categories reduce to;
+// the mood screen's genre is Claude's, off the closed `GENRES` list, and the two are
+// not the same label.
 
 const SEPARATOR = ' · ';
 
