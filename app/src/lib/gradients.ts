@@ -81,6 +81,41 @@ export const MOOD_INK: Record<Mood, string> = {
 
 const MOOD_ANGLE = 160;
 
+/** WCAG relative luminance of a `#rrggbb`, for picking ink over a gradient. */
+function luminance(hex: string): number {
+  const channel = (offset: number) => {
+    const value = parseInt(hex.slice(offset, offset + 2), 16) / 255;
+    return value <= 0.03928 ? value / 12.92 : Math.pow((value + 0.055) / 1.055, 2.4);
+  };
+
+  return 0.2126 * channel(1) + 0.7152 * channel(3) + 0.0722 * channel(5);
+}
+
+const LIGHT_ABOVE = 0.3;
+
+/**
+ * Ink over the playlist hero, read where each block actually sits rather than once for
+ * the whole gradient — the header is a third of the way down under a dark scrim, the
+ * title most of the way along. Both weightings are the design prototype's own.
+ *
+ * `MOOD_INK` is no use here: it is picked for a chip the gradient fills edge to edge.
+ */
+export function moodHeaderIsLight(moods: readonly Mood[]): boolean {
+  const [first = DEFAULT_MOOD] = moods;
+  const [from, to] = MOOD_STOPS[first];
+
+  // The scrim darkens roughly 26% at the height the header controls sit at.
+  return (luminance(from) * 0.62 + luminance(to) * 0.38) * 0.74 > LIGHT_ABOVE;
+}
+
+export function moodTitleIsLight(moods: readonly Mood[]): boolean {
+  const [first = DEFAULT_MOOD, second] = moods;
+  const a = MOOD_STOPS[first];
+  const b = second ? MOOD_STOPS[second] : a;
+
+  return luminance(a[1]) * 0.55 + luminance(b[1]) * 0.45 > LIGHT_ABOVE;
+}
+
 /**
  * Artwork gradient for a profile's moods. Takes `MoodProfile.mood` directly so the
  * fallbacks live here rather than at every call site. A pair uses the design's
