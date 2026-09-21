@@ -107,7 +107,7 @@ async function createMessage(
         ? { betas: [FALLBACK_BETA], fallbacks: "default" as const }
         : {};
 
-    return await anthropic().beta.messages.create({
+    const message = await anthropic().beta.messages.create({
       model: request.model,
       max_tokens: request.maxTokens,
       ...fallback,
@@ -115,6 +115,8 @@ async function createMessage(
       output_config: { effort: request.effort, format: request.format },
       messages: [{ role: "user", content: request.prompt }],
     });
+    logUsage(request, message);
+    return message;
   } catch (error) {
     if (error instanceof Anthropic.APIError) {
       // Not the error itself as `cause`: it carries the request headers, api key
@@ -126,6 +128,18 @@ async function createMessage(
     }
     throw error;
   }
+}
+
+/** No thinking-token field on `usage`; the gap between `out` and `json` is what thinking cost. */
+function logUsage(
+  request: Pick<StructuredRequest<unknown>, "model" | "effort">,
+  message: Anthropic.Beta.BetaMessage,
+): void {
+  const jsonChars = message.content.find((block) => block.type === "text")?.text.length ?? 0;
+  const { input_tokens, output_tokens } = message.usage;
+  console.log(
+    `[claude] ${request.model} effort=${request.effort} in=${input_tokens} out=${output_tokens} json=${jsonChars}c`,
+  );
 }
 
 /** Null when the turn carried no text block, or text that is not JSON. */
@@ -164,7 +178,6 @@ export async function analyzeMood(book: BookDetail): Promise<MoodProfile> {
     prompt: moodPrompt(book),
     format: MOOD_ANALYSIS_FORMAT,
     model: MOOD_MODEL,
-    // Reading a mood off a blurb is a light task; the effort is better spent on tracks.
     effort: "low",
     maxTokens: 2000,
     schema: MoodProfileSchema,
@@ -187,8 +200,8 @@ export async function suggestAnchors(
     prompt: anchorPrompt(profile, book, context),
     format: ANCHORS_FORMAT,
     model: ANCHOR_MODEL,
-    // Recalling real catalogue entries is where the quality of a playlist is decided.
-    effort: "medium",
+    // Low until the MVP measurement says the track lists need more; thinking stays on.
+    effort: "low",
     maxTokens: 8000,
     schema: AnchorResponseSchema,
   });
