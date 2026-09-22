@@ -14,7 +14,16 @@ export const auth = betterAuth({
   // Every entry is also a permitted recipient of the session token: the Expo plugin
   // appends the session cookie to the post-OAuth redirect URL, gated only by
   // isTrustedOrigin. Keep it exact — no wildcards.
-  trustedOrigins: [`${env.APP_SCHEME}://`, env.APP_ORIGIN],
+  //
+  // The exception is development, where Expo Go deep-links as `exp://` rather than the
+  // app's own scheme, so an OAuth round trip there would hand back no cookie at all. It
+  // is a wildcard over any Expo host, which is exactly why it must never be on outside
+  // development.
+  trustedOrigins: [
+    `${env.APP_SCHEME}://`,
+    env.APP_ORIGIN,
+    ...(env.NODE_ENV === "development" ? ["exp://", "exp://**"] : []),
+  ],
   plugins: [
     expo(),
     emailOTP({
