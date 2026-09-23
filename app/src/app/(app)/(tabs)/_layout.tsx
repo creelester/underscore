@@ -1,17 +1,17 @@
 import { Navigator } from 'expo-router';
 import { TabList, TabSlot, TabTrigger, Tabs } from 'expo-router/ui';
-import { BookOpen, CirclePlay, Settings } from 'lucide-react-native';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppBackdrop } from '@/components/app-backdrop';
 import { ScreenFade } from '@/components/screen-fade';
-import { TabBar, TabBarButton } from '@/components/ui/tab-bar';
+import { APP_TABS, TabBar, TabBarButton } from '@/components/ui/tab-bar';
 
 /**
  * The three tabs — Play / Library / Settings. Headless `expo-router/ui` tabs
  * rather than the styled navigator, which brings its own indicator and tinting to
- * fight. The scoring flow sits outside this group because the bar is hidden there.
+ * fight. The scoring flow sits outside this group; the playlist at the end of it draws
+ * the same bar for itself with `AppTabBar`.
  */
 export default function TabsLayout() {
   return (
@@ -20,15 +20,11 @@ export default function TabsLayout() {
 
       <TabList asChild>
         <TabBar>
-          <TabTrigger name="now" href="/now" asChild>
-            <TabBarButton label="Play" icon={CirclePlay} />
-          </TabTrigger>
-          <TabTrigger name="library" href="/library" asChild>
-            <TabBarButton label="Library" icon={BookOpen} />
-          </TabTrigger>
-          <TabTrigger name="settings" href="/settings" asChild>
-            <TabBarButton label="Settings" icon={Settings} />
-          </TabTrigger>
+          {APP_TABS.map(({ name, href, label, icon }) => (
+            <TabTrigger key={name} name={name} href={href} asChild>
+              <TabBarButton label={label} icon={icon} />
+            </TabTrigger>
+          ))}
         </TabBar>
       </TabList>
     </Tabs>
