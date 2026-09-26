@@ -81,10 +81,36 @@ export const MOOD_INK: Record<Mood, string> = {
 
 const MOOD_ANGLE = 160;
 
+/** Linear blend of two `#rrggbb`. */
+function mix(from: string, to: string, amount: number): string {
+  const channel = (offset: number) => {
+    const a = parseInt(from.slice(offset, offset + 2), 16);
+    const b = parseInt(to.slice(offset, offset + 2), 16);
+    return Math.round(a + (b - a) * amount)
+      .toString(16)
+      .padStart(2, '0');
+  };
+
+  return `#${channel(1)}${channel(3)}${channel(5)}`;
+}
+
+/** Smoothstep: zero rate of change at both ends, which is what kills the crease. */
+function ease(t: number): number {
+  return t * t * (3 - 2 * t);
+}
+
+/** Enough samples to read as continuous without bloating the stop list. */
+const RAMP_SAMPLES = 9;
+
 /**
  * Artwork gradient for a profile's moods. Takes `MoodProfile.mood` directly so the
- * fallbacks live here rather than at every call site. A pair uses the design's
- * composite rule — one gradient, not two stacked.
+ * fallbacks live here rather than at every call site.
+ *
+ * A pair is sampled along an eased ramp rather than handed to `LinearGradient` as the
+ * design's three raw stops. Those meet at 46% with a jump in rate — plum to lilac over
+ * the first half, then almost nothing — and the eye reads that kink as a hard line
+ * across the artwork. Easing each leg to a standstill at the join removes it. Cristina
+ * asked for this; the stop positions are the design's, the sampling is not.
  */
 export function moodGradient(moods: readonly Mood[]): GradientSpec {
   const [first = DEFAULT_MOOD, second] = moods;
@@ -100,5 +126,25 @@ export function moodGradient(moods: readonly Mood[]): GradientSpec {
   // the ramp finishes at 46% and the rest is flat. Its own first stop is the nearest
   // thing the second mood has to contribute instead.
   const middle = a[1] === b[1] ? b[0] : a[1];
-  return { colors: [a[0], middle, b[1]], locations: [0, 0.46, 1], ...points };
+  const anchors = [a[0], middle, b[1]];
+  const join = 0.46;
+
+  const colors: string[] = [];
+  const locations: number[] = [];
+  for (let sample = 0; sample < RAMP_SAMPLES; sample += 1) {
+    const at = sample / (RAMP_SAMPLES - 1);
+    const [from, to, progress] =
+      at <= join
+        ? [anchors[0], anchors[1], at / join]
+        : [anchors[1], anchors[2], (at - join) / (1 - join)];
+
+    colors.push(mix(from, to, ease(progress)));
+    locations.push(at);
+  }
+
+  return {
+    colors: colors as unknown as GradientSpec['colors'],
+    locations: locations as unknown as GradientSpec['locations'],
+    ...points,
+  };
 }

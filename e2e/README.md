@@ -182,8 +182,8 @@ await page.goto("/login");
 
 Fixtures shared across specs — `SEEDED_USER`, `uniqueEmail()`, `logIn()`,
 `logInAsSeededUser()`, `expectSignedInApp()`, `searchLibrary()`, `signOut()`,
-`signOutToLogin()`, `signUpOverApi()`, `createShelf()`, `expectedPlaylistName()`
-— live in `helpers.ts`, and the worker fixture that holds a shared shelf in
+`signOutToLogin()`, `signUpOverApi()`, `createShelf()`, `expectedPlaylistName()`,
+`playlistHeader()`, `expectTrackRow()` — live in `helpers.ts`, and the worker fixture that holds a shared shelf in
 `shelf.ts`.
 Neither is a `*.spec.ts`, so Playwright's default `testMatch` never collects them
 as suites.
@@ -253,7 +253,11 @@ can move.
 
 Adding a `testID` to a component is a legitimate fix, not test pollution:
 react-native-web renders RN `testID` as `data-testid`, Playwright's default
-test-id attribute. Nothing in the app carries one yet.
+test-id attribute. The playlist hero
+(`app/src/components/playlist-hero.tsx`) carries the one there is,
+`saved-playlist-header`, because a playlist's name is on screen twice while the
+library stays mounted underneath it; `playlistHeader()` in `helpers.ts` is how a
+spec reaches it.
 
 Both projects (`chromium` desktop, `mobile-chrome` Pixel 7) run every file, and
 `browserName` is `chromium` in both — so what tells them apart is `isMobile`:
