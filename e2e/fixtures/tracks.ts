@@ -45,8 +45,3 @@ export function toSpotifyTrack(anchor: FixtureAnchor) {
     album: { images: [] },
   };
 }
-
-/** `{track.name} - {track.artist}`, as both playlist screens render a track. */
-export function trackLine(anchor: FixtureAnchor): string {
-  return `${anchor.title} - ${anchor.artist}`;
-}

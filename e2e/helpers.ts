@@ -5,6 +5,7 @@ import { PlaylistSchema, defaultPlaylistName } from "@underscore/shared";
 
 import { E2E_API_URL } from "../playwright.config";
 import type { FixtureBook } from "./fixtures/catalog";
+import type { FixtureAnchor } from "./fixtures/tracks";
 
 /**
  * Fixtures shared by the specs that cross the auth boundary. Not a `*.spec.ts` so
@@ -115,6 +116,26 @@ export async function createShelf(label: string, books: FixtureBook[]): Promise<
 export function expectedPlaylistName(book: FixtureBook): string {
   // `analysis` is a whole `MoodProfile` now that Claude answers the genre too.
   return book.playlistName ?? defaultPlaylistName(book.analysis);
+}
+
+/**
+ * The playlist screen's hero, by the `testID` app/src/components/playlist-hero.tsx
+ * carries for it — scoping the name here keeps it clear of the library row of the same
+ * name still mounted behind the screen.
+ */
+export function playlistHeader(page: Page) {
+  return page.getByTestId("saved-playlist-header");
+}
+
+/**
+ * Asserts `anchor` is listed as a track row. A row is album art and two lines, so the
+ * artist is asserted inside the title's parent: the pairing is what says the two belong
+ * to one track rather than to two.
+ */
+export async function expectTrackRow(page: Page, anchor: FixtureAnchor) {
+  const row = page.getByText(anchor.title, { exact: true }).locator("..");
+
+  await expect(row.getByText(anchor.artist, { exact: true })).toBeVisible();
 }
 
 export async function fillLoginForm(page: Page, email: string, password: string) {

@@ -1,11 +1,13 @@
 import type { Page } from "@playwright/test";
 
 import { fixtureBook } from "./fixtures/catalog";
-import { FIXTURE_ANCHORS, trackLine } from "./fixtures/tracks";
+import { FIXTURE_ANCHORS } from "./fixtures/tracks";
 import {
   createShelf,
+  expectTrackRow,
   expectedPlaylistName,
   logIn,
+  playlistHeader,
   searchLibrary,
   type SavedPlaylist,
 } from "./helpers";
@@ -217,10 +219,12 @@ test.describe("scoring a book from the library", () => {
 
     await page.getByRole("button", { name: /^Generate playlist/ }).click();
     await expect(page).toHaveURL(/\/playlist\?/);
-    await expect(page.getByText(trackLine(FIXTURE_ANCHORS[0]))).toBeVisible();
-    // The later of the two: the library underneath has already grown a row of the same
+    await expectTrackRow(page, FIXTURE_ANCHORS[0]);
+    // Scoped to the hero: the library underneath has already grown a row of the same
     // name, which is the invalidation arriving while the result screen is on top.
-    await expect(page.getByText(expectedPlaylistName(ASH), { exact: true }).last()).toBeVisible();
+    await expect(
+      playlistHeader(page).getByText(expectedPlaylistName(ASH), { exact: true }),
+    ).toBeVisible();
 
     // Back through the stack the flow pushed: playlist → mood → book → library.
     await page.goBack();

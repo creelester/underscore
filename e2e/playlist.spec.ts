@@ -1,8 +1,14 @@
 import type { Page } from "@playwright/test";
 
 import { fixtureBook } from "./fixtures/catalog";
-import { FIXTURE_ANCHORS, trackLine } from "./fixtures/tracks";
-import { expectedPlaylistName, logIn, type SavedPlaylist } from "./helpers";
+import { FIXTURE_ANCHORS } from "./fixtures/tracks";
+import {
+  expectTrackRow,
+  expectedPlaylistName,
+  logIn,
+  playlistHeader,
+  type SavedPlaylist,
+} from "./helpers";
 import { expect, savedPlaylistFor, test } from "./shelf";
 
 /**
@@ -23,16 +29,6 @@ const TESSELLATE = fixtureBook("e2e-tessellate");
 /** The one shelf book whose anchors come back unnamed, so its playlist falls back. */
 const LANTERN = fixtureBook("e2e-lantern");
 
-/**
- * The screen's header block, reached as the book line's parent — one hop, the shape
- * mood.spec.ts uses for the read banner. It scopes the name away from the library row
- * of the same name behind it, and asserts the two lines belong together. A
- * `testID="saved-playlist-header"` in app/src/app/(app)/playlist/[playlistId].tsx would
- * replace the hop.
- */
-const header = (page: Page, saved: SavedPlaylist) =>
-  page.getByText(saved.book.title, { exact: true }).locator("..");
-
 async function openFromLibrary(page: Page, saved: SavedPlaylist) {
   await page.getByRole("button", { name: expectedPlaylistName(saved.book) }).click();
   await expect(page).toHaveURL(new RegExp(`/playlist/${saved.id}$`));
@@ -49,13 +45,15 @@ test.describe("a saved playlist", () => {
     await openFromLibrary(page, saved);
 
     await expect(
-      header(page, saved).getByText(expectedPlaylistName(TESSELLATE), { exact: true }),
+      playlistHeader(page).getByText(expectedPlaylistName(TESSELLATE), { exact: true }),
     ).toBeVisible();
-    // First and last, in the order the anchors were suggested.
-    await expect(page.getByText(trackLine(FIXTURE_ANCHORS[0]))).toBeVisible();
-    await expect(
-      page.getByText(trackLine(FIXTURE_ANCHORS[FIXTURE_ANCHORS.length - 1])),
-    ).toBeVisible();
+    // The hero's eyebrow, so the name is over this book and not another. Case-insensitive
+    // because whether it is uppercased in JS or in CSS is presentation.
+    await expect(playlistHeader(page)).toContainText(TESSELLATE.title, { ignoreCase: true });
+
+    // First and last of the suggested anchors.
+    await expectTrackRow(page, FIXTURE_ANCHORS[0]);
+    await expectTrackRow(page, FIXTURE_ANCHORS[FIXTURE_ANCHORS.length - 1]);
   });
 
   test("heads with a name built from the mood and the pacing when Claude sent none", async ({
@@ -69,8 +67,8 @@ test.describe("a saved playlist", () => {
 
     // A generation that came back untitled still keeps its thirty resolved tracks.
     await expect(
-      header(page, saved).getByText(expectedPlaylistName(LANTERN), { exact: true }),
+      playlistHeader(page).getByText(expectedPlaylistName(LANTERN), { exact: true }),
     ).toBeVisible();
-    await expect(page.getByText(trackLine(FIXTURE_ANCHORS[0]))).toBeVisible();
+    await expectTrackRow(page, FIXTURE_ANCHORS[0]);
   });
 });
