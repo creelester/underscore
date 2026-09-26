@@ -7,7 +7,6 @@ import {
 import * as Linking from 'expo-linking';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView, Share, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppBackdrop } from '@/components/app-backdrop';
 import { PlaylistActionsSheet } from '@/components/playlist-actions-sheet';
@@ -15,6 +14,7 @@ import { PlaylistHero } from '@/components/playlist-hero';
 import { PlaylistSavedSheet } from '@/components/playlist-saved-sheet';
 import { TrackRow } from '@/components/track-row';
 import { Button } from '@/components/ui/button';
+import { AppTabBar } from '@/components/ui/tab-bar';
 import { Text } from '@/components/ui/text';
 import { Toast } from '@/components/ui/toast';
 import { useLinkSpotify } from '@/features/music-connector/use-link-spotify';
@@ -36,8 +36,6 @@ const TOAST_MS = 2200;
 const FAB = 52;
 
 export function PlaylistView({ playlist }: { playlist: Playlist }) {
-  const insets = useSafeAreaInsets();
-
   const [actionsOpen, setActionsOpen] = useState(false);
   const [savedOpen, setSavedOpen] = useState(false);
   const [toast, setToast] = useState<string>();
@@ -130,70 +128,80 @@ export function PlaylistView({ playlist }: { playlist: Playlist }) {
     <View className="flex-1">
       <AppBackdrop />
 
-      <PlaylistHero
-        moods={moods}
-        coverUrl={playlist.book.thumbnailUrl}
-        bookTitle={playlist.book.title}
-        eyebrow={playlistEyebrow(playlist)}
-        title={playlist.name}
-        onOpenActions={() => setActionsOpen(true)}
-      />
+      {/* Wraps the toast too, so it rises above the bar instead of behind it. */}
+      <View className="flex-1">
+        <PlaylistHero
+          moods={moods}
+          coverUrl={playlist.book.thumbnailUrl}
+          bookTitle={playlist.book.title}
+          eyebrow={playlistEyebrow(playlist)}
+          title={playlist.name}
+          onOpenActions={() => setActionsOpen(true)}
+        />
 
-      <ScrollView
-        className="flex-1"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          gap: 16,
-          paddingHorizontal: 22,
-          paddingTop: 18,
-          paddingBottom: Math.max(insets.bottom, 28),
-        }}>
-        <View className="gap-1">
-          <Text className="text-ink-muted font-body text-body-sm">
-            {moodSentence(playlist.moodProfile)}
-          </Text>
-          <Text className="text-ink-faint font-body text-body-sm">{summary}</Text>
-          {isSaved && (
-            <Text className="text-ink-faint font-mono mt-[2px] text-[12px]">
-              {sync.isPending ? 'Syncing with Spotify…' : 'Synced with Spotify'}
+        <ScrollView
+          className="flex-1"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            gap: 16,
+            paddingHorizontal: 22,
+            paddingTop: 18,
+            // The tab bar below carries the bottom inset.
+            paddingBottom: 28,
+          }}>
+          <View className="gap-1">
+            <Text className="text-ink-muted font-body text-body-sm">
+              {moodSentence(playlist.moodProfile)}
+            </Text>
+            <Text className="text-ink-faint font-body text-body-sm">{summary}</Text>
+            {isSaved && (
+              <Text className="text-ink-faint font-mono mt-[2px] text-[12px]">
+                {sync.isPending ? 'Syncing with Spotify…' : 'Synced with Spotify'}
+              </Text>
+            )}
+          </View>
+
+          <View className="flex-row items-center gap-3">
+            <Button size="lg" className="flex-1" disabled={isPending} onPress={save}>
+              <Text>{isSaved ? 'Saved ✓' : 'Save to Spotify'}</Text>
+            </Button>
+            {/* The design plays here in-app. There is no in-app player, and the MVP's
+                playback is the hand-off, so this opens Spotify — saving first if needed. */}
+            <Button
+              size="icon"
+              aria-label="Open in Spotify"
+              disabled={isPending}
+              style={{ width: FAB, height: FAB }}
+              onPress={openInSpotify}>
+              {/* Variation selector: bare U+25B6 renders as the blue emoji triangle. */}
+              <Text className="text-[17px]">▶︎</Text>
+            </Button>
+          </View>
+
+          <View>
+            {playlist.tracks.map(({ track, position }) => (
+              <TrackRow
+                key={position}
+                track={track}
+                // Alternating across the pair, as the design's rows do.
+                mood={moods[position % Math.max(moods.length, 1)] ?? DEFAULT_MOOD}
+              />
+            ))}
+          </View>
+
+          {playlist.isTooShort && (
+            <Text className="text-ink-faint font-body text-body-sm">
+              A smaller playlist than usual — fewer tracks than expected turned up on Spotify.
             </Text>
           )}
-        </View>
+        </ScrollView>
 
-        <View className="flex-row items-center gap-3">
-          <Button size="lg" className="flex-1" disabled={isPending} onPress={save}>
-            <Text>{isSaved ? 'Saved ✓' : 'Save to Spotify'}</Text>
-          </Button>
-          {/* The design plays here in-app. There is no in-app player, and the MVP's
-              playback is the hand-off, so this opens Spotify — saving first if needed. */}
-          <Button
-            size="icon"
-            aria-label="Open in Spotify"
-            disabled={isPending}
-            style={{ width: FAB, height: FAB }}
-            onPress={openInSpotify}>
-            {/* Variation selector: bare U+25B6 renders as the blue emoji triangle. */}
-            <Text className="text-[17px]">▶︎</Text>
-          </Button>
-        </View>
+        <Toast message={toast} />
+      </View>
 
-        <View>
-          {playlist.tracks.map(({ track, position }) => (
-            <TrackRow
-              key={position}
-              track={track}
-              // Alternating across the pair, as the design's rows do.
-              mood={moods[position % Math.max(moods.length, 1)] ?? DEFAULT_MOOD}
-            />
-          ))}
-        </View>
-
-        {playlist.isTooShort && (
-          <Text className="text-ink-faint font-body text-body-sm">
-            A smaller playlist than usual — fewer tracks than expected turned up on Spotify.
-          </Text>
-        )}
-      </ScrollView>
+      {/* Cristina's, against the prototype: it ends the scoring flow with no way out
+          but `← Back`. */}
+      <AppTabBar />
 
       <PlaylistActionsSheet
         isOpen={actionsOpen}
@@ -211,8 +219,6 @@ export function PlaylistView({ playlist }: { playlist: Playlist }) {
         title={playlist.name}
         onOpenSpotify={openInSpotify}
       />
-
-      <Toast message={toast} />
     </View>
   );
 }

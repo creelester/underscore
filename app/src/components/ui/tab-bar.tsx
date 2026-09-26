@@ -1,4 +1,5 @@
-import type { LucideIcon } from 'lucide-react-native';
+import { router, type Href } from 'expo-router';
+import { BookOpen, CirclePlay, Settings, type LucideIcon } from 'lucide-react-native';
 import { forwardRef } from 'react';
 import { Pressable, StyleSheet, View, type View as RNView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,6 +16,14 @@ import { useTheme } from '@/lib/use-theme';
  * through a slot and merges its own style in, so the layout that has to survive the
  * clone is written directly. Colour still comes from the theme tokens.
  */
+
+/** The three tabs, shared by the navigator's bar and by `AppTabBar` below. */
+export const APP_TABS = [
+  { name: 'now', href: '/now', label: 'Play', icon: CirclePlay },
+  { name: 'library', href: '/library', label: 'Library', icon: BookOpen },
+  { name: 'settings', href: '/settings', label: 'Settings', icon: Settings },
+] as const satisfies readonly { name: string; href: Href; label: string; icon: LucideIcon }[];
+
 export function TabBar({ children }: { children: React.ReactNode }) {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
@@ -76,3 +85,27 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
 });
+
+/**
+ * The same bar for a screen outside the tabs group. Cristina asked for it on the
+ * playlist, where the prototype's scoring flow is full-bleed — otherwise the only way
+ * back to the library is walking the stack down one `← Back` at a time.
+ *
+ * `TabTrigger` only works under the `<Tabs>` navigator, so these navigate by hand:
+ * `dismissTo` pops back to the tabs already below on the stack, and pushes when there
+ * are none — a deep link, or a web reload. Nothing is focused; the playlist is not a tab.
+ */
+export function AppTabBar() {
+  return (
+    <TabBar>
+      {APP_TABS.map(({ name, href, label, icon }) => (
+        <TabBarButton
+          key={name}
+          label={label}
+          icon={icon}
+          onPress={() => router.dismissTo(href)}
+        />
+      ))}
+    </TabBar>
+  );
+}
