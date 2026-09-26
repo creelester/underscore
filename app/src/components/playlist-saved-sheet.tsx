@@ -35,7 +35,8 @@ export function PlaylistSavedSheet({
           className="rounded-pill items-center justify-center self-center overflow-hidden"
           style={{ width: CHECK, height: CHECK, boxShadow: shadows.glow }}>
           <LinearGradient {...GRAD_WARM} style={StyleSheet.absoluteFill} />
-          <Text className="font-display-bold text-[22px] text-[#180310]">✓</Text>
+          {/* The same ink the primary button uses on this gradient. */}
+          <Text className="text-primary-foreground font-display-bold text-[22px]">✓</Text>
         </View>
 
         <Text className="text-foreground font-display text-center text-[21px] leading-[26px]">

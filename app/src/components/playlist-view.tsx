@@ -51,26 +51,29 @@ export function PlaylistView({ playlist }: { playlist: Playlist }) {
 
   const moods = playlist.moodProfile.mood;
   const isSaved = !!playlist.spotifyPlaylistId;
-  const isWorking = link.isPending || exportPlaylist.isPending || sync.isPending;
+  const isPending = link.isPending || exportPlaylist.isPending || sync.isPending;
+
+  /** Connects Spotify if it is not yet. False means the reader has been told why not. */
+  const connectIfNeeded = async (): Promise<boolean> => {
+    if (status?.linked) return true;
+
+    const { linked } = await link.mutateAsync();
+    // A refused grant and a dismissed browser are indistinguishable here, so the wording
+    // cannot name which happened.
+    if (!linked) flash('Spotify was not connected.');
+    return linked;
+  };
 
   /**
-   * The Spotify id, connecting and saving on the way if this is the first time. Every
-   * control needs it, and none of them should make the reader go and press another one
-   * first.
+   * The playlist's Spotify id, connecting and saving on the way the first time — every
+   * control needs it, and none should make the reader go and press another one first.
+   * `undefined` means it did not happen and the toast has already said why.
    */
-  const ensureSaved = async (): Promise<string | undefined> => {
+  const savedPlaylistId = async (): Promise<string | undefined> => {
     if (playlist.spotifyPlaylistId) return playlist.spotifyPlaylistId;
 
     try {
-      if (!status?.linked) {
-        const linked = await link.mutateAsync();
-        // A refused grant and a dismissed browser are indistinguishable here, so the
-        // wording cannot name which happened.
-        if (!linked.linked) {
-          flash('Spotify was not connected.');
-          return undefined;
-        }
-      }
+      if (!(await connectIfNeeded())) return undefined;
 
       const { spotifyPlaylistId } = await exportPlaylist.mutateAsync();
       return spotifyPlaylistId;
@@ -85,11 +88,11 @@ export function PlaylistView({ playlist }: { playlist: Playlist }) {
       setSavedOpen(true);
       return;
     }
-    if (await ensureSaved()) setSavedOpen(true);
+    if (await savedPlaylistId()) setSavedOpen(true);
   };
 
   const openInSpotify = async () => {
-    const spotifyPlaylistId = await ensureSaved();
+    const spotifyPlaylistId = await savedPlaylistId();
     if (!spotifyPlaylistId) return;
 
     setSavedOpen(false);
@@ -103,7 +106,7 @@ export function PlaylistView({ playlist }: { playlist: Playlist }) {
 
   const share = async () => {
     setActionsOpen(false);
-    const spotifyPlaylistId = await ensureSaved();
+    const spotifyPlaylistId = await savedPlaylistId();
     if (!spotifyPlaylistId) return;
 
     const url = spotifyPlaylistWebUrl(spotifyPlaylistId);
@@ -157,7 +160,7 @@ export function PlaylistView({ playlist }: { playlist: Playlist }) {
         </View>
 
         <View className="flex-row items-center gap-3">
-          <Button size="lg" className="flex-1" disabled={isWorking} onPress={save}>
+          <Button size="lg" className="flex-1" disabled={isPending} onPress={save}>
             <Text>{isSaved ? 'Saved ✓' : 'Save to Spotify'}</Text>
           </Button>
           {/* The design plays here in-app. There is no in-app player, and the MVP's
@@ -165,7 +168,7 @@ export function PlaylistView({ playlist }: { playlist: Playlist }) {
           <Button
             size="icon"
             aria-label="Open in Spotify"
-            disabled={isWorking}
+            disabled={isPending}
             style={{ width: FAB, height: FAB }}
             onPress={openInSpotify}>
             {/* Variation selector: bare U+25B6 renders as the blue emoji triangle. */}
