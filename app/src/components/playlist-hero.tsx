@@ -59,12 +59,15 @@ const INK = '#FFF8EF';
 export function PlaylistHero({
   moods,
   coverUrl,
+  bookTitle,
   eyebrow,
   title,
   onOpenActions,
 }: {
   moods: readonly Mood[];
   coverUrl: string | null;
+  /** Names the cover for a screen reader; the blur is a look, not a reason to go unlabelled. */
+  bookTitle: string;
   eyebrow: string;
   title: string;
   onOpenActions: () => void;
@@ -72,23 +75,20 @@ export function PlaylistHero({
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={{ height: HERO_HEIGHT }} className='justify-end'>
+    <View style={{ height: HERO_HEIGHT }} className="justify-end">
       {/* The artwork, not the theme, is what the clock and battery sit on here. */}
-      <StatusBar style='light' />
+      <StatusBar style="light" />
 
-      <LinearGradient
-        {...moodGradient(moods)}
-        style={StyleSheet.absoluteFill}
-      />
+      <LinearGradient {...moodGradient(moods)} style={StyleSheet.absoluteFill} />
 
       {coverUrl && (
         <>
           <Image
             source={coverUrl}
-            alt=''
-            contentFit='cover'
+            alt={`Cover of ${bookTitle}`}
+            contentFit="cover"
             blurRadius={COVER_BLUR}
-            cachePolicy='memory-disk'
+            cachePolicy="memory-disk"
             transition={MOTION.durMed}
             style={StyleSheet.absoluteFill}
           />
@@ -101,42 +101,27 @@ export function PlaylistHero({
 
       <LinearGradient
         {...TOP_SCRIM}
-        pointerEvents='none'
-        style={[
-          StyleSheet.absoluteFill,
-          { height: TOP_SCRIM_HEIGHT, bottom: undefined },
-        ]}
+        pointerEvents="none"
+        style={[StyleSheet.absoluteFill, { height: TOP_SCRIM_HEIGHT, bottom: undefined }]}
       />
       <LinearGradient
         {...BOTTOM_SCRIM}
-        pointerEvents='none'
-        style={[
-          StyleSheet.absoluteFill,
-          { height: BOTTOM_SCRIM_HEIGHT, top: undefined },
-        ]}
+        pointerEvents="none"
+        style={[StyleSheet.absoluteFill, { height: BOTTOM_SCRIM_HEIGHT, top: undefined }]}
       />
 
       <View
-        className='px-screen absolute left-0 right-0 flex-row items-center justify-between'
-        style={{ top: insets.top + 4 }}
-      >
+        className="px-screen absolute left-0 right-0 flex-row items-center justify-between"
+        style={{ top: insets.top + 4 }}>
         <Button
-          variant='text'
-          size='sm'
-          onPress={() =>
-            router.canGoBack() ? router.back() : router.replace(BACK_FALLBACK)
-          }
-        >
+          variant="text"
+          size="sm"
+          onPress={() => (router.canGoBack() ? router.back() : router.replace(BACK_FALLBACK))}>
           <Text style={{ color: INK }}>← Back</Text>
         </Button>
 
-        <Button
-          variant='text'
-          size='sm'
-          aria-label='Playlist options'
-          onPress={onOpenActions}
-        >
-          <Text className='text-[17px]' style={{ color: INK }}>
+        <Button variant="text" size="sm" aria-label="Playlist options" onPress={onOpenActions}>
+          <Text className="text-[17px]" style={{ color: INK }}>
             •••
           </Text>
         </Button>
@@ -144,17 +129,15 @@ export function PlaylistHero({
 
       {/* `testID` so a spec can scope the name away from a library row of the same name
           behind it — e2e/playlist.spec.ts asks for this anchor by name. */}
-      <View testID='saved-playlist-header' className='px-screen pb-5'>
+      <View testID="saved-playlist-header" className="px-screen pb-5">
         <Text
-          className='font-mono text-eyebrow tracking-eyebrow uppercase'
-          style={{ color: INK, opacity: 0.85 }}
-        >
+          className="font-mono text-eyebrow tracking-eyebrow uppercase"
+          style={{ color: INK, opacity: 0.85 }}>
           {eyebrow}
         </Text>
         <Text
-          className='font-display mt-[6px] text-[30px] leading-[33px] tracking-tight'
-          style={{ color: INK }}
-        >
+          className="font-display mt-[6px] text-[30px] leading-[33px] tracking-tight"
+          style={{ color: INK }}>
           {title}
         </Text>
       </View>
