@@ -1,6 +1,7 @@
+import { randomUUID } from "node:crypto";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 
-import { ANCHOR_COUNT } from "@underscore/shared";
+import { SPOTIFY_PLAYLIST_SCOPES } from "@underscore/shared";
 
 import { FIXTURE_BOOKS, type FixtureBook } from "./catalog";
 import { readerSpotify } from "./spotify-user";
@@ -26,12 +27,14 @@ import { FIXTURE_ANCHORS, parseSearchQuery, toSpotifyTrack } from "./tracks";
  * playlist in the reader's account, filling it and renaming it — is fixtured below on
  * the state in `spotify-user.ts`, which holds enough to tell a created playlist from a
  * filled one from a renamed one, plus a control surface under `/e2e/` for the specs to
- * read it back. Only Better Auth's own Spotify OAuth handshake is still unfixtured, and
- * cannot be: the provider's authorize and token URLs are hardcoded there, so e2e/db.ts
- * writes the linked `account` row directly instead.
+ * read it back. The reader's consent handshake is fixtured too, now that it is ours and
+ * follows `SPOTIFY_ACCOUNTS_BASE_URL`: `/authorize` grants and redirects straight back.
  */
 
 const PORT = Number(process.env.E2E_UPSTREAM_PORT ?? 3101);
+
+/** A real grant keeps the identity scopes alongside the ones we asked for. */
+const GRANTED_SCOPES = ["user-read-email", ...SPOTIFY_PLAYLIST_SCOPES].join(" ");
 
 function sendJson(res: ServerResponse, status: number, body: unknown) {
   const payload = JSON.stringify(body);
@@ -179,11 +182,48 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  // Spotify accounts, rooted where SPOTIFY_ACCOUNTS_BASE_URL points. The connector
-  // caches this for `expires_in` less a minute, so one token covers a whole run.
+  // Spotify accounts, rooted where SPOTIFY_ACCOUNTS_BASE_URL points. The consent screen,
+  // with consent always given: the reader goes straight back to whatever redirect_uri the
+  // request carried, which is our own callback.
+  if (req.method === "GET" && url.pathname === "/authorize") {
+    const back = new URL(url.searchParams.get("redirect_uri") ?? "");
+    back.searchParams.set("code", `fixture-code-${randomUUID()}`);
+    back.searchParams.set("state", url.searchParams.get("state") ?? "");
+
+    res.writeHead(302, { Location: back.toString() });
+    res.end();
+    return;
+  }
+
+  // Two grants arrive here. The app's client-credentials token, which the connector
+  // caches for `expires_in` less a minute so one covers a whole run — and the reader's
+  // own, which is the only one that comes with a refresh token and granted scopes.
   if (req.method === "POST" && url.pathname === "/api/token") {
-    await readBody(req);
-    sendJson(res, 200, { access_token: "e2e-fixture-app-token", expires_in: 3600 });
+    const form = new URLSearchParams(await readBody(req));
+    if (form.get("grant_type") === "client_credentials") {
+      sendJson(res, 200, { access_token: "e2e-fixture-app-token", expires_in: 3600 });
+      return;
+    }
+
+    const grant = form.get("code") ?? form.get("refresh_token") ?? "";
+    sendJson(res, 200, {
+      access_token: `fixture-reader-token-${grant}`,
+      refresh_token: `fixture-refresh-${grant}`,
+      expires_in: 3600,
+      scope: GRANTED_SCOPES,
+    });
+    return;
+  }
+
+  // Who the reader is, which is what the callback asks for before it stores the grant.
+  if (req.method === "GET" && url.pathname === "/me") {
+    const auth = authorize(req);
+    if ("status" in auth) {
+      spotifyError(res, auth.status, "No usable token");
+      return;
+    }
+
+    sendJson(res, 200, { id: `fixture-spotify-user-${auth.token}` });
     return;
   }
 

@@ -35,9 +35,9 @@ export const E2E_API_URL = API_URL;
 export const E2E_UPSTREAM_URL = UPSTREAM_URL;
 
 /**
- * Also read by e2e/db.ts, which writes the linked Spotify `account` row no OAuth
- * handshake can produce here. Exported from this module so the guard below governs
- * every use of it.
+ * Also read by e2e/db.ts, which seeds a reader's `spotifyConnection` row instead of
+ * walking every test through the consent redirect. Exported from this module so the
+ * guard below governs every use of it.
  */
 export const E2E_DATABASE_URL =
   process.env.E2E_DATABASE_URL ??
