@@ -88,6 +88,13 @@ export const BookshelfResponseSchema = z.object({
 });
 export type BookshelfResponse = z.infer<typeof BookshelfResponseSchema>;
 
+/**
+ * The user-level scope the connector needs, and the whole of it: creating a private
+ * playlist, filling it, renaming it and unfollowing it all sit behind this one. Shared
+ * because the app asks for it at link time and the server checks for it afterwards.
+ */
+export const SPOTIFY_PLAYLIST_SCOPES = ["playlist-modify-private"] as const;
+
 export const MusicConnectorStatusResponseSchema = z.object({
   linked: z.boolean(),
   provider: z.literal("spotify"),
@@ -100,3 +107,15 @@ export const ExportPlaylistResponseSchema = z.object({
   deepLinkUri: z.string(),
 });
 export type ExportPlaylistResponse = z.infer<typeof ExportPlaylistResponseSchema>;
+
+/**
+ * What a sync should change. Every field is optional: a caller passes what moved and
+ * nothing else, so a rename leaves the tracks where the reader dragged them. An empty
+ * body means the tracks, which is what a sync meant before there was a body at all.
+ */
+export const UpdateExportRequestSchema = z.object({
+  name: z.string().trim().min(1).max(100).optional(),
+  description: z.string().trim().max(300).optional(),
+  tracks: z.boolean().optional(),
+});
+export type UpdateExportRequest = z.infer<typeof UpdateExportRequestSchema>;

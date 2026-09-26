@@ -58,6 +58,14 @@ export class ApiError extends Error {
     return new ApiError("FORBIDDEN", message);
   }
 
+  static spotifyNotLinked(message = "Connect Spotify to put this playlist in your account") {
+    return new ApiError("SPOTIFY_NOT_LINKED", message);
+  }
+
+  static spotifyTokenExpired(message = "Your Spotify connection has lapsed. Connect it again.") {
+    return new ApiError("SPOTIFY_TOKEN_EXPIRED", message);
+  }
+
   static rateLimited(message = "Too many requests. Try again later.") {
     return new ApiError("RATE_LIMITED", message);
   }

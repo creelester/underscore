@@ -3,6 +3,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { ANCHOR_COUNT } from "@underscore/shared";
 
 import { FIXTURE_BOOKS, type FixtureBook } from "./catalog";
+import { readerSpotify } from "./spotify-user";
 import { FIXTURE_ANCHORS, parseSearchQuery, toSpotifyTrack } from "./tracks";
 
 /**
@@ -21,8 +22,13 @@ import { FIXTURE_ANCHORS, parseSearchQuery, toSpotifyTrack } from "./tracks";
  *
  * Spotify's client-credentials token and catalogue search are here too, which is what
  * lets generation run to completion: the bookshelf specs need saved playlists, and a
- * playlist only exists once its anchors resolve. The user-level OAuth Spotify — sign-in
- * and export — is still unfixtured; nothing drives it.
+ * playlist only exists once its anchors resolve. The user-level side — creating a
+ * playlist in the reader's account, filling it and renaming it — is fixtured below on
+ * the state in `spotify-user.ts`, which holds enough to tell a created playlist from a
+ * filled one from a renamed one, plus a control surface under `/e2e/` for the specs to
+ * read it back. Only Better Auth's own Spotify OAuth handshake is still unfixtured, and
+ * cannot be: the provider's authorize and token URLs are hardcoded there, so e2e/db.ts
+ * writes the linked `account` row directly instead.
  */
 
 const PORT = Number(process.env.E2E_UPSTREAM_PORT ?? 3101);
@@ -121,6 +127,22 @@ function handleMessages(res: ServerResponse, raw: string) {
   sendJson(res, 200, toMessage(book.analysis));
 }
 
+/** The bearer token, or the status Spotify would answer without a usable one. */
+function authorize(req: IncomingMessage): { token: string } | { status: number } {
+  const header = req.headers.authorization;
+  const token = header?.startsWith("Bearer ") ? header.slice("Bearer ".length) : undefined;
+  if (!token) return { status: 401 };
+
+  const revoked = readerSpotify.revokedStatus(token);
+  return revoked ? { status: revoked } : { token };
+}
+
+function spotifyError(res: ServerResponse, status: number, message: string) {
+  sendJson(res, status, { error: { status, message } });
+}
+
+type ItemsRequest = { uris?: string[] };
+
 function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
     let raw = "";
@@ -171,6 +193,101 @@ const server = createServer(async (req, res) => {
   if (req.method === "GET" && url.pathname === "/search") {
     const anchor = parseSearchQuery(url.searchParams.get("q") ?? "");
     sendJson(res, 200, { tracks: { items: anchor ? [toSpotifyTrack(anchor)] : [] } });
+    return;
+  }
+
+  // User-level Spotify, same root as search above but on the reader's own token. The
+  // paths are the post-February-2026 `/items` ones, not `/tracks`.
+  if (req.method === "POST" && url.pathname === "/me/playlists") {
+    const raw = await readBody(req);
+    const auth = authorize(req);
+    if ("status" in auth) {
+      spotifyError(res, auth.status, "No usable token");
+      return;
+    }
+
+    const created = readerSpotify.create(auth.token, JSON.parse(raw || "{}"));
+    sendJson(res, 201, { id: created.id, external_urls: { spotify: created.webUrl } });
+    return;
+  }
+
+  const items = url.pathname.match(/^\/playlists\/([^/]+)\/items$/);
+  if (items && (req.method === "POST" || req.method === "PUT")) {
+    const raw = await readBody(req);
+    const auth = authorize(req);
+    if ("status" in auth) {
+      spotifyError(res, auth.status, "No usable token");
+      return;
+    }
+
+    const playlist = readerSpotify.find(decodeURIComponent(items[1]));
+    // What the reader deleting it on their side looks like from here.
+    if (!playlist) {
+      spotifyError(res, 404, "Playlist not found");
+      return;
+    }
+
+    const uris = (JSON.parse(raw || "{}") as ItemsRequest).uris ?? [];
+    if (req.method === "POST") {
+      playlist.uris.push(...uris);
+      playlist.appends += 1;
+    } else {
+      playlist.uris = uris;
+      playlist.replaces += 1;
+    }
+
+    sendJson(res, req.method === "POST" ? 201 : 200, { snapshot_id: `snap-${playlist.uris.length}` });
+    return;
+  }
+
+  // The playlist itself — name and description. `/playlists/{id}` was untouched by the
+  // February 2026 rename, so this path has no `/items` on it, and Spotify answers 200
+  // with an empty body.
+  const details = url.pathname.match(/^\/playlists\/([^/]+)$/);
+  if (details && req.method === "PUT") {
+    const raw = await readBody(req);
+    const auth = authorize(req);
+    if ("status" in auth) {
+      spotifyError(res, auth.status, "No usable token");
+      return;
+    }
+
+    const playlist = readerSpotify.find(decodeURIComponent(details[1]));
+    if (!playlist) {
+      spotifyError(res, 404, "Playlist not found");
+      return;
+    }
+
+    // Only what the request carried: a field left off is a field Spotify keeps.
+    const body = JSON.parse(raw || "{}") as { name?: string; description?: string };
+    if (body.name !== undefined) playlist.name = body.name;
+    if (body.description !== undefined) playlist.description = body.description;
+    playlist.details += 1;
+
+    sendJson(res, 200, {});
+    return;
+  }
+
+  // The harness's own view of the above, under /e2e/ so it can never shadow a Spotify
+  // path. Not part of any contract the server knows about.
+  if (req.method === "GET" && url.pathname === "/e2e/spotify/playlists") {
+    sendJson(res, 200, { playlists: readerSpotify.forToken(url.searchParams.get("token") ?? "") });
+    return;
+  }
+
+  const oneE2ePlaylist = url.pathname.match(/^\/e2e\/spotify\/playlists\/([^/]+)$/);
+  if (oneE2ePlaylist && req.method === "DELETE") {
+    sendJson(res, 200, { deleted: readerSpotify.forget(decodeURIComponent(oneE2ePlaylist[1])) });
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/e2e/spotify/revoke") {
+    const { token, status } = JSON.parse((await readBody(req)) || "{}") as {
+      token?: string;
+      status?: number;
+    };
+    if (token) readerSpotify.revoke(token, status ?? 401);
+    sendJson(res, 200, { token, status: status ?? 401 });
     return;
   }
 

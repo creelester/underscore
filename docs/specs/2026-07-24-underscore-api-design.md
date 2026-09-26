@@ -91,7 +91,7 @@ Closed vocabularies, for the reason `mood` is closed: every value needs a chip, 
 | `tracks`            | `PlaylistTrack[]`   | Ordered                                                                              |
 | `totalRuntimeMs`    | `number`            | Sum of track durations — informational only                                          |
 | `isTooShort`        | `boolean`           | True if the &lt;8-anchor regeneration path was hit and fewer than 13 tracks resolved |
-| `spotifyPlaylistId` | `string \| null`    | Set after first successful export (Phase 7)                                          |
+| `spotifyPlaylistId` | `string \| null`    | Set after the first successful export; `null` until the playlist reaches Spotify      |
 | `createdAt`         | `string` (ISO date) |                                                                                      |
 
 ### Common error envelope
@@ -221,8 +221,22 @@ Side effects: on the `googleBooksId` path, re-fetches the volume from Google Boo
 | ---------------------------------------- | ---------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `GET /api/music-connector/status`        | session-required | —                  | `{ linked: boolean, provider: "spotify" }`                                                                                                            | —                                                                                                                                                                                                                               |
 | `POST /api/playlists/:playlistId/export` | session-required | path: `playlistId` | `{ spotifyPlaylistId: string, webUrl: string, deepLinkUri: string }` (idempotent — returns the existing export if `spotifyPlaylistId` is already set) | `404 PLAYLIST_NOT_FOUND`, `403 FORBIDDEN` (not owner), `409 SPOTIFY_NOT_LINKED` (client should prompt `link-social`), `401 SPOTIFY_TOKEN_EXPIRED` (client should prompt re-link), `502 UPSTREAM_UNAVAILABLE` (Spotify API down) |
+| `PUT /api/playlists/:playlistId/export`  | session-required | path: `playlistId`, body: `{ name?: string, description?: string, tracks?: boolean }` | Same shape as `POST` (creates the playlist first if it was never exported)                                        | Same as `POST`, plus `400 INVALID_INPUT`                                                                                                                                                                                                                  |
 
-`POST /api/playlists/:playlistId/export` takes no body — the playlist is identified by the path param alone.
+`POST` takes no body — the playlist is identified by the path param alone. `POST` is the first save and `PUT` is a later sync, but both upsert, so the client never has to sequence two calls: `POST` on an already-exported playlist hands back the existing links, and `PUT` on one never exported creates it. A `404` from Spotify on a sync means the reader deleted the playlist on their side; the stored id is dropped and a new playlist created.
+
+`PUT` carries only the fields that changed, and touches nothing else:
+
+| Body | Effect |
+| ---- | ------ |
+| `{ "name": "…" }` | Renames the playlist in Spotify **and** in our `Playlist` row; the items are left where they are |
+| `{ "description": "…" }` | Changes the Spotify description only |
+| `{ "tracks": true }` | Replaces the playlist's items with ours |
+| `{}` (or no body) | Replaces the items — what a sync meant before it took a body |
+
+The rename is written to our row as well as Spotify's, or the next track sync would carry the old name straight back. On a playlist never exported, any of these creates it, using the `name` and `description` given.
+
+Export needs the `playlist-modify-private` scope, which is the whole of what the connector asks for — creating, filling, renaming and unfollowing all sit behind it. It is requested at link time (`linkSocial`), never at sign-in, so `GET /api/music-connector/status` reports `linked: false` for a reader who signed in *with* Spotify and never granted it.
 
 ---
 

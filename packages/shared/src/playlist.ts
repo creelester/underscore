@@ -34,6 +34,21 @@ export function defaultPlaylistName(profile: MoodProfile): string {
   return `${mood[0].toUpperCase()}${mood.slice(1)} ${pacing.toLowerCase()}`;
 }
 
+// Spotify's URI and link shapes. Here rather than in the connector because the server
+// writes them on export and the app reads them back off a `spotifyPlaylistId` alone.
+
+export function spotifyTrackUri(spotifyTrackId: string): string {
+  return `spotify:track:${spotifyTrackId}`;
+}
+
+export function spotifyPlaylistDeepLink(spotifyPlaylistId: string): string {
+  return `spotify:playlist:${spotifyPlaylistId}`;
+}
+
+export function spotifyPlaylistWebUrl(spotifyPlaylistId: string): string {
+  return `https://open.spotify.com/playlist/${spotifyPlaylistId}`;
+}
+
 export const PlaylistSchema = z.object({
   id: z.string(),
   name: z.string().trim().min(1).max(MAX_PLAYLIST_NAME_LENGTH),

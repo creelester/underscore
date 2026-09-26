@@ -31,7 +31,15 @@ const WEB_URL = `http://localhost:${WEB_PORT}`;
  */
 export const E2E_API_URL = API_URL;
 
-const E2E_DATABASE_URL =
+/** For the specs that read the fixture server's own record of what Spotify was asked to do. */
+export const E2E_UPSTREAM_URL = UPSTREAM_URL;
+
+/**
+ * Also read by e2e/db.ts, which writes the linked Spotify `account` row no OAuth
+ * handshake can produce here. Exported from this module so the guard below governs
+ * every use of it.
+ */
+export const E2E_DATABASE_URL =
   process.env.E2E_DATABASE_URL ??
   "postgresql://underscore:underscore@localhost:5432/underscore_e2e?schema=public";
 

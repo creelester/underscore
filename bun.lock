@@ -7,7 +7,9 @@
       "devDependencies": {
         "@playwright/test": "1.62.1",
         "@types/node": "^22.7.4",
+        "@types/pg": "^8.11.10",
         "concurrently": "^10.0.4",
+        "pg": "^8.13.0",
         "typescript": "^5.6.3",
       },
     },
