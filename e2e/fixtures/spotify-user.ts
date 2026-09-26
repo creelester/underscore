@@ -24,6 +24,8 @@ export type FixtureSpotifyPlaylist = {
   appends: number;
   /** `PUT /items` calls. */
   replaces: number;
+  /** `PUT /playlists/{id}` calls — name and description. Zero alongside a changed name means nothing renamed it. */
+  details: number;
 };
 
 const playlists = new Map<string, FixtureSpotifyPlaylist>();
@@ -45,6 +47,7 @@ export const readerSpotify = {
       uris: [],
       appends: 0,
       replaces: 0,
+      details: 0,
     };
     playlists.set(id, playlist);
     return playlist;

@@ -81,13 +81,18 @@ playlist name down.
 ### User-level Spotify
 
 Export needs the reader's *own* Spotify, not the app's client credentials, so the
-fixture server serves that side too: `POST /me/playlists` and
+fixture server serves that side too: `POST /me/playlists`,
 `POST`/`PUT /playlists/:id/items` (the post-February-2026 `/items` paths, not
-`/tracks`). Its state lives in `fixtures/spotify-user.ts`, keyed by the bearer
-token each request arrives on, and records enough to tell a **created** playlist
-from a **filled** one — the uris in it, how many times they were appended and how
-many times replaced, and which token created it. A spec seeds a token of its own,
-so parallel workers never see each other's playlists.
+`/tracks`) and `PUT /playlists/:id` for the name and description. Its state lives
+in `fixtures/spotify-user.ts`, keyed by the bearer token each request arrives on,
+and records enough to tell a **created** playlist from a **filled** one from a
+**renamed** one — the uris in it, its name and description, how many times the
+items were appended (`appends`) or replaced (`replaces`), how many times the
+playlist itself was edited (`details`), and which token created it. Those three
+counters are what let a spec prove that a partial `PUT …/export` changed only
+what it named: a rename that quietly re-pushed the tracks shows up as a
+`replaces` the spec did not ask for. A spec seeds a token of its own, so parallel
+workers never see each other's playlists.
 
 The same module backs a small control surface, namespaced under `/e2e/` so it can
 never shadow a Spotify path:
@@ -118,9 +123,15 @@ bun run e2e/fixtures/upstream-server.ts
 
 ```sh
 bun install
+bun run --filter server prisma:generate
 bunx playwright install chromium
 docker compose up -d
 ```
+
+`prisma generate` is explicit because nothing runs it for you: there is no
+postinstall hook, and the suite's own reset passes `--skip-generate`. After a
+fresh `bun install` — a new clone or a new worktree — the seed step of
+`e2e:db:reset` is the first thing to fail without it.
 
 The `underscore_e2e` database is created automatically by
 `docker/postgres/init-e2e-db.sh` — but Postgres only runs that on a **fresh**

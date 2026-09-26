@@ -8,6 +8,7 @@ import {
   PlaylistSchema,
   SPOTIFY_PLAYLIST_SCOPES,
   type Playlist,
+  type UpdateExportRequest,
 } from "@underscore/shared";
 
 import { E2E_UPSTREAM_URL } from "../playwright.config";
@@ -23,6 +24,9 @@ import { GENERATE_TIMEOUT_MS, signUpOverApi } from "./helpers";
  *
  * Driven over HTTP, like `rate-limit.spec.ts`: neither route has a screen yet, so nothing
  * the app renders is part of the contract under test and there is no page to open.
+ *
+ * A sync carries only the fields that changed, so the last group here is about what a
+ * body leaves alone as much as about what it changes.
  *
  * What Spotify was asked to do is read back off the fixture server's own record
  * (`fixtures/spotify-user.ts`), which is what makes a created playlist distinguishable
@@ -131,12 +135,16 @@ function expectedUris(playlist: Playlist): string[] {
   return playlist.tracks.map(({ track }) => `spotify:track:${track.spotifyTrackId}`);
 }
 
-/** What we remember of an export, read back the way the app would read it. */
-async function storedSpotifyPlaylistId(reader: Reader, playlistId: string) {
+/** What we remember of a playlist, read back the way the app would read it. */
+async function storedPlaylist(reader: Reader, playlistId: string): Promise<Playlist> {
   const response = await reader.api.get(`/api/bookshelf/${playlistId}`);
   expect(response.status()).toBe(200);
 
-  return PlaylistSchema.parse(await response.json()).spotifyPlaylistId;
+  return PlaylistSchema.parse(await response.json());
+}
+
+async function storedSpotifyPlaylistId(reader: Reader, playlistId: string) {
+  return (await storedPlaylist(reader, playlistId)).spotifyPlaylistId;
 }
 
 async function status(reader: Reader) {
@@ -149,8 +157,24 @@ async function status(reader: Reader) {
 const exportPlaylist = (reader: Reader, playlistId: string) =>
   reader.api.post(`/api/playlists/${playlistId}/export`);
 
-const syncPlaylist = (reader: Reader, playlistId: string) =>
-  reader.api.put(`/api/playlists/${playlistId}/export`);
+/** No `update` sends no body at all, which is the sync that predates the body. */
+const syncPlaylist = (reader: Reader, playlistId: string, update?: UpdateExportRequest) =>
+  reader.api.put(
+    `/api/playlists/${playlistId}/export`,
+    update === undefined ? undefined : { data: update },
+  );
+
+/** For bodies the schema should reject — none of them type-check as an `UpdateExportRequest`. */
+const syncWithBody = (reader: Reader, playlistId: string, body: Record<string, unknown>) =>
+  reader.api.put(`/api/playlists/${playlistId}/export`, { data: body });
+
+/** The reader's one playlist in Spotify. A second would mean something created it twice. */
+async function inSpotify(spotify: SpotifyFixture, token: string): Promise<FixtureSpotifyPlaylist> {
+  const mine = await spotify.playlistsFor(token);
+  expect(mine).toHaveLength(1);
+
+  return mine[0];
+}
 
 test.describe("the music connector status", () => {
   test("reports a reader who has never linked Spotify as unlinked", async ({ newReader }) => {
@@ -363,5 +387,167 @@ test.describe("exporting a playlist to Spotify", () => {
     expect(ApiErrorSchema.parse(await response.json())).toMatchObject({
       code: "PLAYLIST_NOT_FOUND",
     });
+  });
+});
+
+/**
+ * `PUT /api/playlists/:playlistId/export` with a body: a sync changes only what it was
+ * handed, so a rename leaves the items where the reader dragged them.
+ *
+ * `details`, `replaces` and `appends` on the fixture's own record are what make "only"
+ * assertable — a rename that quietly re-pushed the tracks would pass every assertion
+ * about the name.
+ */
+test.describe("syncing only the fields a playlist asked to change", () => {
+  test.describe.configure({ timeout: 90_000 });
+
+  /** An exported playlist of this reader's own, and the links Spotify gave it. */
+  async function exported(reader: Reader) {
+    const playlist = await score(reader);
+    const response = await exportPlaylist(reader, playlist.id);
+    expect(response.status(), await response.text()).toBe(200);
+
+    return { playlist, ...ExportPlaylistResponseSchema.parse(await response.json()) };
+  }
+
+  test("renames in Spotify and on our row without re-pushing the tracks", async ({
+    newReader,
+    spotify,
+  }) => {
+    const reader = await newReader(EXPORT_SCOPES);
+    const { playlist, spotifyPlaylistId } = await exported(reader);
+    const renamed = "Hours by the Harbour Light";
+
+    // Padded, because the schema trims: what reaches Spotify is what proves it.
+    const response = await syncPlaylist(reader, playlist.id, { name: `  ${renamed}  ` });
+    expect(response.status(), await response.text()).toBe(200);
+    expect(ExportPlaylistResponseSchema.parse(await response.json()).spotifyPlaylistId).toBe(
+      spotifyPlaylistId,
+    );
+
+    const theirs = await inSpotify(spotify, reader.spotifyToken);
+    expect(theirs.name).toBe(renamed);
+    expect(theirs.details).toBe(1);
+    // The point of a partial body: the items were left alone.
+    expect(theirs.replaces).toBe(0);
+    expect(theirs.appends).toBe(1);
+    expect(theirs.uris).toEqual(expectedUris(playlist));
+
+    // Ours as well as Spotify's, or the app would go on showing the old name.
+    expect((await storedPlaylist(reader, playlist.id)).name).toBe(renamed);
+  });
+
+  test("changes the Spotify description and leaves the name and the items alone", async ({
+    newReader,
+    spotify,
+  }) => {
+    const reader = await newReader(EXPORT_SCOPES);
+    const { playlist } = await exported(reader);
+    const description = "Rewritten by the reader, not by us.";
+
+    const response = await syncPlaylist(reader, playlist.id, { description });
+    expect(response.status(), await response.text()).toBe(200);
+
+    const theirs = await inSpotify(spotify, reader.spotifyToken);
+    expect(theirs.description).toBe(description);
+    expect(theirs.details).toBe(1);
+    expect(theirs.name).toBe(playlist.name);
+    expect(theirs.replaces).toBe(0);
+    expect(theirs.uris).toEqual(expectedUris(playlist));
+
+    expect((await storedPlaylist(reader, playlist.id)).name).toBe(playlist.name);
+  });
+
+  test("replaces the items and nothing else when the body asks for the tracks", async ({
+    newReader,
+    spotify,
+  }) => {
+    const reader = await newReader(EXPORT_SCOPES);
+    const { playlist } = await exported(reader);
+
+    const response = await syncPlaylist(reader, playlist.id, { tracks: true });
+    expect(response.status(), await response.text()).toBe(200);
+
+    const theirs = await inSpotify(spotify, reader.spotifyToken);
+    expect(theirs.replaces).toBe(1);
+    expect(theirs.uris).toEqual(expectedUris(playlist));
+    // Nothing named, so the playlist itself was never touched.
+    expect(theirs.details).toBe(0);
+    expect(theirs.name).toBe(playlist.name);
+  });
+
+  test("treats an empty body as the track sync it meant before there was a body", async ({
+    newReader,
+    spotify,
+  }) => {
+    const reader = await newReader(EXPORT_SCOPES);
+    const { playlist } = await exported(reader);
+
+    const response = await syncPlaylist(reader, playlist.id, {});
+    expect(response.status(), await response.text()).toBe(200);
+
+    const theirs = await inSpotify(spotify, reader.spotifyToken);
+    expect(theirs.replaces).toBe(1);
+    expect(theirs.uris).toEqual(expectedUris(playlist));
+    expect(theirs.details).toBe(0);
+  });
+
+  test("creates a playlist never exported under the name the rename gave it", async ({
+    newReader,
+    spotify,
+  }) => {
+    const reader = await newReader(EXPORT_SCOPES);
+    const playlist = await score(reader);
+    const renamed = "A Letter in Her Own Hand";
+
+    const response = await syncPlaylist(reader, playlist.id, { name: renamed });
+    expect(response.status(), await response.text()).toBe(200);
+    const synced = ExportPlaylistResponseSchema.parse(await response.json());
+
+    const theirs = await inSpotify(spotify, reader.spotifyToken);
+    expect(theirs.id).toBe(synced.spotifyPlaylistId);
+    // Created carrying the new name, rather than created and then renamed.
+    expect(theirs.name).toBe(renamed);
+    expect(theirs.details).toBe(0);
+    expect(theirs.appends).toBe(1);
+    expect(theirs.uris).toEqual(expectedUris(playlist));
+
+    const stored = await storedPlaylist(reader, playlist.id);
+    expect(stored.name).toBe(renamed);
+    expect(stored.spotifyPlaylistId).toBe(synced.spotifyPlaylistId);
+  });
+
+  test("refuses a body the schema rejects and leaves Spotify untouched", async ({
+    newReader,
+    spotify,
+  }) => {
+    const reader = await newReader(EXPORT_SCOPES);
+    const { playlist } = await exported(reader);
+
+    // Every way `UpdateExportRequestSchema` can fail: a name that is empty once trimmed,
+    // one past 100 characters, a description past 300, and a non-boolean `tracks`.
+    const rejected: Record<string, unknown>[] = [
+      { name: "" },
+      { name: "   " },
+      { name: "n".repeat(101) },
+      { description: "d".repeat(301) },
+      { tracks: "yes" },
+    ];
+
+    for (const body of rejected) {
+      const response = await syncWithBody(reader, playlist.id, body);
+      expect(response.status(), JSON.stringify(body).slice(0, 60)).toBe(400);
+      expect(ApiErrorSchema.parse(await response.json())).toMatchObject({
+        code: "INVALID_INPUT",
+        retryable: false,
+      });
+    }
+
+    // A rejected body reaches neither Spotify nor our row.
+    const theirs = await inSpotify(spotify, reader.spotifyToken);
+    expect(theirs.details).toBe(0);
+    expect(theirs.replaces).toBe(0);
+    expect(theirs.name).toBe(playlist.name);
+    expect((await storedPlaylist(reader, playlist.id)).name).toBe(playlist.name);
   });
 });

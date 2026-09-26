@@ -23,9 +23,9 @@ import { FIXTURE_ANCHORS, parseSearchQuery, toSpotifyTrack } from "./tracks";
  * Spotify's client-credentials token and catalogue search are here too, which is what
  * lets generation run to completion: the bookshelf specs need saved playlists, and a
  * playlist only exists once its anchors resolve. The user-level side — creating a
- * playlist in the reader's account and filling it — is fixtured below on the state in
- * `spotify-user.ts`, which holds enough to tell a created playlist from a filled one,
- * plus a control surface under `/e2e/` for the specs to read it back. Only Better Auth's
+ * playlist in the reader's account, filling it and renaming it — is fixtured below on the
+ * state in `spotify-user.ts`, which holds enough to tell a created playlist from a filled
+ * one from a renamed one, plus a control surface under `/e2e/` for the specs to read it back. Only Better Auth's
  * own Spotify OAuth handshake is still unfixtured, and cannot be: the provider's
  * authorize and token URLs are hardcoded there, so e2e/db.ts writes the linked
  * `account` row directly instead.
@@ -237,6 +237,34 @@ const server = createServer(async (req, res) => {
     }
 
     sendJson(res, req.method === "POST" ? 201 : 200, { snapshot_id: `snap-${playlist.uris.length}` });
+    return;
+  }
+
+  // The playlist itself — name and description. `/playlists/{id}` was untouched by the
+  // February 2026 rename, so this path has no `/items` on it, and Spotify answers 200
+  // with an empty body.
+  const details = url.pathname.match(/^\/playlists\/([^/]+)$/);
+  if (details && req.method === "PUT") {
+    const raw = await readBody(req);
+    const auth = authorize(req);
+    if ("status" in auth) {
+      spotifyError(res, auth.status, "No usable token");
+      return;
+    }
+
+    const playlist = readerSpotify.find(decodeURIComponent(details[1]));
+    if (!playlist) {
+      spotifyError(res, 404, "Playlist not found");
+      return;
+    }
+
+    // Only what the request carried: a field left off is a field Spotify keeps.
+    const body = JSON.parse(raw || "{}") as { name?: string; description?: string };
+    if (body.name !== undefined) playlist.name = body.name;
+    if (body.description !== undefined) playlist.description = body.description;
+    playlist.details += 1;
+
+    sendJson(res, 200, {});
     return;
   }
 
