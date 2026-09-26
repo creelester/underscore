@@ -517,6 +517,30 @@ test.describe("syncing only the fields a playlist asked to change", () => {
     expect(stored.spotifyPlaylistId).toBe(synced.spotifyPlaylistId);
   });
 
+  test("remakes a playlist the reader deleted, carrying the rename that found it gone", async ({
+    newReader,
+    spotify,
+  }) => {
+    const reader = await newReader(EXPORT_SCOPES);
+    const { playlist, spotifyPlaylistId } = await exported(reader);
+    const renamed = "The Winters She Counted";
+
+    await spotify.deleteInSpotify(spotifyPlaylistId);
+
+    const response = await syncPlaylist(reader, playlist.id, { name: renamed });
+    expect(response.status(), await response.text()).toBe(200);
+    const synced = ExportPlaylistResponseSchema.parse(await response.json());
+    expect(synced.spotifyPlaylistId).not.toBe(spotifyPlaylistId);
+
+    // A rename is not a track sync, but a playlist rebuilt from nothing needs its items.
+    const theirs = await inSpotify(spotify, reader.spotifyToken);
+    expect(theirs.name).toBe(renamed);
+    expect(theirs.uris).toEqual(expectedUris(playlist));
+    expect(theirs.appends).toBe(1);
+
+    expect(await storedSpotifyPlaylistId(reader, playlist.id)).toBe(synced.spotifyPlaylistId);
+  });
+
   test("refuses a body the schema rejects and leaves Spotify untouched", async ({
     newReader,
     spotify,
