@@ -5,13 +5,12 @@ import { Client } from "pg";
 import { E2E_DATABASE_URL } from "../playwright.config";
 
 /**
- * The one thing the harness cannot drive over HTTP: the `account` row a Spotify OAuth
- * grant leaves behind.
+ * A reader's Spotify connection, written straight into `spotifyConnection`.
  *
- * Better Auth hardcodes Spotify's authorize and token URLs, so `SPOTIFY_ACCOUNTS_BASE_URL`
- * — which only redirects our own client-credentials connector — cannot point the handshake
- * at the fixture server. There is no way to fake the round trip; the row is written
- * directly instead. Don't try to fixture the OAuth flow.
+ * The handshake itself is fixturable now that it is ours (`SPOTIFY_ACCOUNTS_BASE_URL`
+ * points it at the fixture server), and music-connector.spec.ts drives it end to end
+ * once. This is the shortcut every other test takes: a connection in a chosen state,
+ * without three redirects in front of each one.
  *
  * Not a `*.spec.ts`, so Playwright's default testMatch never collects it.
  */
@@ -28,35 +27,43 @@ async function withClient<T>(run: (client: Client) => Promise<T>): Promise<T> {
 }
 
 export type SpotifyLink = {
-  /** Comma-joined, which is how Better Auth writes granted scopes — not space-delimited. */
+  /** Space-delimited, as Spotify grants them — `hasPlaylistScopes` also tolerates commas. */
   scope: string;
   /**
-   * Handed straight back by `getAccessToken`, and recorded by the fixture server on every
+   * Handed straight back while it is fresh, and recorded by the fixture server on every
    * call it authorises, so a per-test value keeps one test's Spotify state to itself.
    */
   accessToken: string;
 };
 
 /**
- * Links Spotify to `userId` as an OAuth grant would.
+ * Connects Spotify for `userId` as the callback would.
  *
- * Two details keep `auth.api.getAccessToken` from reaching the real accounts host, and
- * both are load-bearing: `refreshToken` stays null and the expiry is an hour out, so
- * Better Auth returns the token verbatim rather than refreshing it. The token is stored
- * in plain text because `account.encryptOAuthTokens` is off (the default) in
- * `server/src/lib/auth.ts` — turning it on would mean encrypting this one too.
+ * The expiry is an hour out so `spotifyAccessToken` returns the token verbatim instead
+ * of spending the refresh token first — the fixture would answer, but the test's own
+ * token would no longer be the one Spotify sees. In UTC, because Prisma reads these
+ * `timestamp` columns as UTC and `NOW()` is the server's local wall clock: west of
+ * Greenwich, an hour ahead by that clock is hours in the past by Prisma's.
  */
-export async function linkSpotifyAccount(
+export async function connectSpotify(
   userId: string,
   { scope, accessToken }: SpotifyLink,
 ): Promise<void> {
   await withClient((client) =>
     client.query(
-      `INSERT INTO "account"
-         (id, "accountId", "providerId", "userId", "accessToken", scope,
-          "accessTokenExpiresAt", "createdAt", "updatedAt")
-       VALUES ($1, $2, 'spotify', $3, $4, $5, NOW() + INTERVAL '1 hour', NOW(), NOW())`,
-      [randomUUID(), `spotify-${randomUUID()}`, userId, accessToken, scope],
+      `INSERT INTO "spotifyConnection"
+         (id, "userId", "spotifyUserId", "accessToken", "refreshToken",
+          "accessTokenExpiresAt", scope, "createdAt", "updatedAt")
+       SELECT $1, $2, $3, $4, $5, utc + INTERVAL '1 hour', $6, utc, utc
+       FROM (SELECT NOW() AT TIME ZONE 'utc' AS utc) AS clock`,
+      [
+        randomUUID(),
+        userId,
+        `spotify-user-${randomUUID()}`,
+        accessToken,
+        `refresh-${randomUUID()}`,
+        scope,
+      ],
     ),
   );
 }

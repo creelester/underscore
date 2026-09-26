@@ -106,11 +106,13 @@ never shadow a Spotify path:
 `music-connector.spec.ts` reads it through a `spotify` fixture rather than calling
 those paths inline.
 
-The one thing that stays unfixtured is Better Auth's own Spotify OAuth handshake,
-and it cannot be fixtured: Better Auth hardcodes the provider's authorize and token
-URLs, so `SPOTIFY_ACCOUNTS_BASE_URL` — which only redirects our own
-client-credentials connector — cannot point it at the fixture server. See
-[Linking Spotify in a test](#linking-spotify-in-a-test).
+The reader's consent handshake is fixtured as well, because it is ours rather than
+Better Auth's: `beginSpotifyAuth` builds the authorize URL from
+`SPOTIFY_ACCOUNTS_BASE_URL`, so `GET /authorize` on the fixture server stands in for
+the consent screen and redirects straight back to whatever `redirect_uri` it was
+given. `POST /api/token` answers an `authorization_code` grant with an access token,
+a refresh token and the granted scopes, and `GET /me` with the Spotify user id the
+callback stores. See [Connecting Spotify in a test](#connecting-spotify-in-a-test).
 
 `server/.env.test` carries the same base URLs, so running the e2e stack by hand
 needs the fixture server running too:
@@ -204,28 +206,30 @@ persists a row, so any test that reaches it must not use the seeded account: a
 playlist on that shelf would answer another spec's search from the library instead
 of from the catalogue.
 
-### Linking Spotify in a test
+### Connecting Spotify in a test
 
-`GET /api/music-connector/status` calls a reader linked only when their `account`
-row carries `playlist-modify-private` — signing in *with* Spotify leaves a row with
+The connector reads the `spotifyConnection` table, one row per reader, and
+`GET /api/music-connector/status` calls that reader linked only when its `scope`
+carries `playlist-modify-private` — a grant from before we asked for it carries
 identity scopes only, and calling that linked would hand the app an export that dies
-at the Spotify call. Covering that discrimination, and the export routes at all,
-needs a linked row, and no HTTP call the harness can make will produce one (see
-above: Better Auth's provider URLs are hardcoded).
+at the Spotify call.
 
-So `db.ts` writes it, over `pg` against `E2E_DATABASE_URL`:
+`music-connector.spec.ts` drives the real handshake once, hop by hop with
+`maxRedirects: 0` (our authorize route → the fixture's consent screen → our
+callback), which is what proves the row the rest of the suite fakes is the row the
+product writes. Every other test seeds the state it needs directly, over `pg`
+against `E2E_DATABASE_URL`:
 
 ```ts
-await linkSpotifyAccount(userId, { scope: "user-read-email,playlist-modify-private", accessToken });
+await connectSpotify(userId, { scope: "user-read-email playlist-modify-private", accessToken });
 ```
 
-Three details in that row are load-bearing, and the function's comment says so:
-`scope` is **comma-joined**, which is how Better Auth stores granted scopes;
-`refreshToken` stays null and the expiry is an hour out, so
-`auth.api.getAccessToken` hands the token back verbatim instead of trying to refresh
-it against the real `accounts.spotify.com`; and the token is plain text because
-`account.encryptOAuthTokens` is off (the default) in `server/src/lib/auth.ts` —
-turning it on means encrypting this one too.
+Two details in that row are load-bearing, and the function's comment says so:
+`scope` is **space-delimited**, as Spotify sends it — `hasPlaylistScopes` splits on
+`/[,\s]+/`, so a comma-joined scope also passes, but it is not what the callback
+stores; and the expiry is an hour out, so `spotifyAccessToken` hands the token back
+verbatim rather than spending the refresh token and replacing it with one the test
+does not know.
 
 The token is also the key the fixture server files that reader's playlists under, so
 give every test its own.

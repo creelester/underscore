@@ -22,8 +22,8 @@ import { MOTION } from '@/lib/theme';
  * back rule is repeated from it rather than shared: one control, two lines.
  */
 
-const HERO_HEIGHT = 280;
-const COVER_BLUR = 28;
+const HERO_HEIGHT = 250;
+const COVER_BLUR = 5;
 
 /** The cover supplies the colour; the gradient keeps it in the app's palette. */
 const TINT_OPACITY = 0.22;
@@ -59,12 +59,15 @@ const INK = '#FFF8EF';
 export function PlaylistHero({
   moods,
   coverUrl,
+  bookTitle,
   eyebrow,
   title,
   onOpenActions,
 }: {
   moods: readonly Mood[];
   coverUrl: string | null;
+  /** Names the cover for a screen reader; the blur is a look, not a reason to go unlabelled. */
+  bookTitle: string;
   eyebrow: string;
   title: string;
   onOpenActions: () => void;
@@ -82,7 +85,7 @@ export function PlaylistHero({
         <>
           <Image
             source={coverUrl}
-            alt=""
+            alt={`Cover of ${bookTitle}`}
             contentFit="cover"
             blurRadius={COVER_BLUR}
             cachePolicy="memory-disk"

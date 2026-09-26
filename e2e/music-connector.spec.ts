@@ -11,15 +11,16 @@ import {
   type UpdateExportRequest,
 } from "@underscore/shared";
 
-import { E2E_UPSTREAM_URL } from "../playwright.config";
-import { linkSpotifyAccount } from "./db";
+import { E2E_API_URL, E2E_UPSTREAM_URL } from "../playwright.config";
+import { connectSpotify } from "./db";
 import { fixtureBook } from "./fixtures/catalog";
 import type { FixtureSpotifyPlaylist } from "./fixtures/spotify-user";
 import { GENERATE_TIMEOUT_MS, signUpOverApi } from "./helpers";
 
 /**
- * The Music Connector: whether a reader's Spotify link can write a playlist
- * (`GET /api/music-connector/status`), and putting one there
+ * The Music Connector: connecting a reader's Spotify (`GET /api/music-connector/authorize`
+ * and `/callback`, `DELETE /api/music-connector`), whether that connection can write a
+ * playlist (`GET /api/music-connector/status`), and putting one there
  * (`POST` / `PUT /api/playlists/:playlistId/export`).
  *
  * Driven over HTTP, like `rate-limit.spec.ts`: neither route has a screen yet, so nothing
@@ -35,28 +36,32 @@ import { GENERATE_TIMEOUT_MS, signUpOverApi } from "./helpers";
  *
  * Every reader here is minted by this spec, scores its own playlist and carries its own
  * Spotify token, so nothing shared is mutated and no two tests can see each other's
- * playlists in the fixture.
+ * playlists in the fixture. The consent round trip is driven once, for real; every other
+ * test seeds the connection it needs with `connectSpotify`.
  */
 
-/** What signing in *with* Spotify leaves behind: identity, and no way to write a playlist. */
-const SIGN_IN_SCOPES = "user-read-email,user-read-private";
+/** A grant from before we asked for the playlist scope: identity, and nothing writable. */
+const IDENTITY_SCOPES = "user-read-email user-read-private";
 
 /**
  * A real grant keeps the identity scopes alongside the one we asked for, so the status
- * check has to be set membership rather than equality. Comma-joined, as Better Auth writes it.
+ * check has to be set membership rather than equality. Space-delimited, as Spotify sends it.
  */
-const EXPORT_SCOPES = ["user-read-email", ...SPOTIFY_PLAYLIST_SCOPES].join(",");
+const EXPORT_SCOPES = ["user-read-email", ...SPOTIFY_PLAYLIST_SCOPES].join(" ");
 
 const BOOK = fixtureBook("e2e-lantern");
 
 type Reader = {
   api: APIRequestContext;
   userId: string;
-  /** The access token its `account` row carries; the fixture keys its playlists on it. */
+  /**
+   * The access token its `spotifyConnection` row carries; the fixture keys its playlists
+   * on it.
+   */
   spotifyToken: string;
 };
 
-/** Mints a reader. With a `scope`, Spotify is linked at it; without, not linked at all. */
+/** Mints a reader. With a `scope`, Spotify is connected at it; without, not at all. */
 type NewReader = (scope?: string) => Promise<Reader>;
 
 /** The fixture server's record of what user-level Spotify was asked to do. */
@@ -68,7 +73,11 @@ type SpotifyFixture = {
   revoke(token: string, status: 401 | 403): Promise<void>;
 };
 
-const test = base.extend<{ newReader: NewReader; spotify: SpotifyFixture }>({
+const test = base.extend<{
+  newReader: NewReader;
+  spotify: SpotifyFixture;
+  signedOut: APIRequestContext;
+}>({
   newReader: async ({}, use) => {
     const readers: Reader[] = [];
 
@@ -84,7 +93,7 @@ const test = base.extend<{ newReader: NewReader; spotify: SpotifyFixture }>({
         spotifyToken: `spotify-reader-token-${randomUUID()}`,
       };
       if (scope) {
-        await linkSpotifyAccount(reader.userId, { scope, accessToken: reader.spotifyToken });
+        await connectSpotify(reader.userId, { scope, accessToken: reader.spotifyToken });
       }
 
       readers.push(reader);
@@ -113,6 +122,17 @@ const test = base.extend<{ newReader: NewReader; spotify: SpotifyFixture }>({
       },
     });
 
+    await api.dispose();
+  },
+
+  /**
+   * The browser the consent redirects arrive in — no session, which is the point: on
+   * native the callback lands in a browser that has none. Absolute URLs only, since each
+   * hop is a `Location` off the one before.
+   */
+  signedOut: async ({}, use) => {
+    const api = await request.newContext();
+    await use(api);
     await api.dispose();
   },
 });
@@ -176,17 +196,122 @@ async function inSpotify(spotify: SpotifyFixture, token: string): Promise<Fixtur
   return mine[0];
 }
 
+/**
+ * The consent round trip, hop by hop. The redirects are followed by hand rather than by
+ * the client, because each hop *is* the contract — and because the last one is
+ * `underscore://`, which no HTTP client can fetch.
+ */
+test.describe("connecting Spotify", () => {
+  /** The app's own scheme, one of the two the server will send a reader back to. */
+  const RETURN_URL = "underscore://spotify";
+
+  const param = (url: URL, name: string) => url.searchParams.get(name) ?? "";
+
+  const follow = (signedOut: APIRequestContext, location: string) =>
+    signedOut.get(location, { maxRedirects: 0 });
+
+  /** Where the reader is sent to consent, carrying the state that will bring them back. */
+  async function consentUrl(reader: Reader): Promise<URL> {
+    const response = await reader.api.get("/api/music-connector/authorize", {
+      params: { returnUrl: RETURN_URL },
+    });
+    expect(response.status(), await response.text()).toBe(200);
+
+    return new URL(((await response.json()) as { url: string }).url);
+  }
+
+  test("connects the reader through the consent round trip", async ({ newReader, signedOut }) => {
+    const reader = await newReader();
+
+    const consent = await consentUrl(reader);
+    expect(consent.origin).toBe(new URL(E2E_UPSTREAM_URL).origin);
+    expect(param(consent, "redirect_uri")).toBe(`${E2E_API_URL}/api/music-connector/callback`);
+    // Asked for at consent time, or nothing the reader does later can write a playlist.
+    expect(param(consent, "scope").split(" ")).toEqual(
+      expect.arrayContaining([...SPOTIFY_PLAYLIST_SCOPES]),
+    );
+
+    const granted = await follow(signedOut, consent.toString());
+    expect(granted.status()).toBe(302);
+
+    const callback = await follow(signedOut, granted.headers().location);
+    expect(callback.status()).toBe(302);
+    expect(callback.headers().location).toBe(`${RETURN_URL}?spotify=connected`);
+
+    expect(await status(reader)).toEqual({ linked: true, provider: "spotify" });
+  });
+
+  test("leaves the reader unconnected when consent is refused", async ({
+    newReader,
+    signedOut,
+  }) => {
+    const reader = await newReader();
+    const consent = await consentUrl(reader);
+
+    // What a refused consent screen sends back: the state, an error, and no code.
+    const refused = new URL(param(consent, "redirect_uri"));
+    refused.searchParams.set("state", param(consent, "state"));
+    refused.searchParams.set("error", "access_denied");
+
+    const callback = await follow(signedOut, refused.toString());
+    expect(callback.status()).toBe(302);
+    expect(callback.headers().location).toBe(`${RETURN_URL}?spotify=denied`);
+
+    expect(await status(reader)).toEqual({ linked: false, provider: "spotify" });
+  });
+
+  test("spends the state, so the same callback cannot be replayed", async ({
+    newReader,
+    signedOut,
+  }) => {
+    const reader = await newReader();
+    const granted = await follow(signedOut, (await consentUrl(reader)).toString());
+    const landing = granted.headers().location;
+
+    expect((await follow(signedOut, landing)).status()).toBe(302);
+
+    const replay = await follow(signedOut, landing);
+    expect(replay.status()).toBe(400);
+    expect(ApiErrorSchema.parse(await replay.json())).toMatchObject({
+      code: "INVALID_INPUT",
+      retryable: false,
+    });
+  });
+
+  // Without this the callback is an open redirect: anyone could have Spotify's round
+  // trip deliver a reader to a page of theirs.
+  test("refuses to start a flow that would return anywhere but the app", async ({ newReader }) => {
+    const reader = await newReader();
+
+    const response = await reader.api.get("/api/music-connector/authorize", {
+      params: { returnUrl: "https://not-the-app.example/anywhere" },
+    });
+    expect(response.status()).toBe(400);
+    expect(ApiErrorSchema.parse(await response.json())).toMatchObject({ code: "INVALID_INPUT" });
+  });
+
+  test("forgets the connection when the reader disconnects", async ({ newReader }) => {
+    const reader = await newReader(EXPORT_SCOPES);
+    expect(await status(reader)).toEqual({ linked: true, provider: "spotify" });
+
+    const response = await reader.api.delete("/api/music-connector");
+    expect(response.status()).toBe(204);
+
+    expect(await status(reader)).toEqual({ linked: false, provider: "spotify" });
+  });
+});
+
 test.describe("the music connector status", () => {
-  test("reports a reader who has never linked Spotify as unlinked", async ({ newReader }) => {
+  test("reports a reader who has never connected Spotify as unlinked", async ({ newReader }) => {
     expect(await status(await newReader())).toEqual({ linked: false, provider: "spotify" });
   });
 
   // The regression this spec exists for. A row check rather than a scope check passes
   // every other case here and hands this reader an export that dies at the Spotify call.
-  test("reports a Spotify sign-in carrying only identity scopes as unlinked", async ({
+  test("reports a connection granted without the playlist scope as unlinked", async ({
     newReader,
   }) => {
-    expect(await status(await newReader(SIGN_IN_SCOPES))).toEqual({
+    expect(await status(await newReader(IDENTITY_SCOPES))).toEqual({
       linked: false,
       provider: "spotify",
     });

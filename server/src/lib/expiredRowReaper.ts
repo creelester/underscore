@@ -8,12 +8,16 @@ export function startExpiredRowReaper() {
   const sweep = async () => {
     const now = new Date();
     try {
-      const [sessions, verifications] = await Promise.all([
+      const [sessions, verifications, authStates] = await Promise.all([
         prisma.session.deleteMany({ where: { expiresAt: { lt: now } } }),
         prisma.verification.deleteMany({ where: { expiresAt: { lt: now } } }),
+        // An abandoned consent leaves its row behind; the flow only deletes what it uses.
+        prisma.spotifyAuthState.deleteMany({ where: { expiresAt: { lt: now } } }),
       ]);
-      if (sessions.count || verifications.count) {
-        console.log(`[reaper] deleted ${sessions.count} sessions, ${verifications.count} verifications`);
+      if (sessions.count || verifications.count || authStates.count) {
+        console.log(
+          `[reaper] deleted ${sessions.count} sessions, ${verifications.count} verifications, ${authStates.count} auth states`,
+        );
       }
     } catch (err) {
       // Nothing awaits this, so an escaping rejection would be fatal. The next sweep retries.

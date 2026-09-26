@@ -1,17 +1,16 @@
 import { z } from "zod";
-import { isAPIError } from "better-auth/api";
 import type { AxiosResponse } from "axios";
 import { spotifyPlaylistWebUrl } from "@underscore/shared";
 import { env } from "../config/env";
 import { ApiError } from "../lib/apiError";
-import { auth } from "../lib/auth";
 import { createHttpClient } from "../lib/http";
 
 /**
- * User-level Spotify — the reader's own OAuth token, used to put a playlist in their
- * account. Separate from `spotify.ts`, which holds the app credentials that catalogue
- * search runs on: the two never share a token, and generation must keep working for a
- * reader who has linked nothing.
+ * The playlist calls made on the reader's own token. Separate from `spotify.ts`, which
+ * holds the app credentials that catalogue search runs on: the two never share a token,
+ * and generation must keep working for a reader who has connected nothing.
+ *
+ * The token itself comes from `services/spotifyConnection.ts`, which owns the grant.
  */
 
 const api = createHttpClient({
@@ -28,29 +27,6 @@ const CreatedPlaylistSchema = z.object({
 });
 
 export type CreatedPlaylist = { spotifyPlaylistId: string; webUrl: string };
-
-/**
- * The reader's token, refreshed when stale. Better Auth answers a missing account and a
- * failed refresh with the same status, so the code on its body is what tells them apart.
- * Anything else is rethrown rather than read as a lapsed link: selecting the account by
- * `providerId` is not a contract Better Auth promises to keep, and a version bump that
- * broke it would otherwise show up to readers as a Spotify problem they cannot fix.
- */
-export async function spotifyAccessToken(userId: string): Promise<string> {
-  try {
-    const { accessToken } = await auth.api.getAccessToken({
-      body: { providerId: "spotify", userId },
-    });
-    if (!accessToken) throw ApiError.spotifyNotLinked();
-    return accessToken;
-  } catch (err) {
-    if (err instanceof ApiError) throw err;
-    if (!isAPIError(err)) throw err;
-    if (err.body?.code === "ACCOUNT_NOT_FOUND") throw ApiError.spotifyNotLinked();
-    if (err.body?.code === "FAILED_TO_GET_ACCESS_TOKEN") throw ApiError.spotifyTokenExpired();
-    throw err;
-  }
-}
 
 /** 401 is a lapsed token; 403 is a token granted before we asked for the playlist scope. */
 function assertAuthorized(response: AxiosResponse) {

@@ -10,11 +10,11 @@ import {
   addSpotifyItems,
   createSpotifyPlaylist,
   replaceSpotifyItems,
-  spotifyAccessToken,
   updateSpotifyPlaylistDetails,
 } from "../connectors/spotifyUser";
 import { prisma } from "../lib/prisma";
 import { getPlaylist } from "./bookshelf";
+import { spotifyAccessToken } from "./spotifyConnection";
 
 /**
  * Putting a playlist in the reader's own Spotify. `POST` creates and `PUT` syncs, but

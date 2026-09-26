@@ -19,6 +19,9 @@ model User {
   accounts      Account[]
   playlists     Playlist[]
 
+  spotifyConnection SpotifyConnection?
+  spotifyAuthStates SpotifyAuthState[]
+
   @@unique([email])
   @@map("user")
 }
@@ -86,6 +89,43 @@ model Verification {
 // ---------------------------------------------------------------------------
 // Domain models. Everything above this line is Better Auth's.
 // ---------------------------------------------------------------------------
+
+// The music connector, deliberately not Better Auth's `account`. Linking a provider there
+// requires trusting it for sign-in too, which would let an unverified Spotify address be
+// linked into an existing user — and what someone streams with is not what they log in with.
+//
+// Tokens are plaintext, as Better Auth's `account` already stores them. Worth revisiting,
+// but for both tables at once rather than encrypting one and leaving the other.
+model SpotifyConnection {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  spotifyUserId        String
+  accessToken          String
+  refreshToken         String
+  accessTokenExpiresAt DateTime
+  scope                String
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@map("spotifyConnection")
+}
+
+// Carries the user across the OAuth redirect. It has to exist because on native the
+// callback lands in a browser with no session — the session lives in SecureStore, not a
+// cookie — so the callback cannot ask who is calling and trades this row for it instead.
+model SpotifyAuthState {
+  id        String   @id @default(cuid())
+  state     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  returnUrl String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("spotifyAuthState")
+}
 
 enum BookSource {
   GOOGLE_BOOKS
