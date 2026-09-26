@@ -107,3 +107,15 @@ export const ExportPlaylistResponseSchema = z.object({
   deepLinkUri: z.string(),
 });
 export type ExportPlaylistResponse = z.infer<typeof ExportPlaylistResponseSchema>;
+
+/**
+ * What a sync should change. Every field is optional: a caller passes what moved and
+ * nothing else, so a rename leaves the tracks where the reader dragged them. An empty
+ * body means the tracks, which is what a sync meant before there was a body at all.
+ */
+export const UpdateExportRequestSchema = z.object({
+  name: z.string().trim().min(1).max(100).optional(),
+  description: z.string().trim().max(300).optional(),
+  tracks: z.boolean().optional(),
+});
+export type UpdateExportRequest = z.infer<typeof UpdateExportRequestSchema>;

@@ -84,6 +84,21 @@ export async function createSpotifyPlaylist(
   };
 }
 
+/**
+ * Name and description, each sent only when given. The playlist path itself was untouched
+ * by the February 2026 rename, so this is `/playlists/{id}` and not `/items`. False when
+ * Spotify has no such playlist any more.
+ */
+export async function updateSpotifyPlaylistDetails(
+  token: string,
+  spotifyPlaylistId: string,
+  details: { name?: string; description?: string },
+): Promise<boolean> {
+  const response = await api.put(`/playlists/${spotifyPlaylistId}`, details, authorized(token));
+  assertAuthorized(response);
+  return response.status !== 404;
+}
+
 /** `/items`, not `/tracks` — the track-shaped paths were deprecated in February 2026. */
 export async function addSpotifyItems(token: string, spotifyPlaylistId: string, uris: string[]) {
   const response = await api.post(
