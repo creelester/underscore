@@ -21,8 +21,8 @@ screen's error path is waiting on it too.
 `POST /api/playlists/generate` accepts `manualGenre: Genre` — one value from the closed
 vocabulary, which becomes the stand-in book's title. That was enough when the fallback was
 "generate me something ambient for sci-fi". The design's by-hand screen asks for more: a
-cover, a title, an author, a year, up to three genres, the mood, the pacing, and the same
-fine-tune answers the mood screen collects. None of that has anywhere to go.
+cover, a title, an author, up to three genres, the mood, the pacing, and the same fine-tune
+answers the mood screen collects. None of that has anywhere to go.
 
 ## Scope
 
@@ -39,6 +39,10 @@ Out:
   upload endpoint and somewhere to keep the bytes — infra the MVP has never had. Deferred to
   v2. Not to be confused with the OCR cover-scan lookup the PRD rules out; this was only ever
   artwork.
+- **The `YEAR` field.** The design draws one, and nothing would read it: it is not a catalogue
+  fact on this path, no screen renders it, and what it would tell Claude about the sound of a
+  book is already covered better by `ReadingContext.era`, which asks where the book is *set*
+  rather than when it was printed. Dropping it also spares `Book` a column.
 - Playlist rename, delete and regenerate. Still absent from the actions sheet, still not MVP.
 
 ## The cover, without a photo
@@ -82,7 +86,6 @@ every screen that reads `genre[0]` still resolves.
 ManualBookSchema = {
   title?:      string   // trimmed, ≤120 — the book row falls back to "Untitled book"
   author?:     string   // trimmed, ≤120
-  year?:       number   // int, 1000 … current year + 1
   genre:       Genre[]  // 1–3, from GENRES
   coverEmoji?: string   // ≤16 chars, must contain \p{Extended_Pictographic}
 }
@@ -98,22 +101,18 @@ Changes elsewhere:
 - `GeneratePlaylistRequestSchema`: `manualGenre` → `manualBook`, and `bookOrGenreRefinement`
   becomes exactly-one-of `googleBooksId | manualBook`.
 - `ReadingContextSchema` gains `genreOther?: string`, ≤60, beside `moodOther`.
-- `BookSchema` gains `publishedYear: number | null` and `coverEmoji: string | null` — nullable,
-  because Prisma reads them back as `null` and making them optional would drop the keys out of
-  responses the app already parses. `BookCandidateSchema` stops *adding* `publishedYear` and
-  inherits it.
+- `BookSchema` gains `coverEmoji: string | null` — nullable, not optional, because Prisma reads
+  it back as `null` and making it optional would drop the key out of responses the app already
+  parses. `BookCandidateSchema` is untouched, and keeps adding its own `publishedYear`: that one
+  is Google's, on the search path, and has nothing to do with this screen.
 - `MoodProfileRequestSchema` narrows to `{ googleBooksId }`. The by-hand path never runs the
   Mood Engine — the reader states the mood themselves — so nothing calls it with a genre, and
   the app never did.
 
 ## Data
 
-Two nullable columns on `Book`: `publishedYear`, `coverEmoji`.
-
-`publishedYear` is populated on the Google path as well, in the same `upsertBook` line. No
-screen changes as a result: saved-playlist rows read `Book · Author` via `playlistMetaLine`,
-and `bookMetaLine`'s `Author · Year · Genre` runs off the unpersisted search candidate. It is
-one line in the same migration and it stops the column meaning two different things.
+One nullable column on `Book`: `coverEmoji`. Manual-only in practice — a Google book has real
+artwork — which is why it is nullable rather than defaulted.
 
 **Manual books stop being shared.** Today the manual branch is
 `findFirst({ source: MANUAL_GENRE, title })`, which was harmless when the title was a genre
@@ -127,28 +126,23 @@ value costs a migration for no behavioural gain.
 ## Server
 
 `upsertBook`'s manual branch takes the whole `manualBook`: title (or `"Untitled book"`),
-`authors: author ? [author] : []`, `publishedYear`, `coverEmoji`, always `create`.
+`authors: author ? [author] : []`, `coverEmoji`, always `create`.
 
 `resolveProfile` keeps its fallback for a request arriving with no `moodProfile` — a deep link,
 or a reload — building one from `manualBook.genre` with `mood: []` and `pacing: "steady"`. The
 screen itself always sends a profile, because the reader picked it.
 
 `anchorPrompt(profile, book?, context?)` currently gets **no** `book` on the manual path: there
-was nothing but a genre word to give it. It now gets `{ title, authors, publishedYear }`, so Claude sees
-the actual book — which it may well know even when Google Books came back empty. That is the
-quality win hiding in this change.
-
-The year is the reason it is in the prompt at all: persisted and never rendered, it would be a
-field the design collects for nothing. It reads as `Book: <title> by <author> (<year>)`, and it
-is not the same as `ReadingContext.era` — one is when the book was written, the other where the
-reader says it is set. `genreOther` joins `moodOther` in `readingContextLines`.
+was nothing but a genre word to give it. It now gets `{ title, authors }`, so Claude sees the
+actual book — which it may well know even when Google Books came back empty. That is the
+quality win hiding in this change. `genreOther` joins `moodOther` in `readingContextLines`.
 
 Generation stays one call and keeps its 10/hour limit.
 
 ## App
 
-`score-by-hand.tsx` becomes the real screen, in the design's order: cover, TITLE / AUTHOR /
-YEAR, `GENRE · PICK UP TO THREE`, `MOOD · PICK UP TO TWO`, `PACING`, divider, the lyrics switch
+`score-by-hand.tsx` becomes the real screen, in the design's order: cover, TITLE / AUTHOR,
+`GENRE · PICK UP TO THREE`, `MOOD · PICK UP TO TWO`, `PACING`, divider, the lyrics switch
 and the format/setting/era groups, `Generate playlist →`. It reuses `ScoringScreen`, `MoodWash`,
 `Chip`, `OptionGroup`, `OtherInput`, `Switch` and `ControlledInput`. New: the cover frame and
 the genre picker.
@@ -183,7 +177,7 @@ lands.
 
 | # | PR | Files | Ships |
 | - | -- | ----- | ----- |
-| 1 | `Book.publishedYear` + `Book.coverEmoji`: migration, `BookSchema`, mapper, populated on the Google path | 7 | Nothing on screen; columns exist and are read back |
+| 1 | `Book.coverEmoji`: migration, `BookSchema`, mapper | 5 | Nothing on screen; the column exists and is read back |
 | 2 | `manualBook` replaces `manualGenre`: `ManualBookSchema`, `BY_HAND_GENRES`, `genreOther`, the generator's manual branch, the prompt, `MoodProfileRequest` narrowed | 9 | The endpoint accepts the new shape, verifiable by hand |
 | 3 | Extract the mood picker and fine-tune fields out of `mood.tsx` | 3 | Pure refactor; the mood screen behaves identically |
 | 4 | The by-hand screen, wired end to end and reachable from `+ Add manually` | 6 | Where it lights up |
@@ -207,3 +201,4 @@ a later PR. PR 3 is independent of 1 and 2 and can go in parallel.
   call, 2026-09-26.
 - The genre picker is `BY_HAND_GENRES`, ten of the vocabulary's 39, because that is what the
   prototype draws.
+- No `YEAR` field, though the prototype draws one. Cristina's call, 2026-09-26.
