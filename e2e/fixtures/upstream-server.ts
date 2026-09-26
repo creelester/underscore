@@ -23,12 +23,12 @@ import { FIXTURE_ANCHORS, parseSearchQuery, toSpotifyTrack } from "./tracks";
  * Spotify's client-credentials token and catalogue search are here too, which is what
  * lets generation run to completion: the bookshelf specs need saved playlists, and a
  * playlist only exists once its anchors resolve. The user-level side — creating a
- * playlist in the reader's account, filling it and renaming it — is fixtured below on the
- * state in `spotify-user.ts`, which holds enough to tell a created playlist from a filled
- * one from a renamed one, plus a control surface under `/e2e/` for the specs to read it back. Only Better Auth's
- * own Spotify OAuth handshake is still unfixtured, and cannot be: the provider's
- * authorize and token URLs are hardcoded there, so e2e/db.ts writes the linked
- * `account` row directly instead.
+ * playlist in the reader's account, filling it and renaming it — is fixtured below on
+ * the state in `spotify-user.ts`, which holds enough to tell a created playlist from a
+ * filled one from a renamed one, plus a control surface under `/e2e/` for the specs to
+ * read it back. Only Better Auth's own Spotify OAuth handshake is still unfixtured, and
+ * cannot be: the provider's authorize and token URLs are hardcoded there, so e2e/db.ts
+ * writes the linked `account` row directly instead.
  */
 
 const PORT = Number(process.env.E2E_UPSTREAM_PORT ?? 3101);

@@ -24,7 +24,7 @@ export type FixtureSpotifyPlaylist = {
   appends: number;
   /** `PUT /items` calls. */
   replaces: number;
-  /** `PUT /playlists/{id}` calls — name and description. Zero alongside a changed name means nothing renamed it. */
+  /** `PUT /playlists/{id}` calls. Zero beside a changed name means nothing renamed it. */
   details: number;
 };
 
