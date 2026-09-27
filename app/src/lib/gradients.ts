@@ -45,7 +45,7 @@ export const GRAD_HERO: GradientSpec = {
 
 /**
  * Two stops per mood, standing in for artwork. `Record<Mood, …>` makes a mood without
- * a pair a type error. The first six are the design's; the last four extend the
+ * a pair a type error. The first six are the design's; the rest extend the
  * vocabulary from existing PALETTE colours rather than new tokens.
  */
 export const MOOD_STOPS: Record<Mood, readonly [string, string]> = {
@@ -59,12 +59,13 @@ export const MOOD_STOPS: Record<Mood, readonly [string, string]> = {
   playful: [PALETTE.amber400, PALETTE.seafoam300],
   epic: [PALETTE.indigo700, PALETTE.orange500],
   haunting: [PALETTE.plum700, PALETTE.seafoam300],
+  scary: [PALETTE.plum950, PALETTE.rose500],
 };
 
 /**
  * Ink for a chip filled with a mood's gradient. The first six are the design's own
- * `MoodChip` values, picked for contrast against the gradient's darkest stop; the last
- * four follow the same reading of the extended moods' first stops.
+ * `MoodChip` values, picked for contrast against the gradient's darkest stop; the rest
+ * follow the same reading of the extended moods' first stops.
  */
 export const MOOD_INK: Record<Mood, string> = {
   cozy: PALETTE.plum950,
@@ -77,6 +78,7 @@ export const MOOD_INK: Record<Mood, string> = {
   playful: PALETTE.plum950,
   epic: '#FFFFFF',
   haunting: '#FFFFFF',
+  scary: '#FFFFFF',
 };
 
 const MOOD_ANGLE = 160;
