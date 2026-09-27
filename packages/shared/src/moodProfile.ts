@@ -70,6 +70,24 @@ export const GENRES = [
 ] as const;
 export type Genre = (typeof GENRES)[number];
 
+/**
+ * The ten the by-hand picker draws, out of the vocabulary's 38. Typed `readonly Genre[]`
+ * rather than its own `as const`, so renaming one in `GENRES` breaks the build instead of
+ * the screen.
+ */
+export const BY_HAND_GENRES: readonly Genre[] = [
+  'Literary fiction',
+  'Fantasy',
+  'Science fiction',
+  'Mystery',
+  'Thriller',
+  'Romance',
+  'Horror',
+  'Memoir',
+  'History',
+  'Poetry',
+];
+
 /** What the correction UI lets the user pick, and so what Claude is held to. */
 export const MAX_MOODS = 2;
 
@@ -87,6 +105,8 @@ export const MoodProfileSchema = z.object({
    * persists and what both screens say back. It costs neither of the `MAX_MOODS` slots.
    */
   moodOther: z.string().trim().max(MAX_READING_DETAIL_LENGTH).optional(),
+  /** A genre in the reader's own words, from the by-hand picker's `Something else`. */
+  genreOther: z.string().trim().max(MAX_READING_DETAIL_LENGTH).optional(),
   pacing: z.enum(['slow', 'steady', 'fast']),
   summary: z.string(),
 });

@@ -4,6 +4,7 @@ import {
   defaultPlaylistName,
   type BookDetail,
   type GeneratePlaylistRequest,
+  type ManualBook,
   type Playlist,
   type Track,
 } from "@underscore/shared";
@@ -12,7 +13,7 @@ import { fetchVolume } from "../connectors/googleBooks";
 import { resolveAnchors } from "../connectors/spotify";
 import { ApiError } from "../lib/apiError";
 import { prisma } from "../lib/prisma";
-import { buildMoodProfile } from "./moodEngine";
+import { buildMoodProfile, manualProfile } from "./moodEngine";
 import { toApiBook } from "./playlistMapper";
 
 /** Below this, the suggestion step is worth re-running before shipping what resolved. */
@@ -37,10 +38,12 @@ type Transaction = Parameters<Parameters<PrismaClient["$transaction"]>[0]>[0];
  * volume is still fetched: the `Book` row is minted from the catalogue, never the request.
  */
 async function resolveProfile(request: GeneratePlaylistRequest) {
-  if (!request.moodProfile) return buildMoodProfile(request);
-  if (!request.googleBooksId) return { profile: request.moodProfile, book: null };
+  if (request.manualBook) {
+    return { profile: request.moodProfile ?? manualProfile(request.manualBook), book: null };
+  }
+  if (!request.moodProfile) return buildMoodProfile({ googleBooksId: request.googleBooksId! });
 
-  const book = await fetchVolume(request.googleBooksId);
+  const book = await fetchVolume(request.googleBooksId!);
   if (!book) throw ApiError.bookNotFound();
   return { profile: request.moodProfile, book };
 }
@@ -49,10 +52,19 @@ async function resolveProfile(request: GeneratePlaylistRequest) {
  * The only place a `GOOGLE_BOOKS` book is created — search is read-only, so a row here
  * means somebody actually scored this book.
  */
+/** What the by-hand path can tell Claude about the book. Nothing, if no title was given. */
+function manualBookRef(
+  manualBook: ManualBook | undefined,
+): Pick<BookDetail, "title" | "authors"> | undefined {
+  if (!manualBook?.title) return undefined;
+
+  return { title: manualBook.title, authors: manualBook.author ? [manualBook.author] : [] };
+}
+
 async function upsertBook(
   tx: Transaction,
   book: BookDetail | null,
-  manualGenre: string | undefined,
+  manualBook: ManualBook | undefined,
 ): Promise<BookRow> {
   if (book) {
     const fields = {
@@ -70,25 +82,23 @@ async function upsertBook(
     });
   }
 
-  // The stand-in book for the by-hand path: its title is the genre the user typed. No
-  // upsert, because `googleBooksId` is the only unique key and this row has none.
-  const title = manualGenre!;
-  const existing = await tx.book.findFirst({ where: { source: "MANUAL_GENRE", title } });
-  return (
-    existing ??
-    tx.book.create({
-      data: {
-        title,
-        source: "MANUAL_GENRE",
-        googleBooksId: null,
-        authors: [],
-        description: null,
-        categories: [],
-        pageCount: null,
-        thumbnailUrl: null,
-      },
-    })
-  );
+  // Always its own row, never shared. Matching on `(source, title)` was harmless while the
+  // title was one of 38 genre words, but a reader-typed title, author and emoji would hand
+  // one reader's book to another's. Two by-hand scores of the same book make two rows.
+  const { title, author, coverEmoji } = manualBook!;
+  return tx.book.create({
+    data: {
+      title: title || "Untitled book",
+      source: "MANUAL_GENRE",
+      googleBooksId: null,
+      authors: author ? [author] : [],
+      description: null,
+      categories: [],
+      pageCount: null,
+      thumbnailUrl: null,
+      coverEmoji: coverEmoji ?? null,
+    },
+  });
 }
 
 /** `artist — title` of what this reader already has, newest playlists first. */
@@ -132,7 +142,9 @@ export async function generatePlaylist(
   request: GeneratePlaylistRequest,
 ): Promise<Playlist> {
   const { profile, book } = await resolveProfile(request);
-  const bookRef = book ?? undefined;
+  // The by-hand path used to send Claude no book at all — only a genre word. It gets what
+  // the reader typed instead, which Claude may recognise even where the catalogue did not.
+  const bookRef = book ?? manualBookRef(request.manualBook);
 
   const context = request.readingContext;
   const exclude = await recentTracks(userId);
@@ -164,7 +176,7 @@ export async function generatePlaylist(
   // The transaction opens only once the network work is done, so no connection is held
   // across a Claude round-trip.
   return prisma.$transaction(async (tx) => {
-    const bookRow = await upsertBook(tx, book, request.manualGenre);
+    const bookRow = await upsertBook(tx, book, request.manualBook);
     const trackIds = await upsertTracks(tx, tracks);
 
     const playlist = await tx.playlist.create({

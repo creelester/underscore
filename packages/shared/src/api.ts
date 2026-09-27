@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { BookCandidateSchema, BookDetailSchema } from "./book";
 import { PlaylistSchema } from "./playlist";
+import { MAX_GENRES } from "./book";
 import { GENRES, MoodProfileSchema } from "./moodProfile";
 import { ReadingContextSchema } from "./readingContext";
 
@@ -27,26 +28,56 @@ export const BookDetailResponseSchema = z.object({
 });
 export type BookDetailResponse = z.infer<typeof BookDetailResponseSchema>;
 
+/** A phrase, not a paragraph: it becomes a book row's title or its author line. */
+export const MAX_MANUAL_BOOK_FIELD_LENGTH = 120;
+
+/**
+ * Everything one emoji can take once ZWJ sequences and skin-tone modifiers are counted —
+ * which is why this is not 1. `Extended_Pictographic` is what keeps the field from
+ * becoming a second title.
+ */
+export const MAX_COVER_EMOJI_LENGTH = 16;
+
+const manualBookFieldSchema = z
+  .string()
+  .trim()
+  .max(MAX_MANUAL_BOOK_FIELD_LENGTH)
+  .optional();
+
+/**
+ * The book the reader described themselves, when the catalogue has nothing. Everything but
+ * the genre is optional — the title falls back to `Untitled book`, and the genre is what
+ * keeps `MoodProfile.genre` non-empty so every screen reading `genre[0]` still resolves.
+ */
+export const ManualBookSchema = z.object({
+  title: manualBookFieldSchema,
+  author: manualBookFieldSchema,
+  genre: z.array(z.enum(GENRES)).min(1).max(MAX_GENRES),
+  coverEmoji: z
+    .string()
+    .trim()
+    .max(MAX_COVER_EMOJI_LENGTH)
+    .regex(/\p{Extended_Pictographic}/u, "Cover must be an emoji")
+    .optional(),
+});
+export type ManualBook = z.infer<typeof ManualBookSchema>;
+
 /**
  * A Google volume id, not an internal book id: search persists nothing, so that is the
  * only handle the client holds. The server re-fetches the volume and mints the `Book`
- * row itself, so book metadata is never client-supplied.
+ * row itself, so book metadata is never client-supplied on that path.
  */
-const bookOrGenreRefinement = <T extends { googleBooksId?: string; manualGenre?: string }>(
+const bookOrManualRefinement = <T extends { googleBooksId?: string; manualBook?: unknown }>(
   data: T,
-) => (data.googleBooksId ? !data.manualGenre : !!data.manualGenre);
+) => (data.googleBooksId ? !data.manualBook : !!data.manualBook);
 
-/** The same closed vocabulary Claude answers in; it becomes the `MANUAL_GENRE` book's title. */
-const manualGenreSchema = z.enum(GENRES);
-
-export const MoodProfileRequestSchema = z
-  .object({
-    googleBooksId: z.string().optional(),
-    manualGenre: manualGenreSchema.optional(),
-  })
-  .refine(bookOrGenreRefinement, {
-    message: "Exactly one of googleBooksId or manualGenre must be set",
-  });
+/**
+ * Only a Google volume reaches the Mood Engine. The by-hand path states its own mood, so
+ * there is nothing here to analyse and nothing ever called this with a genre.
+ */
+export const MoodProfileRequestSchema = z.object({
+  googleBooksId: z.string(),
+});
 export type MoodProfileRequest = z.infer<typeof MoodProfileRequestSchema>;
 
 export const MoodProfileResponseSchema = z.object({
@@ -57,7 +88,8 @@ export type MoodProfileResponse = z.infer<typeof MoodProfileResponseSchema>;
 export const GeneratePlaylistRequestSchema = z
   .object({
     googleBooksId: z.string().optional(),
-    manualGenre: manualGenreSchema.optional(),
+    /** The reader's own description of a book the catalogue could not find. */
+    manualBook: ManualBookSchema.optional(),
     /**
      * The profile the user was shown, corrections included. Omitted, the server runs
      * the Mood Engine itself — sent, it is used verbatim, so a corrected mood reaches
@@ -70,8 +102,8 @@ export const GeneratePlaylistRequestSchema = z
      */
     readingContext: ReadingContextSchema.optional(),
   })
-  .refine(bookOrGenreRefinement, {
-    message: "Exactly one of googleBooksId or manualGenre must be set",
+  .refine(bookOrManualRefinement, {
+    message: "Exactly one of googleBooksId or manualBook must be set",
   });
 export type GeneratePlaylistRequest = z.infer<typeof GeneratePlaylistRequestSchema>;
 
