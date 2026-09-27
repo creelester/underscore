@@ -13,6 +13,8 @@ export const BookSchema = z.object({
   categories: z.array(z.string()),
   pageCount: z.number().int().positive().nullable(),
   thumbnailUrl: z.string().nullable(),
+  /** The by-hand path's stand-in for artwork; `null` on every Google book. */
+  coverEmoji: z.string().nullable(),
   source: BookSourceSchema,
 });
 export type Book = z.infer<typeof BookSchema>;
@@ -20,11 +22,12 @@ export type Book = z.infer<typeof BookSchema>;
 /**
  * A search hit, not persisted — a `Book` row is minted only when a playlist is
  * generated, so this is identified by its Google volume id. No `source`: search
- * only ever returns Google results.
+ * only ever returns Google results, and no `coverEmoji`: only a reader sets one.
  */
 export const BookCandidateSchema = BookSchema.omit({
   id: true,
   source: true,
+  coverEmoji: true,
 }).extend({
   googleBooksId: z.string(),
   // Display metadata for a search row, never persisted — hence here and not on
