@@ -1,12 +1,16 @@
 import type { Page } from "@playwright/test";
+import { PACING_LABELS, PlaylistSchema } from "@underscore/shared";
 
-import { fixtureBook } from "./fixtures/catalog";
+import { fixtureBook, type FixtureBook } from "./fixtures/catalog";
 import { FIXTURE_ANCHORS } from "./fixtures/tracks";
 import {
+  GENERATE_TIMEOUT_MS,
   expectTrackRow,
   expectedPlaylistName,
   logIn,
   playlistHeader,
+  signUpOverApi,
+  type Account,
   type SavedPlaylist,
 } from "./helpers";
 import { expect, savedPlaylistFor, test } from "./shelf";
@@ -29,9 +33,56 @@ const TESSELLATE = fixtureBook("e2e-tessellate");
 /** The one shelf book whose anchors come back unnamed, so its playlist falls back. */
 const LANTERN = fixtureBook("e2e-lantern");
 
+/** A mood in the reader's own words, as the mood screen's `Something else` would send it. */
+const TYPED_MOOD = "like rain on a tin roof";
+
+const capitalize = (word: string) => word[0].toUpperCase() + word.slice(1);
+
+/**
+ * The mood line under the hero, derived from the fixture's read rather than written down:
+ * the profile's moods, a typed one among them, then the pacing.
+ */
+const moodLine = (book: FixtureBook, typed?: string) => {
+  const moods = [...book.analysis.mood, ...(typed ? [typed] : [])].map(capitalize);
+
+  return `${moods.join(", ")} · ${PACING_LABELS[book.analysis.pacing]}`;
+};
+
 async function openFromLibrary(page: Page, saved: SavedPlaylist) {
   await page.getByRole("button", { name: expectedPlaylistName(saved.book) }).click();
   await expect(page).toHaveURL(new RegExp(`/playlist/${saved.id}$`));
+}
+
+/**
+ * An account with one playlist scored from a profile carrying a typed mood — the profile
+ * the mood screen hands over when `Something else` was filled in.
+ *
+ * Over HTTP rather than through the mood screen, which is that screen's spec's job
+ * (e2e/mood.spec.ts): scored this way, nothing of the generation is still on screen, so
+ * the phrase the playlist renders can only have come back out of `Playlist.moodProfile`.
+ */
+async function scoreWithTypedMood(
+  book: FixtureBook,
+): Promise<{ account: Account; saved: SavedPlaylist }> {
+  const { account, api } = await signUpOverApi("playlist-typed-mood");
+
+  try {
+    const response = await api.post("/api/playlists/generate", {
+      data: {
+        googleBooksId: book.googleBooksId,
+        moodProfile: { ...book.analysis, moodOther: TYPED_MOOD },
+      },
+      timeout: GENERATE_TIMEOUT_MS,
+    });
+    if (!response.ok()) {
+      throw new Error(`Scoring "${book.title}" failed: ${await response.text()}`);
+    }
+
+    const playlist = PlaylistSchema.parse(await response.json());
+    return { account, saved: { id: playlist.id, book } };
+  } finally {
+    await api.dispose();
+  }
 }
 
 test.describe("a saved playlist", () => {
@@ -70,5 +121,27 @@ test.describe("a saved playlist", () => {
       playlistHeader(page).getByText(expectedPlaylistName(LANTERN), { exact: true }),
     ).toBeVisible();
     await expectTrackRow(page, FIXTURE_ANCHORS[0]);
+  });
+
+  test("says the read it was built from under the name", async ({ shelf, page }) => {
+    const saved = savedPlaylistFor(shelf, TESSELLATE.googleBooksId);
+    await logIn(page, shelf);
+
+    await openFromLibrary(page, saved);
+
+    await expect(page.getByText(moodLine(TESSELLATE), { exact: true })).toBeVisible();
+  });
+
+  test("says a mood typed in the reader's own words back among the read's own", async ({
+    page,
+  }) => {
+    const { account, saved } = await scoreWithTypedMood(LANTERN);
+    await logIn(page, account);
+
+    await openFromLibrary(page, saved);
+
+    // Read back off the stored profile, so the phrase survived generation rather than
+    // only reaching Claude. It sits among the moods, not in a line of its own.
+    await expect(page.getByText(moodLine(LANTERN, TYPED_MOOD), { exact: true })).toBeVisible();
   });
 });
