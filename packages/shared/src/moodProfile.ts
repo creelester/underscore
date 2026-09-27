@@ -17,6 +17,7 @@ export const MOODS = [
   'playful',
   'epic',
   'haunting',
+  'scary',
 ] as const;
 export type Mood = (typeof MOODS)[number];
 
