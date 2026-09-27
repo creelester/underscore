@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { MAX_GENRES } from './book';
+import { MAX_READING_DETAIL_LENGTH } from './readingContext';
 
 /**
  * The closed mood vocabulary. Each mood needs a gradient standing in for artwork
@@ -79,6 +80,13 @@ export const MoodProfileSchema = z.object({
   genre: z.array(z.enum(GENRES)).max(MAX_GENRES),
   /** Empty on the manual-genre path. */
   mood: z.array(z.enum(MOODS)).max(MAX_MOODS),
+  /**
+   * A mood in the reader's own words, from `Something else`. Beside `mood` rather than in
+   * it because that enum stays closed — every value there needs a gradient and a chip —
+   * but in the profile rather than in `ReadingContext`, because the profile is what
+   * persists and what both screens say back. It costs neither of the `MAX_MOODS` slots.
+   */
+  moodOther: z.string().trim().max(MAX_READING_DETAIL_LENGTH).optional(),
   pacing: z.enum(['slow', 'steady', 'fast']),
   summary: z.string(),
 });

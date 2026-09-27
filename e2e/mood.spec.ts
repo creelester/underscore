@@ -85,6 +85,9 @@ const COPY = {
   settingOther: "Where is it set?",
 } as const;
 
+/** A mood in the reader's own words, from the mood group's `Something else`. */
+const TYPED_MOOD = "like rain on a tin roof";
+
 /**
  * A chip's accessible name is its bare label whichever state it is in, which is what
  * makes this locator survive a toggle. Its *selected* state, though, reaches the web
@@ -286,19 +289,18 @@ test.describe("the read Claude sent back", () => {
     const moodOther = page.getByPlaceholder(COPY.moodOther);
     await expect(moodOther).toBeVisible();
 
-    await moodOther.fill("like rain on a tin roof");
-    await expect(moodOther).toHaveValue("like rain on a tin roof");
+    await moodOther.fill(TYPED_MOOD);
+    await expect(moodOther).toHaveValue(TYPED_MOOD);
 
     await somethingElse.nth(1).click();
     await expect(page.getByPlaceholder(COPY.settingOther)).toBeVisible();
     // The mood field is unaffected by another group's escape hatch.
-    await expect(moodOther).toHaveValue("like rain on a tin roof");
+    await expect(moodOther).toHaveValue(TYPED_MOOD);
 
     // Pressing it again closes the field it opened.
     await somethingElse.first().click();
     await expect(moodOther).toBeHidden();
   });
-
 });
 
 /**
@@ -316,7 +318,7 @@ test.describe("handing over to generation", () => {
     await chip(page, MOOD_CHIP.tense).click();
     await chip(page, PACING_CHIP.fast).click();
     await page.getByRole("button", { name: OTHER }).first().click();
-    await page.getByPlaceholder(COPY.moodOther).fill("like rain on a tin roof");
+    await page.getByPlaceholder(COPY.moodOther).fill(TYPED_MOOD);
     await page.getByRole("switch", { name: "Include music with lyrics" }).click();
     await chip(page, AUDIOBOOK).click();
 
@@ -333,14 +335,28 @@ test.describe("handing over to generation", () => {
     expect(body.moodProfile).toMatchObject({
       // The corrections, not the read: the newer read mood survived the third pick.
       mood: [BOOK.analysis.mood[1], "tense"],
+      // The typed mood travels with the profile rather than the reading context, which is
+      // request-only: the profile is persisted whole, so the phrase outlives generation.
+      moodOther: TYPED_MOOD,
       pacing: "fast",
       genre: BOOK.analysis.genre,
       summary: BOOK.analysis.summary,
     });
-    expect(body.readingContext).toMatchObject({
-      lyrics: true,
-      moodOther: "like rain on a tin roof",
-      format: AUDIOBOOK,
-    });
+    expect(body.readingContext).toMatchObject({ lyrics: true, format: AUDIOBOOK });
+    expect(body.readingContext).not.toHaveProperty("moodOther");
+  });
+
+  test("sends no typed mood at all when its field was opened and left empty", async ({ page }) => {
+    await page.getByRole("button", { name: OTHER }).first().click();
+    await expect(page.getByPlaceholder(COPY.moodOther)).toBeVisible();
+
+    const generation = page.waitForRequest("**/api/playlists/generate");
+    await page.getByRole("button", { name: /^Generate playlist/ }).click();
+
+    // An answer nobody gave is absent, not an empty string: `""` would reach Claude as a
+    // mood with no word in it, and read back on the playlist as a stray separator.
+    const body = (await generation).postDataJSON();
+    expect(body.moodProfile).not.toHaveProperty("moodOther");
+    expect(body.moodProfile).toMatchObject({ mood: BOOK.analysis.mood });
   });
 });
