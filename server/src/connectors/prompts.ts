@@ -48,12 +48,8 @@ function resolveDetail(choice?: string, other?: string): string | undefined {
 function readingContextLines(context: ReadingContext): (string | undefined)[] {
   const setting = resolveDetail(context.setting, context.settingOther);
   const era = resolveDetail(context.era, context.eraOther);
-  const moodOther = context.moodOther?.trim();
 
   return [
-    // Beside the profile's own moods, not instead of them — the reader reaching for a
-    // word the vocabulary lacks is exactly the nuance the enum cannot hold.
-    moodOther ? `The reader also calls it: ${moodOther}` : undefined,
     context.lyrics
       ? "Lyrics: tracks with vocals are welcome alongside instrumentals."
       : "Lyrics: instrumental only — no vocals.",
@@ -65,6 +61,17 @@ function readingContextLines(context: ReadingContext): (string | undefined)[] {
   ];
 }
 
+/**
+ * The moods, with a typed `Something else` among them rather than as a footnote — the
+ * reader reaching for a word the vocabulary lacks is the nuance the enum cannot hold, and
+ * it should weigh as much as the two it sits beside.
+ */
+function moodLine(profile: MoodProfile): string {
+  const moods = [...profile.mood, ...(profile.moodOther?.trim() ? [profile.moodOther.trim()] : [])];
+
+  return `Mood: ${moods.join(", ") || "unspecified"}`;
+}
+
 /** `book` is absent on the manual-genre path, which has no book behind it. */
 export function anchorPrompt(
   profile: MoodProfile,
@@ -74,7 +81,7 @@ export function anchorPrompt(
   return [
     book ? `Book: ${book.title} by ${book.authors.join(", ") || "unknown"}` : undefined,
     `Genre: ${profile.genre.join(", ") || "unspecified"}`,
-    `Mood: ${profile.mood.join(", ") || "unspecified"}`,
+    moodLine(profile),
     `Pacing: ${profile.pacing}`,
     profile.summary ? `Reader's experience: ${profile.summary}` : undefined,
     ...(context ? readingContextLines(context) : []),

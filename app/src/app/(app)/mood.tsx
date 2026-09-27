@@ -32,6 +32,7 @@ import { useBook } from '@/features/books/use-book';
 import { useMoodProfile } from '@/features/mood/use-mood-profile';
 import { isApiError } from '@/lib/api-client';
 import { MOOD_INK, moodGradient } from '@/lib/gradients';
+import { moodLabels } from '@/lib/playlist-display';
 import { CONTENT_GAP } from '@/lib/theme';
 
 const COVER_WIDTH = 118;
@@ -39,7 +40,7 @@ const COVER_HEIGHT = 177;
 const COVER_RADIUS = 10;
 
 /** The correctable half of a profile. */
-type Correction = Pick<MoodProfile, 'mood' | 'pacing'>;
+type Correction = Pick<MoodProfile, 'mood' | 'pacing' | 'moodOther'>;
 
 /** Read off the schema rather than restated, so the pills cannot drift from the wire. */
 const PACINGS = MoodProfileSchema.shape.pacing.options;
@@ -95,7 +96,7 @@ export default function MoodScreen() {
     override ??
     (profile ? { mood: profile.mood, pacing: profile.pacing } : { mood: [], pacing: 'steady' });
 
-  const moodLines = [...current.mood.map(capitalize), PACING_LABELS[current.pacing]];
+  const moodLines = [...moodLabels(current), PACING_LABELS[current.pacing]];
 
   const toggleMood = (mood: Mood) =>
     setOverride({
@@ -192,19 +193,20 @@ export default function MoodScreen() {
 
             <Chip
               label={OTHER}
-              isSelected={context.moodOther !== undefined}
+              isSelected={current.moodOther !== undefined}
               onPress={() =>
-                setDetail({
-                  moodOther: context.moodOther === undefined ? '' : undefined,
+                setOverride({
+                  ...current,
+                  moodOther: current.moodOther === undefined ? '' : undefined,
                 })
               }
             />
           </View>
 
-          {context.moodOther !== undefined && (
+          {current.moodOther !== undefined && (
             <OtherInput
-              value={context.moodOther}
-              onChangeText={(moodOther) => setDetail({ moodOther })}
+              value={current.moodOther}
+              onChangeText={(moodOther) => setOverride({ ...current, moodOther })}
               placeholder="How does it feel?"
             />
           )}
@@ -269,7 +271,12 @@ export default function MoodScreen() {
               pathname: '/playlist',
               params: {
                 googleBooksId,
-                profile: JSON.stringify({ ...profile, ...current }),
+                // An opened-but-empty field is an answer nobody gave.
+                profile: JSON.stringify({
+                  ...profile,
+                  ...current,
+                  moodOther: current.moodOther?.trim() || undefined,
+                }),
                 context: JSON.stringify(context),
               },
             })

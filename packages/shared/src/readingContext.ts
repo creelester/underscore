@@ -55,12 +55,6 @@ const otherSchema = z.string().trim().max(MAX_READING_DETAIL_LENGTH).optional();
  */
 export const ReadingContextSchema = z.object({
   lyrics: z.boolean(),
-  /**
-   * A mood the closed vocabulary cannot carry, in the reader's own words. It rides here
-   * rather than in `MoodProfile.mood` because that enum stays closed — every value there
-   * needs a gradient and a chip. Absent means the option was never chosen.
-   */
-  moodOther: otherSchema,
   format: z.enum(BOOK_FORMATS).optional(),
   setting: z.enum(SETTINGS).optional(),
   settingOther: otherSchema,
