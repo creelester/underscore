@@ -8,9 +8,19 @@ function capitalize(word: string): string {
   return `${word[0]?.toUpperCase() ?? ''}${word.slice(1)}`;
 }
 
+/**
+ * The profile's moods as they are written on screen, a typed `Something else` among them
+ * as one more mood. Deduped, because a typed word can repeat a chipped one.
+ */
+export function moodLabels(profile: Pick<MoodProfile, 'mood' | 'moodOther'>): string[] {
+  const typed = profile.moodOther?.trim();
+
+  return [...new Set([...profile.mood.map(capitalize), ...(typed ? [capitalize(typed)] : [])])];
+}
+
 /** `Melancholy, dreamy · Slow burn` — the read the playlist was built from, said back. */
 export function moodSentence(profile: MoodProfile): string {
-  const moods = profile.mood.map(capitalize).join(', ');
+  const moods = moodLabels(profile).join(', ');
   const pacing = PACING_LABELS[profile.pacing];
 
   return moods ? `${moods}${SEPARATOR}${pacing}` : pacing;
