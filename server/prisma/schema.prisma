@@ -146,6 +146,8 @@ model Book {
   categories    String[]
   pageCount     Int?
   thumbnailUrl  String?
+  // Stands in for artwork on the by-hand path, where there is none to fetch.
+  coverEmoji    String?
   source        BookSource
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
