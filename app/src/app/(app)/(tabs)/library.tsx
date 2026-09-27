@@ -225,21 +225,21 @@ export default function LibraryScreen() {
         )}
       </ScrollView>
 
-      {isNoMatch && (
-        <Button
-          variant='secondary'
-          size='lg'
-          onPress={() => router.push('/score-by-hand')}
-        >
-          <Plus
-            size={16}
-            strokeWidth={2.2}
-            color={theme.ink}
-            style={styles.plus}
-          />
-          <Text>Add manually</Text>
-        </Button>
-      )}
+      {/* Ungated, where the prototype shows this only on no-match: scoring by hand is a
+          standing option, not a consolation for a failed search. */}
+      <Button
+        variant='secondary'
+        size='lg'
+        onPress={() => router.push('/score-by-hand')}
+      >
+        <Plus
+          size={16}
+          strokeWidth={2.2}
+          color={theme.ink}
+          style={styles.plus}
+        />
+        <Text>Add manually</Text>
+      </Button>
     </View>
   );
 }
