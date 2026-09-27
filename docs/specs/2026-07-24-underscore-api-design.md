@@ -46,17 +46,18 @@ Derived per generation, not a property of a `Book`: it is Claude's read of one b
 | --------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `genre`   | `string[]`, max 3                       | Normalized genres, most representative first — e.g. `["Literary", "Fantasy"]`. A book can span several. **Not Claude's output.** On the Google path it is derived from `Book.categories` by `genresFromCategories`; on the manual path it is the user's own picks. Google already classifies the volume, so having the model re-derive a genre the catalogue states only invites the two to disagree — and it keeps both paths taking genre from a source rather than inferring it. The cap matches the by-hand screen's "pick up to three". |
 | `mood`    | `Mood[]`, max 2                         | Closed vocabulary — `cozy \| melancholy \| hopeful \| tense \| dreamy \| nostalgic \| romantic \| playful \| epic \| haunting`. Each has a gradient that stands in for artwork and a chip in the correction UI, so the set is fixed; `MOODS` in `/packages/shared` is the source of truth. Empty on the manual-genre path. |
+| `moodOther` | `string`, optional                    | Max 60 chars. A mood the closed vocabulary cannot carry, in the reader's own words, from a `Something else` chip beside the mood chips. Beside `mood` rather than in it so that enum stays closed, and additive — it costs neither of the two picks. In the profile rather than in `ReadingContext` because the profile is what persists and what both screens say back. |
+| `genreOther` | `string`, optional                   | Max 60 chars. The same escape hatch for genre, from the by-hand picker's `Something else`. Additive in the same way, and never one of the three — requiring at least one real chip is what keeps `genre` non-empty. |
 | `pacing`  | `"slow" \| "steady" \| "fast"`          |                                                                                                                |
 | `summary` | `string`                                | 1-2 sentence rationale, shown as QA/debug info                                                                 |
 
 ### `ReadingContext`
 
-The mood screen's optional `Fine-tune to sharpen the score` answers. Input only — it is never persisted and never returned, and unlike `MoodProfile` it is the user's own words rather than Claude's. It reaches the Playlist Builder alone: the design draws it *below* Claude's read, so by the time it exists the Mood Engine has already run, which is why `POST /api/mood-profile` does not accept it.
+The optional `Fine-tune to sharpen the score` answers, collected by the mood screen and the by-hand screen alike. Input only — never persisted, never returned. The reader's free-text *mood* and *genre* are not here: those live on `MoodProfile`, which persists. It reaches the Playlist Builder alone: the design draws it *below* Claude's read, so by the time it exists the Mood Engine has already run, which is why `POST /api/mood-profile` does not accept it.
 
 | Field                        | Type                | Notes                                                                                                                              |
 | ---------------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `lyrics`                     | `boolean`           | False — the default — asks for instrumentals only, matching the Playlist Builder's standing instrumental lean. Both states are stated in the prompt, since either is a real answer. |
-| `moodOther`                  | `string \| null`     | Max 60 chars. A mood the closed vocabulary cannot carry, in the reader's own words, offered as a `Something else` chip beside the mood chips. It rides here rather than in `MoodProfile.mood` so that enum stays closed, and it is additive — it never replaces one of the two picks. |
 | `format`                     | `BookFormat \| null` | `Print \| Ebook \| Audiobook`. Only `Audiobook` shapes the prompt, where a narrator is already competing for the ear.                |
 | `setting`                    | `Setting \| null`    | `City \| Small town \| Countryside \| Coast or sea \| Wilderness \| Another world \| Something else`                                |
 | `era`                        | `Era \| null`        | `Ancient world \| Medieval \| Pre-industrial \| Industrial \| Modern \| Present day \| Near future \| Far future \| Something else` |
@@ -159,23 +160,15 @@ Read-only: search performs no database writes. Persisting every hit would write 
 
 | Endpoint                 | Auth             | Request                                                             | Response (200)             | Errors                                                                                                                                       |
 | ------------------------ | ---------------- | ------------------------------------------------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `POST /api/mood-profile` | session-required | `{ googleBooksId: string }` **or** `{ manualGenre: string }` (exactly one) | `{ profile: MoodProfile }` | `400 INVALID_INPUT` (neither/both fields set), `404 BOOK_NOT_FOUND`, `429 RATE_LIMITED` (20/hour), `502 UPSTREAM_UNAVAILABLE` (Claude down or returned unparseable output) |
+| `POST /api/mood-profile` | session-required | `{ googleBooksId: string }` | `{ profile: MoodProfile }` | `400 INVALID_INPUT`, `404 BOOK_NOT_FOUND`, `429 RATE_LIMITED` (20/hour), `502 UPSTREAM_UNAVAILABLE` (Claude down or returned unparseable output) |
 
-Example bodies — book path:
+Example body:
 
 ```json
 { "googleBooksId": "_LettPDhwR0C" }
 ```
 
-Manual-genre fallback path:
-
-```json
-{ "manualGenre": "gothic horror" }
-```
-
-Sending both keys, or neither, is a `400 INVALID_INPUT` — the zod schema in `/packages/shared` refines on exactly one being present.
-
-Notes: `manualGenre` path never calls Claude — profile is constructed directly from the user's text (`genre = [manualGenre]`, `pacing = "steady"`, `mood = []`, `summary = ""`). The UI renders the default mood gradient for an empty `mood`; `moodGradient` in `app/src/lib/gradients.ts` applies that fallback itself.
+Only a Google volume reaches the Mood Engine. The by-hand path states its own mood, so there is nothing here to analyse — it goes straight to `POST /api/playlists/generate` with a `manualBook` and the profile the reader picked.
 
 **Constraining `mood`.** The request's `output_config.format` carries `MOODS` as an `enum` with `maxItems: 2`, so Claude maps its own read onto the vocabulary rather than inventing a descriptor the UI would have to discard. Nuance the ten can't carry goes in `summary`, which is free text. An `enum` in an output schema is a strong steer and not a guarantee, so `MoodProfileSchema.parse` on the server stays the real gate: a parse failure gets one retry, then `502 UPSTREAM_UNAVAILABLE`.
 
@@ -185,7 +178,7 @@ Notes: `manualGenre` path never calls Claude — profile is constructed directly
 
 | Endpoint                       | Auth             | Request                                               | Response (200)                                     | Errors                                                                                                |
 | ------------------------------ | ---------------- | ----------------------------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `POST /api/playlists/generate` | session-required | `{ googleBooksId: string }` **or** `{ manualGenre: string }`, plus optional `moodProfile: MoodProfile` and `readingContext: ReadingContext` | `Playlist` (auto-saved; `spotifyPlaylistId: null`) | `400 INVALID_INPUT`, `404 BOOK_NOT_FOUND`, `429 RATE_LIMITED` (10/hour), `502 UPSTREAM_UNAVAILABLE` (Claude or Spotify search down) |
+| `POST /api/playlists/generate` | session-required | `{ googleBooksId: string }` **or** `{ manualBook: ManualBook }` (exactly one), plus optional `moodProfile: MoodProfile` and `readingContext: ReadingContext` | `Playlist` (auto-saved; `spotifyPlaylistId: null`) | `400 INVALID_INPUT`, `404 BOOK_NOT_FOUND`, `429 RATE_LIMITED` (10/hour), `502 UPSTREAM_UNAVAILABLE` (Claude or Spotify search down) |
 
 Example bodies — identical shape to `POST /api/mood-profile`, book path:
 
@@ -196,14 +189,23 @@ Example bodies — identical shape to `POST /api/mood-profile`, book path:
 Manual-genre fallback path:
 
 ```json
-{ "manualGenre": "gothic horror" }
+{
+  "manualBook": {
+    "title": "The Glass Hotel",
+    "author": "Emily St. John Mandel",
+    "genre": ["Literary fiction"],
+    "coverEmoji": "🏨"
+  }
+}
 ```
+
+`ManualBook` is the reader's own description of a book the catalogue could not find. Only `genre` is required (1–3 of `GENRES`) — it is what keeps `MoodProfile.genre` non-empty, so every screen reading `genre[0]` still resolves. `title` and `author` are trimmed and capped at 120; a missing title becomes `"Untitled book"`. `coverEmoji` is capped at 16 characters and must contain an `Extended_Pictographic` codepoint, which is what stops it becoming a second title — one emoji is several code units once ZWJ sequences and skin-tone modifiers are counted.
 
 `moodProfile` is the profile the user was shown on the mood screen, corrections included. Omitted, the endpoint runs the Mood Engine itself, as the shape above implies; sent, it is used verbatim after `MoodProfileSchema.parse` — otherwise a correction would be discarded and Claude's second read of the same book could differ from the one on screen. The volume is still re-fetched either way: the `Book` row is minted from the catalogue, never from the request.
 
 `readingContext` carries the same screen's fine-tune answers. It is appended to the anchor prompt and nothing else — no schema field, no row, no effect on the mood read.
 
-Side effects: on the `googleBooksId` path, re-fetches the volume from Google Books and upserts the `Book` row (this is the only place a `GOOGLE_BOOKS` book is created — search does not write one) → runs Mood Engine → Playlist Builder (Claude, ~20 anchors) → Spotify app-level resolution (regenerates once if &lt;8 resolve) → persists `Playlist` + `PlaylistTrack` + upserted `Track` rows in a single transaction. The `manualGenre` path upserts a `MANUAL_GENRE` book whose `title` is the user's text and skips the Mood Engine. No partial `Playlist` row is ever left on failure.
+Side effects: on the `googleBooksId` path, re-fetches the volume from Google Books and upserts the `Book` row (this is the only place a `GOOGLE_BOOKS` book is created — search does not write one) → runs Mood Engine → Playlist Builder (Claude, ~20 anchors) → Spotify app-level resolution (regenerates once if &lt;8 resolve) → persists `Playlist` + `PlaylistTrack` + upserted `Track` rows in a single transaction. The `manualBook` path skips both Google Books and the Mood Engine, and always **creates** its own `MANUAL_GENRE` row rather than reusing one: matching on `(source, title)` was harmless while the title was a genre word, but a reader-typed title, author and emoji would hand one reader's book to another's. Two by-hand scores of the same book make two rows. It is also the one path where Claude is told about a book the catalogue does not have — `manualBook.title` and `author` reach the anchor prompt, so a book Google Books came back empty on may still be one Claude knows. No partial `Playlist` row is ever left on failure.
 
 ---
 
