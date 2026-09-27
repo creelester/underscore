@@ -9,11 +9,16 @@ import {
   type AnchorSuggestion,
   type BookDetail,
   type MoodProfile,
-  type ReadingContext,
 } from "@underscore/shared";
 import { env } from "../config/env";
 import { ApiError } from "../lib/apiError";
-import { ANCHOR_SYSTEM, MOOD_SYSTEM, anchorPrompt, moodPrompt } from "./prompts";
+import {
+  ANCHOR_SYSTEM,
+  MOOD_SYSTEM,
+  anchorPrompt,
+  moodPrompt,
+  type AnchorRequest,
+} from "./prompts";
 
 /** Reading a mood off a blurb is the light half of a generation, and a fifth of the price. */
 const MOOD_MODEL = "claude-sonnet-5";
@@ -184,24 +189,19 @@ export async function analyzeMood(book: BookDetail): Promise<MoodProfile> {
   });
 }
 
-/**
- * ~20 anchors for a profile, and the name of the playlist they make. `book` is absent on
- * the manual-genre path; `context` is absent whenever the caller had no fine-tune
- * answers to pass on.
- */
+/** ~20 anchors for a profile, and the name of the playlist they make. */
 export async function suggestAnchors(
-  profile: MoodProfile,
-  book?: Pick<BookDetail, "title" | "authors">,
-  context?: ReadingContext,
+  request: AnchorRequest,
 ): Promise<{ name?: string; tracks: AnchorSuggestion[] }> {
   return requestStructured({
     label: "track list",
     system: ANCHOR_SYSTEM,
-    prompt: anchorPrompt(profile, book, context),
+    prompt: anchorPrompt(request),
     format: ANCHORS_FORMAT,
     model: ANCHOR_MODEL,
-    // Low until the MVP measurement says the track lists need more; thinking stays on.
-    effort: "low",
+    // Back up from low, which the measurement in edc034d invited: at low the list collapses
+    // onto the canon of "music for reading", and the prompt's spread rules cost thinking.
+    effort: "medium",
     maxTokens: 8000,
     schema: AnchorResponseSchema,
   });
