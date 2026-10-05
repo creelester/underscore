@@ -95,14 +95,25 @@ function readingContextLines(context: ReadingContext): (string | undefined)[] {
  * it should weigh as much as the two it sits beside.
  */
 function moodLine(profile: MoodProfile): string {
-  const moods = [...profile.mood, ...(profile.moodOther?.trim() ? [profile.moodOther.trim()] : [])];
+  return `Mood: ${beside(profile.mood, profile.moodOther) || "unspecified"}`;
+}
 
-  return `Mood: ${moods.join(", ") || "unspecified"}`;
+/** Same shape as the moods, for the same reason — the by-hand picker has its own escape hatch. */
+function genreLine(profile: MoodProfile): string {
+  return `Genre: ${beside(profile.genre, profile.genreOther) || "unspecified"}`;
+}
+
+/** A closed vocabulary's values with the reader's own word among them, not after them. */
+function beside(chosen: readonly string[], other?: string): string {
+  return [...chosen, ...(other?.trim() ? [other.trim()] : [])].join(", ");
 }
 
 export type AnchorRequest = {
   profile: MoodProfile;
-  /** Absent on the manual-genre path, which has no book behind it. */
+  /**
+   * The catalogue volume, or on the by-hand path what the reader typed — Claude may well
+   * know a book Google Books came back empty on. Absent only when no title was given.
+   */
   book?: Pick<BookDetail, "title" | "authors">;
   /** Absent whenever the caller had no fine-tune answers to pass on. */
   context?: ReadingContext;
@@ -115,7 +126,7 @@ export function anchorPrompt({ profile, book, context, exclude }: AnchorRequest)
 
   return [
     book ? `Book: ${book.title} by ${book.authors.join(", ") || "unknown"}` : undefined,
-    `Genre: ${profile.genre.join(", ") || "unspecified"}`,
+    genreLine(profile),
     moodLine(profile),
     `Pacing: ${profile.pacing}`,
     profile.summary ? `Reader's experience: ${profile.summary}` : undefined,
