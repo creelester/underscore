@@ -21,6 +21,15 @@ const REGENERATE_BELOW = 8;
 /** After a regeneration, a playlist this short is flagged to the user as unusually small. */
 const TOO_SHORT_BELOW = 13;
 
+/**
+ * How much of the reader's own history a new list has to avoid. Claude reaches for the same
+ * canon whatever the book — before this, one track sat in 17 of 21 playlists — and naming
+ * what it already gave them is the only lever, since Opus 5 takes no temperature. Capped:
+ * an unbounded ban starves a list of anything good after a dozen playlists.
+ */
+const RECENT_PLAYLISTS = 4;
+const MAX_EXCLUDED = 60;
+
 type Transaction = Parameters<Parameters<PrismaClient["$transaction"]>[0]>[0];
 
 /**
@@ -82,6 +91,21 @@ async function upsertBook(
   );
 }
 
+/** `artist — title` of what this reader already has, newest playlists first. */
+async function recentTracks(userId: string): Promise<string[]> {
+  const playlists = await prisma.playlist.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    take: RECENT_PLAYLISTS,
+    select: { tracks: { select: { track: { select: { artist: true, name: true } } } } },
+  });
+
+  const used = playlists.flatMap(({ tracks }) =>
+    tracks.map(({ track }) => `${track.artist} — ${track.name}`),
+  );
+  return [...new Set(used)].slice(0, MAX_EXCLUDED);
+}
+
 /** Deduplicated across playlists: the catalog metadata behind a Spotify id is the same for everyone. */
 async function upsertTracks(tx: Transaction, tracks: Track[]): Promise<string[]> {
   const rows = [];
@@ -111,15 +135,23 @@ export async function generatePlaylist(
   const bookRef = book ?? undefined;
 
   const context = request.readingContext;
+  const exclude = await recentTracks(userId);
 
-  let suggested = await suggestAnchors(profile, bookRef, context);
+  let suggested = await suggestAnchors({ profile, book: bookRef, context, exclude });
   let tracks = await resolveAnchors(suggested.tracks);
 
   // Claude names tracks that turn out not to exist in the catalog; too few surviving
-  // means the suggestions were the problem, so ask once more before settling.
+  // means the suggestions were the problem, so ask once more before settling — this time
+  // ruling out what it just named, since none of that resolved.
   const regenerated = tracks.length < REGENERATE_BELOW;
   if (regenerated) {
-    suggested = await suggestAnchors(profile, bookRef, context);
+    const tried = suggested.tracks.map(({ artist, title }) => `${artist} — ${title}`);
+    suggested = await suggestAnchors({
+      profile,
+      book: bookRef,
+      context,
+      exclude: [...exclude, ...tried],
+    });
     tracks = await resolveAnchors(suggested.tracks);
   }
 
