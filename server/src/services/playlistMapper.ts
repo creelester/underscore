@@ -22,6 +22,7 @@ export function toApiBook(row: BookRow) {
     categories: row.categories,
     pageCount: row.pageCount,
     thumbnailUrl: row.thumbnailUrl,
+    coverEmoji: row.coverEmoji,
     source: row.source,
   };
 }

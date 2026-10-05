@@ -18,6 +18,7 @@ These are defined as zod schemas in `/packages/shared` and referenced by name in
 | `categories`    | `string[]`                         | Raw subject strings as returned by Google Books (`volumeInfo.categories`, e.g. `"Fiction / Science Fiction / Space Opera"`). Stored verbatim. **This is where `MoodProfile.genre` comes from** on the Google path — see `genresFromCategories` in `/packages/shared`, which takes the last non-filler segment of each path, deduplicates, and caps at three. Also input to the Mood Engine for mood and pacing. |
 | `pageCount`     | `number \| null`                   | Display-only; does not drive playlist length                                                                                                                                                                                                                                                                  |
 | `thumbnailUrl`  | `string \| null`                   |                                                                                                                                                                                                                                                                                                               |
+| `coverEmoji`    | `string \| null`                   | The by-hand path's stand-in for artwork, set by the reader. Null on every `GOOGLE_BOOKS` book, which has real artwork to show.                                                                                                                                                                                  |
 | `source`        | `"GOOGLE_BOOKS" \| "MANUAL_GENRE"` |                                                                                                                                                                                                                                                                                                               |
 
 ### `BookCandidate`
@@ -35,7 +36,7 @@ A search hit, which is **not** persisted. `GET /api/books/search` writes nothing
 | `thumbnailUrl`  | `string \| null` | Rewritten to `https://` — Google serves `http://`, which iOS ATS blocks        |
 | `publishedYear` | `number \| null` | Leading four digits of Google's `publishedDate`; null when absent or unparseable |
 
-`BookCandidateSchema` in `/packages/shared` derives from `BookSchema` (minus `id` and `source`) so the two cannot drift. `publishedYear` is the one field it adds rather than inherits: the library home's Google rows read `Author · Year · Genre`, but a year is never persisted, so `Book` and the `book` table have no column for it.
+`BookCandidateSchema` in `/packages/shared` derives from `BookSchema` (minus `id`, `source` and `coverEmoji`) so the two cannot drift. `publishedYear` is the one field it adds rather than inherits: the library home's Google rows read `Author · Year · Genre`, but a year is never persisted, so `Book` and the `book` table have no column for it.
 
 ### `MoodProfile`
 
