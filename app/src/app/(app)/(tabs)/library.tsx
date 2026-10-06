@@ -20,7 +20,6 @@ import {
   useBookSearch,
 } from '@/features/books/use-book-search';
 import { bookMetaLine } from '@/lib/book-display';
-import { RADIUS } from '@/lib/theme';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { useTheme } from '@/lib/use-theme';
 
@@ -32,6 +31,10 @@ import { useTheme } from '@/lib/use-theme';
  */
 
 const SEARCH_DEBOUNCE_MS = 700;
+
+/** `px-screen` on the tabs layout, and this screen's own `gap-4`. */
+const SCREEN_GUTTER = 22;
+const LIST_GAP = 16;
 
 const BOOK_COVER_WIDTH = 48;
 const BOOK_COVER_HEIGHT = 70;
@@ -227,10 +230,8 @@ export default function LibraryScreen() {
       </ScrollView>
 
       {/* Ungated, where the prototype shows this only on no-match: scoring by hand is a
-          standing option, not a consolation for a failed search. The lift is this
-          button's alone — `secondary` ships flat everywhere else — and rides a wrapper
-          because NativeWind's className styles beat a `style` prop passed to `Button`. */}
-      <View style={[styles.lift, { boxShadow: shadows.lift }]}>
+          standing option, not a consolation for a failed search. */}
+      <View style={[styles.footer, { boxShadow: shadows.lift }]}>
         <Button
           variant='secondary'
           size='lg'
@@ -270,7 +271,13 @@ function SavedPlaylistRow({ playlist }: { playlist: Playlist }) {
 
 const styles = StyleSheet.create({
   plus: { marginRight: 8 },
-  // Matches the button's pill so the shadow follows its shape, not a rectangle; the
-  // margin is the room the shadow falls into, which the screen clips without it.
-  lift: { borderRadius: RADIUS.pill, marginBottom: 12 },
+  // Breaks the screen gutter so the shadow spans edge to edge, then puts it back as
+  // padding. The negative top cancels the parent's gap, landing the shadow on the line
+  // where the list is clipped instead of floating below it.
+  footer: {
+    marginHorizontal: -SCREEN_GUTTER,
+    paddingHorizontal: SCREEN_GUTTER,
+    marginTop: -LIST_GAP,
+    paddingTop: LIST_GAP,
+  },
 });
