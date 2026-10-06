@@ -32,6 +32,10 @@ import { useTheme } from '@/lib/use-theme';
 
 const SEARCH_DEBOUNCE_MS = 700;
 
+/** `px-screen` on the tabs layout, and this screen's own `gap-4`. */
+const SCREEN_GUTTER = 22;
+const LIST_GAP = 16;
+
 const BOOK_COVER_WIDTH = 48;
 const BOOK_COVER_HEIGHT = 70;
 
@@ -66,7 +70,7 @@ function matches(playlist: Playlist, query: string): boolean {
 }
 
 export default function LibraryScreen() {
-  const { theme } = useTheme();
+  const { theme, shadows } = useTheme();
   const [query, setQuery] = useState('');
 
   const trimmed = query.trim();
@@ -227,19 +231,21 @@ export default function LibraryScreen() {
 
       {/* Ungated, where the prototype shows this only on no-match: scoring by hand is a
           standing option, not a consolation for a failed search. */}
-      <Button
-        variant='secondary'
-        size='lg'
-        onPress={() => router.push('/score-by-hand')}
-      >
-        <Plus
-          size={16}
-          strokeWidth={2.2}
-          color={theme.ink}
-          style={styles.plus}
-        />
-        <Text>Add manually</Text>
-      </Button>
+      <View style={[styles.footer, { boxShadow: shadows.lift }]}>
+        <Button
+          variant='secondary'
+          size='lg'
+          onPress={() => router.push('/score-by-hand')}
+        >
+          <Plus
+            size={16}
+            strokeWidth={2.2}
+            color={theme.ink}
+            style={styles.plus}
+          />
+          <Text>Add manually</Text>
+        </Button>
+      </View>
     </View>
   );
 }
@@ -265,4 +271,13 @@ function SavedPlaylistRow({ playlist }: { playlist: Playlist }) {
 
 const styles = StyleSheet.create({
   plus: { marginRight: 8 },
+  // Breaks the screen gutter so the shadow spans edge to edge, then puts it back as
+  // padding. The negative top cancels the parent's gap, landing the shadow on the line
+  // where the list is clipped instead of floating below it.
+  footer: {
+    marginHorizontal: -SCREEN_GUTTER,
+    paddingHorizontal: SCREEN_GUTTER,
+    marginTop: -LIST_GAP,
+    paddingTop: LIST_GAP,
+  },
 });
