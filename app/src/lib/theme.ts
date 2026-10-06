@@ -78,16 +78,22 @@ export const MOTION = {
   durMed: 220,
 } as const;
 
-/** `boxShadow` strings: RN's legacy shadow props cannot express negative spread. */
+/**
+ * `boxShadow` strings: RN's legacy shadow props cannot express negative spread.
+ * `lift` is `soft` with the spread opened up — a control pinned over scrolling content
+ * needs the shadow to read, where `soft` only has to seat a cover on the page.
+ */
 export const SHADOWS = {
   light: {
     glow: '0 16px 32px -14px rgba(255,0,132,0.30)',
     soft: '0 10px 24px -12px rgba(43,15,61,0.14)',
+    lift: '0 8px 18px -6px rgba(43,15,61,0.38)',
     tertiary: '0 18px 34px -16px rgba(43,15,61,0.55)',
   },
   dark: {
     glow: '0 20px 40px -14px rgba(255,0,132,0.45)',
     soft: '0 12px 30px -12px rgba(0,0,0,0.55)',
+    lift: '0 8px 18px -6px rgba(0,0,0,0.75)',
     tertiary: '0 18px 34px -16px rgba(43,15,61,0.55)',
   },
 } as const;

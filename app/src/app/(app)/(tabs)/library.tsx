@@ -20,6 +20,7 @@ import {
   useBookSearch,
 } from '@/features/books/use-book-search';
 import { bookMetaLine } from '@/lib/book-display';
+import { RADIUS } from '@/lib/theme';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { useTheme } from '@/lib/use-theme';
 
@@ -66,7 +67,7 @@ function matches(playlist: Playlist, query: string): boolean {
 }
 
 export default function LibraryScreen() {
-  const { theme } = useTheme();
+  const { theme, shadows } = useTheme();
   const [query, setQuery] = useState('');
 
   const trimmed = query.trim();
@@ -226,20 +227,24 @@ export default function LibraryScreen() {
       </ScrollView>
 
       {/* Ungated, where the prototype shows this only on no-match: scoring by hand is a
-          standing option, not a consolation for a failed search. */}
-      <Button
-        variant='secondary'
-        size='lg'
-        onPress={() => router.push('/score-by-hand')}
-      >
-        <Plus
-          size={16}
-          strokeWidth={2.2}
-          color={theme.ink}
-          style={styles.plus}
-        />
-        <Text>Add manually</Text>
-      </Button>
+          standing option, not a consolation for a failed search. The lift is this
+          button's alone — `secondary` ships flat everywhere else — and rides a wrapper
+          because NativeWind's className styles beat a `style` prop passed to `Button`. */}
+      <View style={[styles.lift, { boxShadow: shadows.lift }]}>
+        <Button
+          variant='secondary'
+          size='lg'
+          onPress={() => router.push('/score-by-hand')}
+        >
+          <Plus
+            size={16}
+            strokeWidth={2.2}
+            color={theme.ink}
+            style={styles.plus}
+          />
+          <Text>Add manually</Text>
+        </Button>
+      </View>
     </View>
   );
 }
@@ -265,4 +270,7 @@ function SavedPlaylistRow({ playlist }: { playlist: Playlist }) {
 
 const styles = StyleSheet.create({
   plus: { marginRight: 8 },
+  // Matches the button's pill so the shadow follows its shape, not a rectangle; the
+  // margin is the room the shadow falls into, which the screen clips without it.
+  lift: { borderRadius: RADIUS.pill, marginBottom: 12 },
 });
