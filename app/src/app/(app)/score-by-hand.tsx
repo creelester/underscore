@@ -147,7 +147,7 @@ export default function ScoreByHandScreen() {
         </View>
 
         <ChipMultiSelect
-          label={`Genre · pick up to ${MAX_GENRES}`}
+          label="Genre · pick up to three"
           options={BY_HAND_GENRES}
           values={draft.genre}
           onChange={(genre) => set({ genre })}
@@ -161,7 +161,7 @@ export default function ScoreByHandScreen() {
         />
 
         <ChipMultiSelect
-          label={`Mood · pick up to ${MAX_MOODS}`}
+          label="Mood · pick up to two"
           options={MOODS}
           values={draft.mood}
           onChange={(mood) => set({ mood })}
