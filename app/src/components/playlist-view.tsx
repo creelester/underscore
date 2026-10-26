@@ -33,7 +33,6 @@ import { moodSentence, playlistEyebrow, trackSummary } from '@/lib/playlist-disp
  */
 
 const TOAST_MS = 2200;
-const FAB = 52;
 
 export function PlaylistView({ playlist }: { playlist: Playlist }) {
   const [actionsOpen, setActionsOpen] = useState(false);
@@ -166,12 +165,12 @@ export function PlaylistView({ playlist }: { playlist: Playlist }) {
               <Text>{isSaved ? 'Saved ✓' : 'Save to Spotify'}</Text>
             </Button>
             {/* The design plays here in-app. There is no in-app player, and the MVP's
-                playback is the hand-off, so this opens Spotify — saving first if needed. */}
+                playback is the hand-off, so this opens Spotify — saving first if needed.
+                Sized by `size`, not `style`: a style prop is dropped on native. */}
             <Button
-              size="icon"
+              size="lg"
               aria-label="Open in Spotify"
               disabled={isPending}
-              style={{ width: FAB, height: FAB }}
               onPress={openInSpotify}>
               {/* Variation selector: bare U+25B6 renders as the blue emoji triangle. */}
               <Text className="text-[17px]">▶︎</Text>
