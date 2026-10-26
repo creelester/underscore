@@ -1,12 +1,11 @@
 import type { Mood } from '@underscore/shared';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Book } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { BookCover } from '@/components/book-cover';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
-import { moodGradient } from '@/lib/gradients';
 import { pressed, pressedStyle } from '@/lib/pressed';
 import { BORDER } from '@/lib/theme';
 import { useTheme } from '@/lib/use-theme';
@@ -49,7 +48,7 @@ export function CoverEmojiField({
   /** The tile stands in for artwork, so it tracks the mood picked below it. */
   moods: readonly Mood[];
 }) {
-  const { theme, shadows } = useTheme();
+  const { theme } = useTheme();
   const [isSheetOpen, setSheetOpen] = useState(false);
 
   return (
@@ -64,27 +63,28 @@ export function CoverEmojiField({
           accessibilityLabel={emoji ? 'Change cover' : 'Add cover'}
           onPress={() => setSheetOpen(true)}
           style={pressed}>
-          <View
-            style={{
-              width: TILE_WIDTH,
-              height: TILE_HEIGHT,
-              borderRadius: TILE_RADIUS,
-              overflow: 'hidden',
-              boxShadow: shadows.soft,
-            }}>
-            {emoji ? (
-              <LinearGradient {...moodGradient(moods)} style={styles.tile}>
-                <Text className="text-[52px] leading-[62px]">{emoji}</Text>
-              </LinearGradient>
-            ) : (
-              <View
-                className="bg-surface-2 border-border gap-[6px]"
-                style={[styles.tile, styles.empty]}>
-                <Book size={20} strokeWidth={1.5} color={theme.inkMuted} />
-                <Text className="text-ink-muted font-display text-[13px]">Add cover</Text>
-              </View>
-            )}
-          </View>
+          {emoji ? (
+            // The shelf row's own component, so the tile and the shelf cannot drift.
+            <BookCover
+              mood={moods[0]}
+              coverEmoji={emoji}
+              thumbnailUrl={null}
+              title=""
+              width={TILE_WIDTH}
+              height={TILE_HEIGHT}
+              radius={TILE_RADIUS}
+            />
+          ) : (
+            <View
+              className="bg-surface-2 border-border gap-[6px]"
+              style={[
+                styles.empty,
+                { width: TILE_WIDTH, height: TILE_HEIGHT, borderRadius: TILE_RADIUS },
+              ]}>
+              <Book size={20} strokeWidth={1.5} color={theme.inkMuted} />
+              <Text className="text-ink-muted font-display text-[13px]">Add cover</Text>
+            </View>
+          )}
         </Pressable>
 
         {/* Where the prototype's third line is the year, which `Book` has no column for. */}
@@ -150,6 +150,9 @@ export function CoverEmojiField({
 }
 
 const styles = StyleSheet.create({
-  tile: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  empty: { borderWidth: BORDER.hairline },
+  empty: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: BORDER.hairline,
+  },
 });

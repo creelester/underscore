@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, View } from 'react-native';
 
+import { Text } from '@/components/ui/text';
 import { coverMood } from '@/lib/book-display';
 import { moodGradient } from '@/lib/gradients';
 import { MOTION } from '@/lib/theme';
@@ -16,9 +17,14 @@ import { useTheme } from '@/lib/use-theme';
  * A search hit has no mood yet, so `googleBooksId` hashes one; a saved playlist passes
  * its own. One of the two is always present — a manual-genre book has no volume id.
  */
+
+/** Of the tile's width. Below this the glyph reads as a sticker on the gradient. */
+const GLYPH_SCALE = 0.46;
+
 export function BookCover({
   googleBooksId,
   mood,
+  coverEmoji,
   thumbnailUrl,
   title,
   width,
@@ -27,6 +33,8 @@ export function BookCover({
 }: {
   googleBooksId?: string;
   mood?: Mood;
+  /** The by-hand path's artwork. Never set on a Google volume, which has a thumbnail. */
+  coverEmoji?: string | null;
   thumbnailUrl: string | null;
   title: string;
   width: number;
@@ -50,6 +58,18 @@ export function BookCover({
         style={StyleSheet.absoluteFill}
       />
 
+      {!!coverEmoji && (
+        <View style={[StyleSheet.absoluteFill, styles.glyph]}>
+          <Text
+            style={{
+              fontSize: Math.round(width * GLYPH_SCALE),
+              lineHeight: Math.round(width * GLYPH_SCALE * 1.2),
+            }}>
+            {coverEmoji}
+          </Text>
+        </View>
+      )}
+
       {thumbnailUrl && (
         <Image
           source={thumbnailUrl}
@@ -63,3 +83,7 @@ export function BookCover({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  glyph: { alignItems: 'center', justifyContent: 'center' },
+});
