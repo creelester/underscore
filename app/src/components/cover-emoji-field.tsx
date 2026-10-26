@@ -103,9 +103,7 @@ export function CoverEmojiField({
 
       <Sheet isOpen={isSheetOpen} onClose={() => setSheetOpen(false)} label="Pick a cover">
         <View className="gap-[14px] pb-[6px]">
-          <Text className="text-foreground font-display text-base px-[10px]">
-            Pick a cover
-          </Text>
+          <Text className="text-foreground font-display text-base">Pick a cover</Text>
 
           <View className="flex-row flex-wrap gap-[10px]">
             {COVERS.map((cover) => (
