@@ -230,7 +230,10 @@ export default function LibraryScreen() {
       <Button
         variant='secondary'
         size='lg'
-        onPress={() => router.push('/score-by-hand')}
+        onPress={() =>
+          // The query seeds the title: what the catalogue missed is what they are holding.
+          router.push({ pathname: '/score-by-hand', params: { title: trimmed } })
+        }
       >
         <Plus
           size={16}

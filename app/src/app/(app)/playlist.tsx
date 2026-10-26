@@ -1,4 +1,5 @@
 import {
+  ManualBookSchema,
   MoodProfileSchema,
   ReadingContextSchema,
   type GeneratePlaylistRequest,
@@ -23,6 +24,9 @@ import { moodGradient } from '@/lib/gradients';
  * The mood screen hands over the profile the user actually saw, corrections included.
  * When it is missing — a deep link, or a reload — the server runs the Mood Engine
  * itself, which is why `moodProfile` is optional on the request.
+ *
+ * Reached with a `googleBooksId` from the mood screen, or a `manualBook` from the by-hand
+ * one. Exactly one of the two: there is no volume behind a book the reader described.
  */
 
 const GENERATE_STEPS = [
@@ -59,8 +63,14 @@ function parseDraft<T>(schema: z.ZodType<T>, raw?: string): T | undefined {
 }
 
 export default function PlaylistScreen() {
-  const { googleBooksId, profile, context } = useLocalSearchParams<{
+  const {
+    googleBooksId,
+    manualBook: manualBookParam,
+    profile,
+    context,
+  } = useLocalSearchParams<{
     googleBooksId: string;
+    manualBook?: string;
     profile?: string;
     context?: string;
   }>();
@@ -69,24 +79,29 @@ export default function PlaylistScreen() {
   const { mutate, data: playlist, error } = useGeneratePlaylist();
 
   // Memoised so the effect below is not re-armed by a fresh object on every render.
+  const manualBook = useMemo(
+    () => parseDraft(ManualBookSchema, manualBookParam),
+    [manualBookParam],
+  );
   const moodProfile = useMemo(() => parseDraft(MoodProfileSchema, profile), [profile]);
   const readingContext = useMemo(() => parseDraft(ReadingContextSchema, context), [context]);
+
+  // The catalogue's title, or the one the reader typed.
+  const scoring = book?.title ?? manualBook?.title;
 
   // Fired from an effect because generation is a write with no user gesture behind it on
   // this screen — the gesture was `Generate playlist →` on the one before. The ref keeps
   // a re-render from starting a second playlist.
   const started = useRef(false);
   useEffect(() => {
-    if (started.current || !googleBooksId) return;
+    if (started.current || (!googleBooksId && !manualBook)) return;
     started.current = true;
 
-    const request: GeneratePlaylistRequest = {
-      googleBooksId,
-      moodProfile,
-      readingContext,
-    };
+    const request: GeneratePlaylistRequest = manualBook
+      ? { manualBook, moodProfile, readingContext }
+      : { googleBooksId, moodProfile, readingContext };
     mutate(request);
-  }, [googleBooksId, moodProfile, readingContext, mutate]);
+  }, [googleBooksId, manualBook, moodProfile, readingContext, mutate]);
 
   if (error) {
     const message = isApiError(error) ? error.message : 'Something went wrong.';
@@ -108,7 +123,7 @@ export default function PlaylistScreen() {
       <ScoringScreen>
         <ScoringProgress
           gradient={moodGradient(moodProfile?.mood ?? [])}
-          title={book ? `Scoring ${book.title}…` : 'Scoring it now…'}
+          title={scoring ? `Scoring ${scoring}…` : 'Scoring it now…'}
           steps={GENERATE_STEPS}
           asides={GENERATE_ASIDES}
         />
