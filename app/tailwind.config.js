@@ -122,6 +122,9 @@ module.exports = {
         screen: '22px',
         'screen-wide': '26px',
         'safe-bottom': '34px',
+        // off the 4px scale, and the handoff's rhythm for a label over its control and
+        // for one chip beside the next
+        field: '9px',
       },
       transitionTimingFunction: {
         standard: 'cubic-bezier(.32,.72,0,1)',
