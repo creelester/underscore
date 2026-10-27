@@ -166,9 +166,11 @@ export function PlaylistView({ playlist }: { playlist: Playlist }) {
             </Button>
             {/* The design plays here in-app. There is no in-app player, and the MVP's
                 playback is the hand-off, so this opens Spotify — saving first if needed.
-                Sized by `size`, not `style`: a style prop is dropped on native. */}
+                Sized by class, not `style`: a style prop is dropped on native. Square at
+                the row's height, so the base `rounded-pill` reads as a circle. */}
             <Button
               size="lg"
+              className="w-14 px-0"
               aria-label="Open in Spotify"
               disabled={isPending}
               onPress={openInSpotify}>
