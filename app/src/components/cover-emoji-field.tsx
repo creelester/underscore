@@ -7,7 +7,7 @@ import { BookCover } from '@/components/book-cover';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { pressed, pressedStyle } from '@/lib/pressed';
-import { BORDER } from '@/lib/theme';
+import { BORDER, RADIUS } from '@/lib/theme';
 import { useTheme } from '@/lib/use-theme';
 
 /**
@@ -17,11 +17,13 @@ import { useTheme } from '@/lib/use-theme';
  * `coverEmoji` column instead of image storage, so the tile offers a palette — which also
  * means the value cannot fail `ManualBookSchema`'s `Extended_Pictographic` check. The
  * prototype's interaction survives: tap the tile, a sheet rises.
+ *
+ * The palette's emoji size stays in pixels: a glyph sized to its cell is artwork, and the
+ * type scale has no token for it.
  */
 
 const TILE_WIDTH = 104;
 const TILE_HEIGHT = 156;
-const TILE_RADIUS = 10;
 
 const CELL = 46;
 
@@ -52,12 +54,12 @@ export function CoverEmojiField({
   const [isSheetOpen, setSheetOpen] = useState(false);
 
   return (
-    <View className="gap-[9px]">
+    <View className="gap-field">
       <Text className="font-mono text-eyebrow uppercase tracking-eyebrow text-ink-faint">
         Cover
       </Text>
 
-      <View className="flex-row items-start gap-[14px]">
+      <View className="flex-row items-start gap-3.5">
         <Pressable
           role="button"
           accessibilityLabel={emoji ? 'Change cover' : 'Add cover'}
@@ -72,40 +74,37 @@ export function CoverEmojiField({
               title=""
               width={TILE_WIDTH}
               height={TILE_HEIGHT}
-              radius={TILE_RADIUS}
+              radius={RADIUS.sm}
             />
           ) : (
             <View
-              className="bg-surface-2 border-border gap-[6px]"
-              style={[
-                styles.empty,
-                { width: TILE_WIDTH, height: TILE_HEIGHT, borderRadius: TILE_RADIUS },
-              ]}>
+              className="bg-surface-2 border-border gap-1.5 rounded-sm"
+              style={[styles.empty, { width: TILE_WIDTH, height: TILE_HEIGHT }]}>
               <Book size={20} strokeWidth={1.5} color={theme.inkMuted} />
-              <Text className="text-ink-muted font-display text-[13px]">Add cover</Text>
+              <Text className="text-ink-muted font-display text-body-sm">Add cover</Text>
             </View>
           )}
         </Pressable>
 
         {/* Where the prototype's third line is the year, which `Book` has no column for. */}
-        <View className="min-w-0 flex-1 gap-[5px] self-stretch">
-          <Text className="text-foreground font-display text-[22px] leading-[26px] tracking-tight">
+        <View className="min-w-0 flex-1 gap-1 self-stretch">
+          <Text className="text-foreground font-display text-title tracking-tight">
             {title.trim() || 'Untitled'}
           </Text>
           <Text className="text-ink-muted font-body text-body-sm">
             {author.trim() || 'Author unknown'}
           </Text>
-          <Text className="text-ink-faint font-mono text-eyebrow tracking-eyebrow pt-[2px]">
+          <Text className="text-ink-faint font-mono text-eyebrow tracking-eyebrow pt-0.5">
             {genre}
           </Text>
         </View>
       </View>
 
       <Sheet isOpen={isSheetOpen} onClose={() => setSheetOpen(false)} label="Pick a cover">
-        <View className="gap-[14px] pb-[6px]">
-          <Text className="text-foreground font-display text-base">Pick a cover</Text>
+        <View className="gap-3.5 pb-1.5">
+          <Text className="text-foreground font-display text-body">Pick a cover</Text>
 
-          <View className="flex-row flex-wrap gap-[10px]">
+          <View className="flex-row flex-wrap gap-2.5">
             {COVERS.map((cover) => (
               <Pressable
                 key={cover}
@@ -131,16 +130,16 @@ export function CoverEmojiField({
             ))}
           </View>
 
-          {!!emoji && (
+          {emoji && (
             <Pressable
               role="button"
               onPress={() => {
                 onChange(undefined);
                 setSheetOpen(false);
               }}
-              className="items-center py-[14px]"
+              className="items-center py-3.5"
               style={pressed}>
-              <Text className="text-ink-muted font-display text-[15px]">Remove</Text>
+              <Text className="text-ink-muted font-display text-body">Remove</Text>
             </Pressable>
           )}
         </View>

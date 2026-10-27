@@ -122,7 +122,7 @@ export default function ScoreByHandScreen() {
           moods={draft.mood}
         />
 
-        <View className="gap-[9px]">
+        <View className="gap-field">
           <Text className="font-mono text-eyebrow uppercase tracking-eyebrow text-ink-faint">
             Title
           </Text>
@@ -190,7 +190,9 @@ export default function ScoreByHandScreen() {
             <Text className="font-mono text-eyebrow uppercase tracking-eyebrow text-ink-faint">
               Lyrics
             </Text>
-            <Text className="font-body text-[13px] text-ink-muted">Include music with lyrics</Text>
+            <Text className="font-body text-body-sm text-ink-muted">
+              Include music with lyrics
+            </Text>
           </View>
           <Switch
             checked={context.lyrics}

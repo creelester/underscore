@@ -58,7 +58,7 @@ export function BookCover({
         style={StyleSheet.absoluteFill}
       />
 
-      {!!coverEmoji && (
+      {coverEmoji && (
         <View style={[StyleSheet.absoluteFill, styles.glyph]}>
           <Text
             style={{
