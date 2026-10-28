@@ -53,12 +53,12 @@ export function ChipMultiSelect<T extends string>({
   };
 
   return (
-    <View className="gap-field">
+    <View className="gap-2">
       <Text className="font-mono text-eyebrow uppercase tracking-eyebrow text-ink-faint">
         {label}
       </Text>
 
-      <View className="flex-row flex-wrap gap-field">
+      <View className="flex-row flex-wrap gap-2">
         {options.map((option) => (
           <Chip
             key={option}

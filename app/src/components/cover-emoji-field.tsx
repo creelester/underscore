@@ -19,8 +19,7 @@ import { useTheme } from '@/lib/use-theme';
  * means the value cannot fail `ManualBookSchema`'s `Extended_Pictographic` check. The
  * prototype's interaction survives: tap the tile, a sheet rises.
  *
- * The two emoji sizes stay in pixels: the tile stands in for artwork, and the type scale
- * has no token for a glyph sized to its box.
+ * The two emoji sizes stay in pixels: a glyph sized to its box is artwork, not type.
  */
 
 const TILE_WIDTH = 104;
@@ -55,7 +54,7 @@ export function CoverEmojiField({
   const [isSheetOpen, setSheetOpen] = useState(false);
 
   return (
-    <View className="gap-field">
+    <View className="gap-2">
       <Text className="font-mono text-eyebrow uppercase tracking-eyebrow text-ink-faint">
         Cover
       </Text>
