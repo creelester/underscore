@@ -30,16 +30,16 @@ export function PlaylistSavedSheet({
 
   return (
     <Sheet isOpen={isOpen} onClose={onClose} label="Saved to Spotify">
-      <View className="gap-[14px]">
+      <View className="gap-3.5">
         <View
           className="rounded-pill items-center justify-center self-center overflow-hidden"
           style={{ width: CHECK, height: CHECK, boxShadow: shadows.glow }}>
           <LinearGradient {...GRAD_WARM} style={StyleSheet.absoluteFill} />
           {/* The same ink the primary button uses on this gradient. */}
-          <Text className="text-primary-foreground font-display-bold text-[22px]">✓</Text>
+          <Text className="text-primary-foreground font-display-bold text-title">✓</Text>
         </View>
 
-        <Text className="text-foreground font-display text-center text-[21px] leading-[26px]">
+        <Text className="text-foreground font-display text-center text-title">
           {title} is in your Spotify.
         </Text>
         <Text className="text-ink-muted font-body text-body-sm text-center">

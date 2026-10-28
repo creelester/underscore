@@ -44,8 +44,8 @@ export function PlaylistActionsSheet({
 
   return (
     <Sheet isOpen={isOpen} onClose={onClose} label="Playlist options">
-      <View className="gap-[2px] px-[10px] pb-[10px]">
-        <Text className="text-foreground font-display text-base">{title}</Text>
+      <View className="gap-0.5 px-2.5 pb-2.5">
+        <Text className="text-foreground font-display text-body">{title}</Text>
         <Text className="text-ink-faint font-body text-body-sm">{summary}</Text>
       </View>
 
@@ -55,12 +55,12 @@ export function PlaylistActionsSheet({
           role="button"
           onPress={onPress}
           disabled={isSyncing}
-          className="flex-row items-center gap-[14px] px-[10px] py-[14px]"
+          className="flex-row items-center gap-3.5 px-2.5 py-3.5"
           style={pressed}>
           <View className="w-5 items-center">
             <Icon size={18} strokeWidth={1.8} color={theme.inkMuted} />
           </View>
-          <Text className="text-foreground font-display-medium text-[15px]">{label}</Text>
+          <Text className="text-foreground font-display-medium text-body">{label}</Text>
         </Pressable>
       ))}
     </Sheet>

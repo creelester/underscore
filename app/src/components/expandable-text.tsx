@@ -31,7 +31,7 @@ export function ExpandableText({
   const isExpandable = children.length > collapsedLines * MIN_CHARS_PER_LINE;
 
   return (
-    <View className="items-start gap-[6px]">
+    <View className="items-start gap-1.5">
       <Text
         numberOfLines={isExpanded ? undefined : collapsedLines}
         className="text-ink-muted font-body text-body">
@@ -44,7 +44,7 @@ export function ExpandableText({
           onPress={() => setIsExpanded((expanded) => !expanded)}
           hitSlop={10}
           style={pressed}>
-          <Text className="text-primary font-display text-sm">
+          <Text className="text-primary font-display text-body-sm">
             {isExpanded ? LESS_LABEL : MORE_LABEL}
           </Text>
         </Pressable>

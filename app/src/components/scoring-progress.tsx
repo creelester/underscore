@@ -106,7 +106,7 @@ function StepMarker({ state, color }: { state: 'done' | 'active' | 'pending'; co
 
   return (
     <Text
-      className="font-mono text-[13px] font-bold"
+      className="font-mono text-body-sm font-bold"
       style={{ width: MARKER_WIDTH, color, textAlign: 'center' }}>
       {state === 'done' ? DONE : PENDING}
     </Text>
@@ -234,7 +234,7 @@ export function ScoringProgress({
       : step;
 
   return (
-    <View className="flex-1 items-center justify-center gap-[30px] px-[30px] pb-[70px]">
+    <View className="flex-1 items-center justify-center gap-7 px-7 pb-16">
       <AnimatedView
         style={
           reduceMotion
@@ -261,11 +261,11 @@ export function ScoringProgress({
         </LinearGradient>
       </AnimatedView>
 
-      <Text className="text-center font-display text-[24px] leading-[29px] text-foreground">
+      <Text className="text-center font-display text-title text-foreground">
         {title}
       </Text>
 
-      <View className="w-full max-w-[260px] gap-[10px]">
+      <View className="w-full max-w-[260px] gap-2.5">
         {steps.map((step, index) => (
           <View
             key={index}
