@@ -122,7 +122,7 @@ export default function ScoreByHandScreen() {
           moods={draft.mood}
         />
 
-        <View className="gap-field">
+        <View className="gap-2">
           <Text className="font-mono text-eyebrow uppercase tracking-eyebrow text-ink-faint">
             Title
           </Text>
