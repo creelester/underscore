@@ -74,8 +74,8 @@ export default function MoodScreen() {
 
     return (
       <ScoringScreen>
-        <View className="gap-[10px] pt-2">
-          <Text className="font-display text-[19px] leading-[25px] text-foreground">
+        <View className="gap-2.5 pt-2">
+          <Text className="font-display text-body-lg text-foreground">
             {isMissing ? 'This book has gone missing.' : "We couldn't read this one."}
           </Text>
           <Text className="font-body text-body-sm text-ink-muted">
@@ -139,8 +139,8 @@ export default function MoodScreen() {
             radius={COVER_RADIUS}
           />
 
-          <View className="min-w-0 flex-1 gap-[5px] self-stretch">
-            <Text className="font-display text-[22px] leading-[26px] tracking-tight text-foreground">
+          <View className="min-w-0 flex-1 gap-1 self-stretch">
+            <Text className="font-display text-title tracking-tight text-foreground">
               {book?.title}
             </Text>
 
@@ -148,15 +148,15 @@ export default function MoodScreen() {
               {book?.authors.join(', ')}
             </Text>
 
-            <Text className="pt-[2px] font-mono text-eyebrow tracking-eyebrow text-foreground opacity-80">
+            <Text className="pt-0.5 font-mono text-eyebrow tracking-eyebrow text-foreground opacity-80">
               {profile.genre[0]}
             </Text>
 
-            <View className="mt-auto gap-[2px]">
+            <View className="mt-auto gap-0.5">
               {moodLines.map((line) => (
                 <Text
                   key={line}
-                  className="font-display text-[15px] leading-[20px] text-foreground opacity-[0.92]">
+                  className="font-display text-body text-foreground opacity-[0.92]">
                   {line}
                 </Text>
               ))}
@@ -170,16 +170,16 @@ export default function MoodScreen() {
 
         <View className="h-px bg-border" />
 
-        <Text className="font-display text-[17px] text-foreground">
+        <Text className="font-display text-body-lg text-foreground">
           Fine-tune to sharpen the score
         </Text>
 
-        <View className="gap-[9px]">
+        <View className="gap-2">
           <Text className="font-mono text-eyebrow uppercase tracking-eyebrow text-ink-faint">
             Mood
           </Text>
 
-          <View className="flex-row flex-wrap gap-[9px]">
+          <View className="flex-row flex-wrap gap-2">
             {MOODS.map((mood) => (
               <Chip
                 key={mood}
@@ -226,7 +226,7 @@ export default function MoodScreen() {
             <Text className="font-mono text-eyebrow uppercase tracking-eyebrow text-ink-faint">
               Lyrics
             </Text>
-            <Text className="font-body text-[13px] text-ink-muted">Include music with lyrics</Text>
+            <Text className="font-body text-body-sm text-ink-muted">Include music with lyrics</Text>
           </View>
           <Switch
             checked={context.lyrics}

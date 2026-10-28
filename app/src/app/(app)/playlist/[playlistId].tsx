@@ -17,8 +17,8 @@ export default function SavedPlaylistScreen() {
 
     return (
       <ScoringScreen>
-        <View className="gap-[10px] pt-2">
-          <Text className="text-foreground font-display text-[19px] leading-[25px]">
+        <View className="gap-2.5 pt-2">
+          <Text className="text-foreground font-display text-body-lg">
             We couldn&apos;t open this one.
           </Text>
           <Text className="text-ink-muted font-body text-body-sm">{message}</Text>

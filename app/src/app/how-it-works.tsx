@@ -106,7 +106,7 @@ export default function HowItWorksScreen() {
         {PAGES.map(({ eyebrow, title, body, mood }) => (
           <View
             key={eyebrow}
-            className='px-screen-wide gap-[22px]'
+            className='px-screen-wide gap-screen'
             style={{ width }}
           >
             <View className='flex-row items-center justify-between'>
@@ -120,7 +120,7 @@ export default function HowItWorksScreen() {
                 <Text>Skip</Text>
               </Button>
             </View>
-            <Text className='text-foreground font-display tracking-tight text-[30px] leading-[34.5px]'>
+            <Text className='text-foreground font-display tracking-tight text-display-md'>
               {title}
             </Text>
             <Text className='text-ink-muted font-body text-body-lg'>
@@ -139,7 +139,7 @@ export default function HowItWorksScreen() {
         ))}
       </ScrollView>
 
-      <View className='px-screen-wide gap-[22px] pt-[22px]'>
+      <View className='px-screen-wide gap-screen pt-screen'>
         <View className='items-center'>
           <ProgressDots count={PAGES.length} active={page} />
         </View>

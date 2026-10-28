@@ -98,7 +98,7 @@ export default function SplashScreen() {
           }}>
           <View className="items-center" style={styles.lockup}>
             <LogoLockup />
-            <Text className="text-plum-600 dark:text-lilac-200 font-display-medium text-body mt-[18px] text-center">
+            <Text className="text-plum-600 dark:text-lilac-200 font-display-medium text-body mt-4 text-center">
               a soundtrack to all your stories
             </Text>
           </View>
