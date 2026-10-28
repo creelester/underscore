@@ -32,11 +32,11 @@ export default function ConnectMusicScreen() {
     >
       <AppBackdrop />
 
-      <View className='gap-[18px]'>
+      <View className='gap-4'>
         <Text className='text-ink-faint font-mono text-eyebrow tracking-eyebrow uppercase'>
           Step 04 · Connect
         </Text>
-        <Text className='text-foreground font-display tracking-tight text-[30px] leading-[34.5px]'>
+        <Text className='text-foreground font-display tracking-tight text-display-md'>
           Connect your favorite streaming platform
         </Text>
         <Text className='text-ink-muted font-body text-body'>
@@ -49,7 +49,7 @@ export default function ConnectMusicScreen() {
           <Pressable
             role='button'
             onPress={() => router.push('/sign-up')}
-            className='rounded-sm border-border bg-surface flex-row items-center gap-[14px] border p-4'
+            className='rounded-sm border-border bg-surface flex-row items-center gap-3.5 border p-4'
             style={(state) =>
               state.pressed ? pressedStyle : null
             }
@@ -61,7 +61,7 @@ export default function ConnectMusicScreen() {
               />
             </View>
             <View className='flex-1'>
-              <Text className='text-foreground font-display text-base'>
+              <Text className='text-foreground font-display text-body'>
                 Spotify
               </Text>
               <Text className='text-ink-muted font-body text-body-sm'>
@@ -71,10 +71,10 @@ export default function ConnectMusicScreen() {
             <Text className='text-ink-faint'>→</Text>
           </Pressable>
 
-          <View className='rounded-sm border-border bg-surface flex-row items-center gap-[14px] border p-4 opacity-50'>
+          <View className='rounded-sm border-border bg-surface flex-row items-center gap-3.5 border p-4 opacity-50'>
             <View className='bg-surface-raised rounded-pill h-[38px] w-[38px]' />
             <View className='flex-1'>
-              <Text className='text-foreground font-display text-base'>
+              <Text className='text-foreground font-display text-body'>
                 Apple Music
               </Text>
               <Text className='text-ink-muted font-body text-body-sm'>
@@ -94,7 +94,7 @@ export default function ConnectMusicScreen() {
         >
           <Text>Connect later</Text>
         </Button>
-        <Text className='text-ink-faint font-body text-center text-[13px]'>
+        <Text className='text-ink-faint font-body text-center text-body-sm'>
           You can hear 30-second previews without connecting
         </Text>
       </View>

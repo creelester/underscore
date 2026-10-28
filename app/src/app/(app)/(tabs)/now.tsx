@@ -9,7 +9,7 @@ import { Text } from '@/components/ui/text';
 export default function NowScreen() {
   return (
     <View className="flex-1 gap-4">
-      <Text className="text-foreground font-display text-[28px] leading-[31px] tracking-tight">
+      <Text className="text-foreground font-display text-display-md tracking-tight">
         Now playing
       </Text>
       <Text className="text-ink-muted font-body text-body">

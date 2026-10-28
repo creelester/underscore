@@ -35,8 +35,8 @@ export default function BookDetailScreen() {
 
     return (
       <ScoringScreen>
-        <View className="gap-[10px] pt-2">
-          <Text className="text-foreground font-display text-[19px] leading-[25px]">
+        <View className="gap-2.5 pt-2">
+          <Text className="text-foreground font-display text-body-lg">
             {isMissing ? 'This book has gone missing.' : 'This book is unavailable right now.'}
           </Text>
           <Text className="text-ink-muted font-body text-body-sm">
@@ -62,7 +62,7 @@ export default function BookDetailScreen() {
         className="flex-1"
         contentContainerStyle={{ gap: CONTENT_GAP }}
         showsVerticalScrollIndicator={false}>
-        <View className="flex-row items-start gap-[18px]">
+        <View className="flex-row items-start gap-4">
           <BookCover
             googleBooksId={book.googleBooksId}
             thumbnailUrl={book.thumbnailUrl}

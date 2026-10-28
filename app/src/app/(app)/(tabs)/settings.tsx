@@ -15,7 +15,7 @@ export default function SettingsScreen() {
 
   return (
     <View className="flex-1 gap-4">
-      <Text className="text-foreground font-display text-[28px] leading-[31px] tracking-tight">
+      <Text className="text-foreground font-display text-display-md tracking-tight">
         Settings
       </Text>
       <Text className="text-ink-muted font-body text-body">
