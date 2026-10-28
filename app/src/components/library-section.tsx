@@ -13,7 +13,7 @@ import { pressed } from '@/lib/pressed';
  */
 export function LibrarySection({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <View className="gap-[2px]">
+    <View className="gap-0.5">
       {/* The weight is part of `--text-eyebrow`, not an override. */}
       <Text className="text-ink-faint font-mono text-eyebrow tracking-eyebrow pb-2 font-bold uppercase">
         {label}
@@ -38,12 +38,12 @@ export function LibraryRow({
     <Pressable
       role="button"
       onPress={onPress}
-      className="border-border flex-row items-center gap-[14px] border-b px-1 py-3"
+      className="border-border flex-row items-center gap-3.5 border-b px-1 py-3"
       style={pressed}>
       {cover}
 
       <View className="min-w-0 flex-1">
-        <Text numberOfLines={1} className="text-foreground font-display text-base">
+        <Text numberOfLines={1} className="text-foreground font-display text-body">
           {title}
         </Text>
         <Text numberOfLines={1} className="text-ink-muted font-body text-body-sm">
@@ -72,12 +72,12 @@ export function LibraryRowSkeleton() {
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
       aria-hidden
-      className="border-border flex-row items-center gap-[14px] border-b px-1 py-3">
-      <Skeleton className="h-[70px] w-12 rounded-[6px]" />
+      className="border-border flex-row items-center gap-3.5 border-b px-1 py-3">
+      <Skeleton className="h-[70px] w-12 rounded-sm" />
 
-      <View className="min-w-0 flex-1 gap-[7px]">
+      <View className="min-w-0 flex-1 gap-2">
         <Skeleton className="h-3 w-[62%]" />
-        <Skeleton className="h-[10px] w-[38%]" />
+        <Skeleton className="h-2.5 w-[38%]" />
       </View>
     </View>
   );

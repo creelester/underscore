@@ -121,7 +121,7 @@ export function PlaylistHero({
         </Button>
 
         <Button variant="text" size="sm" aria-label="Playlist options" onPress={onOpenActions}>
-          <Text className="text-[17px]" style={{ color: INK }}>
+          <Text className="text-body-lg" style={{ color: INK }}>
             •••
           </Text>
         </Button>
@@ -136,7 +136,7 @@ export function PlaylistHero({
           {eyebrow}
         </Text>
         <Text
-          className="font-display mt-[6px] text-[30px] leading-[33px] tracking-tight"
+          className="font-display mt-1.5 text-display-md tracking-tight"
           style={{ color: INK }}>
           {title}
         </Text>

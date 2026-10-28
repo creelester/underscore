@@ -35,12 +35,12 @@ export function OptionGroup<T extends string>({
   const showFreeText = !!onOtherChange && value === OTHER;
 
   return (
-    <View className="gap-[9px]">
+    <View className="gap-2">
       <Text className="font-mono text-eyebrow uppercase tracking-eyebrow text-ink-faint">
         {label}
       </Text>
 
-      <View className="flex-row flex-wrap gap-[9px]">
+      <View className="flex-row flex-wrap gap-2">
         {options.map((option) => (
           <Chip
             key={option}

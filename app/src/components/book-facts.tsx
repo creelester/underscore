@@ -13,11 +13,11 @@ export function BookFacts({ facts }: { facts: { label: string; value: string }[]
       {facts.map((fact) => (
         <View
           key={fact.label}
-          className="border-border flex-row items-baseline justify-between gap-4 border-b py-[9px]">
+          className="border-border flex-row items-baseline justify-between gap-4 border-b py-2">
           <Text className="text-ink-faint font-mono text-eyebrow tracking-eyebrow shrink-0 font-bold uppercase">
             {fact.label}
           </Text>
-          <Text className="text-ink-muted font-display-medium shrink text-right text-sm">
+          <Text className="text-ink-muted font-display-medium shrink text-right text-body-sm">
             {fact.value}
           </Text>
         </View>

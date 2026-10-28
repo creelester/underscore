@@ -23,7 +23,7 @@ const TILE_RADIUS = 6;
 
 export function TrackRow({ track, mood }: { track: Track; mood: Mood }) {
   return (
-    <View className="border-border flex-row items-center gap-3 border-b py-[11px]">
+    <View className="border-border flex-row items-center gap-3 border-b py-3">
       <View
         className="shrink-0 overflow-hidden"
         style={{ width: TILE, height: TILE, borderRadius: TILE_RADIUS }}>
@@ -42,7 +42,7 @@ export function TrackRow({ track, mood }: { track: Track; mood: Mood }) {
       </View>
 
       <View className="min-w-0 flex-1">
-        <Text numberOfLines={1} className="text-foreground font-display text-[15px]">
+        <Text numberOfLines={1} className="text-foreground font-display text-body">
           {track.name}
         </Text>
         <Text numberOfLines={1} className="text-ink-muted font-body text-body-sm">
@@ -50,7 +50,7 @@ export function TrackRow({ track, mood }: { track: Track; mood: Mood }) {
         </Text>
       </View>
 
-      <Text className="text-ink-faint font-mono text-[12px]">
+      <Text className="text-ink-faint font-mono text-eyebrow">
         {trackDuration(track.durationMs)}
       </Text>
     </View>

@@ -88,7 +88,7 @@ export function Sheet({
               paddingTop: 20,
               paddingBottom: Math.max(insets.bottom, 26),
             }}>
-            <View className="bg-border-strong mb-[14px] h-1 w-10 self-center rounded-pill" />
+            <View className="bg-border-strong mb-3.5 h-1 w-10 self-center rounded-pill" />
             {children}
           </View>
         </Animated.View>
