@@ -48,7 +48,8 @@ export function Toast({ message }: { message?: string }) {
     <Animated.View
       pointerEvents="none"
       style={rise}
-      className="border-border rounded-[14px] border bg-[rgba(8,3,12,0.9)] px-4 py-[13px]">
+      className="border-border rounded-sm border bg-plum-950/90 px-4 py-3">
+      {/* Fixed near-white: the scrim is dark in both themes, so a token would flip it. */}
       <Text role="status" className="font-body text-body-sm text-center text-[#F8F1FB]">
         {message}
       </Text>

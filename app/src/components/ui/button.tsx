@@ -30,7 +30,7 @@ const buttonVariants = cva(
         // fill is painted by the gradient layer below, not by a background class
         primary: '',
         secondary: 'bg-secondary',
-        tertiary: 'bg-[#2B0F3D]',
+        tertiary: 'bg-plum-700',
         // no fill and no shadow — the label is the whole control
         text: '',
         destructive: 'bg-destructive',
@@ -54,12 +54,14 @@ const buttonVariants = cva(
 
 // `font-display`, not body: the bundle's label spec is `500 16px var(--font-display)`.
 const buttonTextVariants = cva(
-  'text-center font-display-medium text-base tracking-label uppercase',
+  'text-center font-display-medium text-body tracking-label uppercase',
   {
     variants: {
       variant: {
         primary: 'text-primary-foreground',
         secondary: 'text-foreground',
+        // Fixed cream, not a token: the fill is dark plum in both themes, so anything
+        // `-foreground` would flip to near-black in dark and vanish.
         tertiary: 'text-[#FFF8EF]',
         text: 'text-ink-muted',
         destructive: 'text-destructive-foreground',
@@ -67,7 +69,7 @@ const buttonTextVariants = cva(
       size: {
         default: '',
         lg: '',
-        sm: 'text-sm',
+        sm: 'text-body-sm',
         icon: '',
       },
     },

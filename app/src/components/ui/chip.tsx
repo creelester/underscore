@@ -65,7 +65,7 @@ export function Chip({
       <LinearGradient {...paint} style={styles.ring}>
         <View
           style={[styles.inner, { backgroundColor: isFilled ? 'transparent' : interior }]}>
-          <Text className="font-display text-sm" style={{ color: labelColor }}>
+          <Text className="font-display text-body-sm" style={{ color: labelColor }}>
             {isSelected ? label + CHECK : label}
           </Text>
         </View>

@@ -9,9 +9,9 @@ import { useTheme } from '@/lib/use-theme';
 /** Split because a password field puts the box on a row and the text on the input inside it. */
 const SIZES = {
   /** The design's standalone field: 52px tall on `--surface`. */
-  default: { box: 'h-[52px] bg-surface px-5', text: 'font-body text-[16px]' },
+  default: { box: 'h-[52px] bg-surface px-5', text: 'font-body text-body' },
   /** Sized and coloured to sit under a row of chips. */
-  sm: { box: 'h-[42px] bg-surface-2 px-[18px]', text: 'font-display text-[14px]' },
+  sm: { box: 'h-[42px] bg-surface-2 px-4', text: 'font-display text-body-sm' },
 } as const;
 
 const BOX = 'border-border rounded-pill w-full min-w-0 flex-row items-center border';
