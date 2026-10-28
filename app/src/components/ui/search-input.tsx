@@ -30,7 +30,7 @@ function SearchInput({
 
       <TextInput
         className={cn(
-          'text-foreground font-body h-[52px] flex-1 text-[16px]',
+          'text-foreground font-body h-[52px] flex-1 text-body',
           isClearable && 'pr-9',
           Platform.select({
             web: 'placeholder:text-ink-faint selection:bg-primary selection:text-primary-foreground outline-none',
@@ -49,7 +49,7 @@ function SearchInput({
           className='rounded-pill absolute right-2 h-[38px] w-[38px] items-center justify-center'
           style={pressed}
         >
-          <Text className='text-ink-faint font-display text-[17px]'>✕</Text>
+          <Text className='text-ink-faint font-display text-body-lg'>✕</Text>
         </Pressable>
       )}
     </View>

@@ -33,7 +33,7 @@ export function Skeleton({ className, style, ...props }: ViewProps) {
 
   return (
     <AnimatedView
-      className={cn('bg-ink-faint/25 rounded-[4px]', className)}
+      className={cn('bg-ink-faint/25 rounded-sm', className)}
       style={[
         reduceMotion
           ? { opacity: STILL_OPACITY }

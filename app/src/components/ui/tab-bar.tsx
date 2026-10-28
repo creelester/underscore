@@ -63,7 +63,7 @@ export const TabBarButton = forwardRef<
       <Icon size={26} strokeWidth={1.8} color={color} />
       <Text
         style={{ color }}
-        className={isFocused ? 'font-display text-[12px]' : 'font-body text-[12px]'}>
+        className={isFocused ? 'font-display text-eyebrow' : 'font-body text-eyebrow'}>
         {label}
       </Text>
     </Pressable>
