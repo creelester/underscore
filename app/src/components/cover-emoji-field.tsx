@@ -1,14 +1,13 @@
 import type { Mood } from '@underscore/shared';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Book } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { BookCover } from '@/components/book-cover';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
-import { moodGradient } from '@/lib/gradients';
 import { pressed, pressedStyle } from '@/lib/pressed';
-import { BORDER } from '@/lib/theme';
+import { BORDER, RADIUS } from '@/lib/theme';
 import { useTheme } from '@/lib/use-theme';
 
 /**
@@ -19,7 +18,7 @@ import { useTheme } from '@/lib/use-theme';
  * means the value cannot fail `ManualBookSchema`'s `Extended_Pictographic` check. The
  * prototype's interaction survives: tap the tile, a sheet rises.
  *
- * The two emoji sizes stay in pixels: a glyph sized to its box is artwork, not type.
+ * The palette's emoji size stays in pixels: a glyph sized to its cell is artwork, not type.
  */
 
 const TILE_WIDTH = 104;
@@ -50,7 +49,7 @@ export function CoverEmojiField({
   /** The tile stands in for artwork, so it tracks the mood picked below it. */
   moods: readonly Mood[];
 }) {
-  const { theme, shadows } = useTheme();
+  const { theme } = useTheme();
   const [isSheetOpen, setSheetOpen] = useState(false);
 
   return (
@@ -65,26 +64,25 @@ export function CoverEmojiField({
           accessibilityLabel={emoji ? 'Change cover' : 'Add cover'}
           onPress={() => setSheetOpen(true)}
           style={pressed}>
-          <View
-            className="overflow-hidden rounded-sm"
-            style={{
-              width: TILE_WIDTH,
-              height: TILE_HEIGHT,
-              boxShadow: shadows.soft,
-            }}>
-            {emoji ? (
-              <LinearGradient {...moodGradient(moods)} style={styles.tile}>
-                <Text className="text-[52px] leading-[62px]">{emoji}</Text>
-              </LinearGradient>
-            ) : (
-              <View
-                className="bg-surface-2 border-border gap-1.5"
-                style={[styles.tile, styles.empty]}>
-                <Book size={20} strokeWidth={1.5} color={theme.inkMuted} />
-                <Text className="text-ink-muted font-display text-body-sm">Add cover</Text>
-              </View>
-            )}
-          </View>
+          {emoji ? (
+            // The shelf row's own component, so the tile and the shelf cannot drift.
+            <BookCover
+              mood={moods[0]}
+              coverEmoji={emoji}
+              thumbnailUrl={null}
+              title=""
+              width={TILE_WIDTH}
+              height={TILE_HEIGHT}
+              radius={RADIUS.sm}
+            />
+          ) : (
+            <View
+              className="bg-surface-2 border-border gap-1.5 rounded-sm"
+              style={[styles.empty, { width: TILE_WIDTH, height: TILE_HEIGHT }]}>
+              <Book size={20} strokeWidth={1.5} color={theme.inkMuted} />
+              <Text className="text-ink-muted font-display text-body-sm">Add cover</Text>
+            </View>
+          )}
         </Pressable>
 
         {/* Where the prototype's third line is the year, which `Book` has no column for. */}
@@ -131,7 +129,7 @@ export function CoverEmojiField({
             ))}
           </View>
 
-          {!!emoji && (
+          {emoji && (
             <Pressable
               role="button"
               onPress={() => {
@@ -150,6 +148,9 @@ export function CoverEmojiField({
 }
 
 const styles = StyleSheet.create({
-  tile: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  empty: { borderWidth: BORDER.hairline },
+  empty: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: BORDER.hairline,
+  },
 });

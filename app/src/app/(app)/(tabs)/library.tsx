@@ -256,6 +256,7 @@ function SavedPlaylistRow({ playlist }: { playlist: Playlist }) {
       cover={
         <BookCover
           mood={playlist.moodProfile.mood[0]}
+          coverEmoji={playlist.book.coverEmoji}
           thumbnailUrl={playlist.book.thumbnailUrl}
           title={playlist.book.title}
           width={BOOK_COVER_WIDTH}
