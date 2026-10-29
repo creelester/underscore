@@ -27,7 +27,9 @@ export function NowCard({ playlist }: { playlist: Playlist }) {
       <LinearGradient {...moodGradient(playlist.moodProfile.mood)} style={{ height: BAND_HEIGHT }} />
 
       <View className="gap-1.5 px-4 py-4">
-        <Text className="text-ink-faint font-mono text-eyebrow tracking-eyebrow uppercase">
+        <Text
+          numberOfLines={1}
+          className="text-ink-faint font-mono text-eyebrow tracking-eyebrow uppercase">
           {playlistEyebrow(playlist)}
         </Text>
         <Text numberOfLines={2} className="text-foreground font-display text-title">
@@ -40,11 +42,14 @@ export function NowCard({ playlist }: { playlist: Playlist }) {
         <View className="flex-row gap-2.5 pt-2.5">
           {/* Not the design's in-app player, which the MVP has none of: the playlist's own
               play button is the hand-off to Spotify. */}
-          <Button className="flex-1" onPress={() => router.push(`/playlist/${playlist.id}`)}>
+          <Button className="flex-1 px-3" onPress={() => router.push(`/playlist/${playlist.id}`)}>
             <Text>Resume</Text>
           </Button>
-          <Button variant="secondary" className="flex-1" onPress={rescore}>
-            <Text>Story turned?</Text>
+          <Button variant="secondary" className="flex-1 px-3" onPress={rescore}>
+            {/* Uppercased and tracked, it overruns half a card on narrower phones. */}
+            <Text numberOfLines={1} adjustsFontSizeToFit>
+              Story turned?
+            </Text>
           </Button>
         </View>
       </View>
