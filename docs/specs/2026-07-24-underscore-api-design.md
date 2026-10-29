@@ -178,7 +178,7 @@ Only a Google volume reaches the Mood Engine. The by-hand path states its own mo
 
 | Endpoint                       | Auth             | Request                                               | Response (200)                                     | Errors                                                                                                |
 | ------------------------------ | ---------------- | ----------------------------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `POST /api/playlists/generate` | session-required | `{ googleBooksId: string }` **or** `{ manualBook: ManualBook }` (exactly one), plus optional `moodProfile: MoodProfile` and `readingContext: ReadingContext` | `Playlist` (auto-saved; `spotifyPlaylistId: null`) | `400 INVALID_INPUT`, `404 BOOK_NOT_FOUND`, `429 RATE_LIMITED` (10/hour), `502 UPSTREAM_UNAVAILABLE` (Claude or Spotify search down) |
+| `POST /api/playlists/generate` | session-required | `{ googleBooksId: string }`, `{ manualBook: ManualBook }` **or** `{ bookId: string }` (exactly one), plus `moodProfile: MoodProfile` (optional; required with `bookId`) and optional `readingContext: ReadingContext` | `Playlist` (auto-saved; `spotifyPlaylistId: null`) | `400 INVALID_INPUT`, `403 FORBIDDEN` (`bookId` the caller has never scored), `404 BOOK_NOT_FOUND`, `429 RATE_LIMITED` (10/hour), `502 UPSTREAM_UNAVAILABLE` (Claude or Spotify search down) |
 
 Example bodies — identical shape to `POST /api/mood-profile`, book path:
 
@@ -206,6 +206,8 @@ Manual-genre fallback path:
 `readingContext` carries the same screen's fine-tune answers. It is appended to the anchor prompt and nothing else — no schema field, no row, no effect on the mood read.
 
 Side effects: on the `googleBooksId` path, re-fetches the volume from Google Books and upserts the `Book` row (this is the only place a `GOOGLE_BOOKS` book is created — search does not write one) → runs Mood Engine → Playlist Builder (Claude, ~20 anchors) → Spotify app-level resolution (regenerates once if &lt;8 resolve) → persists `Playlist` + `PlaylistTrack` + upserted `Track` rows in a single transaction. The `manualBook` path skips both Google Books and the Mood Engine, and always **creates** its own `MANUAL_GENRE` row rather than reusing one: matching on `(source, title)` was harmless while the title was a genre word, but a reader-typed title, author and emoji would hand one reader's book to another's. Two by-hand scores of the same book make two rows. It is also the one path where Claude is told about a book the catalogue does not have — `manualBook.title` and `author` reach the anchor prompt, so a book Google Books came back empty on may still be one Claude knows. No partial `Playlist` row is ever left on failure.
+
+The `bookId` path re-scores a book the caller already has a playlist on (the Now tab's *Score again*). It reuses that `Book` row exactly as stored — no Google Books fetch, no Mood Engine run, no new row — and sends Claude the row's title and authors. It requires `moodProfile`, since there is no volume to read one off. The caller must already own a playlist on the book, which is what keeps one reader's by-hand row from being scored by another; anyone else gets `403`.
 
 ---
 
