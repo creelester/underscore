@@ -3,7 +3,7 @@ import { BookshelfQuerySchema, BookshelfResponseSchema, PlaylistSchema } from "@
 import { ApiError } from "../lib/apiError";
 import { asyncHandler } from "../lib/asyncHandler";
 import { requireSession } from "../middleware/requireSession";
-import { getPlaylist, listBookshelf } from "../services/bookshelf";
+import { deletePlaylist, getPlaylist, listBookshelf } from "../services/bookshelf";
 
 export const bookshelfRouter = Router();
 
@@ -27,5 +27,16 @@ bookshelfRouter.get(
   requireSession,
   asyncHandler(async (req, res) => {
     res.json(PlaylistSchema.parse(await getPlaylist(req.user!.id, req.params.playlistId)));
+  }),
+);
+
+/** DELETE /api/bookshelf/:playlistId — removes it from the shelf; Spotify's copy is untouched. */
+bookshelfRouter.delete(
+  "/:playlistId",
+  requireSession,
+  asyncHandler(async (req, res) => {
+    await deletePlaylist(req.user!.id, req.params.playlistId);
+
+    res.status(204).end();
   }),
 );

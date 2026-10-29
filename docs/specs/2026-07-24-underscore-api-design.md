@@ -211,10 +211,13 @@ Side effects: on the `googleBooksId` path, re-fetches the volume from Google Boo
 
 ## Bookshelf
 
-| Endpoint                         | Auth             | Request                                                 | Response (200)                                          | Errors                                                |
-| -------------------------------- | ---------------- | ------------------------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------- |
-| `GET /api/bookshelf`             | session-required | query: `cursor?: string`, `limit?: number` (default 20) | `{ playlists: Playlist[], nextCursor: string \| null }` | —                                                     |
-| `GET /api/bookshelf/:playlistId` | session-required | path: `playlistId`                                      | `Playlist`                                              | `404 PLAYLIST_NOT_FOUND`, `403 FORBIDDEN` (not owner) |
+| Endpoint                            | Auth             | Request                                                 | Response (200)                                          | Errors                                                |
+| ----------------------------------- | ---------------- | ------------------------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------- |
+| `GET /api/bookshelf`                | session-required | query: `cursor?: string`, `limit?: number` (default 20) | `{ playlists: Playlist[], nextCursor: string \| null }` | —                                                     |
+| `GET /api/bookshelf/:playlistId`    | session-required | path: `playlistId`                                      | `Playlist`                                              | `404 PLAYLIST_NOT_FOUND`, `403 FORBIDDEN` (not owner) |
+| `DELETE /api/bookshelf/:playlistId` | session-required | path: `playlistId`                                      | `204`, no body                                          | `404 PLAYLIST_NOT_FOUND`, `403 FORBIDDEN` (not owner) |
+
+`DELETE` removes the `Playlist` and its `PlaylistTrack` rows. `Book` and `Track` rows are shared and stay, and so does a copy already exported to the reader's Spotify.
 
 ---
 
