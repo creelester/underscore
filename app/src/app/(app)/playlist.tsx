@@ -14,6 +14,7 @@ import { ScoringProgress } from '@/components/scoring-progress';
 import { ScoringScreen } from '@/components/scoring-screen';
 import { Text } from '@/components/ui/text';
 import { useBook } from '@/features/books/use-book';
+import { useSavedPlaylist } from '@/features/bookshelf/use-saved-playlist';
 import { useGeneratePlaylist } from '@/features/playlists/use-generate-playlist';
 import { isApiError } from '@/lib/api-client';
 import { moodGradient } from '@/lib/gradients';
@@ -25,8 +26,8 @@ import { moodGradient } from '@/lib/gradients';
  * When it is missing — a deep link, or a reload — the server runs the Mood Engine
  * itself, which is why `moodProfile` is optional on the request.
  *
- * Reached with a `googleBooksId` from the mood screen, or a `manualBook` from the by-hand
- * one. Exactly one of the two: there is no volume behind a book the reader described.
+ * Reached with a `googleBooksId` from the mood screen, a `manualBook` from the by-hand
+ * one, or a `bookId` from the mood screen re-scoring a saved book. Exactly one of them.
  */
 
 const GENERATE_STEPS = [
@@ -64,18 +65,24 @@ function parseDraft<T>(schema: z.ZodType<T>, raw?: string): T | undefined {
 
 export default function PlaylistScreen() {
   const {
-    googleBooksId,
+    googleBooksId = '',
+    bookId,
+    playlistId = '',
     manualBook: manualBookParam,
     profile,
     context,
   } = useLocalSearchParams<{
-    googleBooksId: string;
+    googleBooksId?: string;
+    bookId?: string;
+    playlistId?: string;
     manualBook?: string;
     profile?: string;
     context?: string;
   }>();
 
   const { data: book } = useBook(googleBooksId);
+  // A re-score's book, already cached by the mood screen that sent it here.
+  const { data: rescored } = useSavedPlaylist(playlistId);
   const { mutate, data: playlist, error } = useGeneratePlaylist();
 
   // Memoised so the effect below is not re-armed by a fresh object on every render.
@@ -87,21 +94,22 @@ export default function PlaylistScreen() {
   const readingContext = useMemo(() => parseDraft(ReadingContextSchema, context), [context]);
 
   // The catalogue's title, or the one the reader typed.
-  const scoring = book?.title ?? manualBook?.title;
+  const scoring = book?.title ?? rescored?.book.title ?? manualBook?.title;
 
   // Fired from an effect because generation is a write with no user gesture behind it on
   // this screen — the gesture was `Generate playlist →` on the one before. The ref keeps
   // a re-render from starting a second playlist.
   const started = useRef(false);
   useEffect(() => {
-    if (started.current || (!googleBooksId && !manualBook)) return;
+    if (started.current || (!googleBooksId && !manualBook && !bookId)) return;
     started.current = true;
 
-    const request: GeneratePlaylistRequest = manualBook
-      ? { manualBook, moodProfile, readingContext }
-      : { googleBooksId, moodProfile, readingContext };
+    let request: GeneratePlaylistRequest;
+    if (bookId) request = { bookId, moodProfile, readingContext };
+    else if (manualBook) request = { manualBook, moodProfile, readingContext };
+    else request = { googleBooksId, moodProfile, readingContext };
     mutate(request);
-  }, [googleBooksId, manualBook, moodProfile, readingContext, mutate]);
+  }, [googleBooksId, bookId, manualBook, moodProfile, readingContext, mutate]);
 
   if (error) {
     const message = isApiError(error) ? error.message : 'Something went wrong.';
