@@ -29,6 +29,7 @@ import { Chip } from '@/components/ui/chip';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { useBook } from '@/features/books/use-book';
+import { useSavedPlaylist } from '@/features/bookshelf/use-saved-playlist';
 import { useMoodProfile } from '@/features/mood/use-mood-profile';
 import { isApiError } from '@/lib/api-client';
 import { MOOD_INK, moodGradient } from '@/lib/gradients';
@@ -58,10 +59,19 @@ const ANALYZE_STEPS = [
 ] as const;
 
 export default function MoodScreen() {
-  const { googleBooksId } = useLocalSearchParams<{ googleBooksId: string }>();
-  const { data: profile, error } = useMoodProfile(googleBooksId);
+  // A `playlistId` is a re-score: its saved read seeds the chips and nothing is analysed.
+  const { googleBooksId = '', playlistId = '' } = useLocalSearchParams<{
+    googleBooksId?: string;
+    playlistId?: string;
+  }>();
+  const read = useMoodProfile(googleBooksId);
+  const saved = useSavedPlaylist(playlistId);
   // Usually already cached by book detail; the banner just falls back to the swatch.
-  const { data: book } = useBook(googleBooksId);
+  const { data: volume } = useBook(googleBooksId);
+
+  const profile = playlistId ? saved.data?.moodProfile : read.data;
+  const error = playlistId ? saved.error : read.error;
+  const book = playlistId ? saved.data?.book : volume;
 
   // Held as an override rather than seeded from the profile, so no effect is needed to
   // resync when the query resolves.
@@ -109,6 +119,9 @@ export default function MoodScreen() {
   const setDetail = (next: Partial<ReadingContext>) => setContext({ ...context, ...next });
 
   if (!profile) {
+    // A saved read is one fetch, not an analysis worth narrating.
+    if (playlistId) return <ScoringScreen />;
+
     return (
       <ScoringScreen>
         <ScoringProgress
@@ -131,7 +144,9 @@ export default function MoodScreen() {
         showsVerticalScrollIndicator={false}>
         <View className="w-full flex-none flex-row gap-3">
           <BookCover
-            googleBooksId={googleBooksId}
+            googleBooksId={book?.googleBooksId ?? googleBooksId}
+            coverEmoji={saved.data?.book.coverEmoji}
+            mood={playlistId ? current.mood[0] : undefined}
             thumbnailUrl={book?.thumbnailUrl ?? null}
             title={book?.title ?? ''}
             width={COVER_WIDTH}
@@ -270,7 +285,9 @@ export default function MoodScreen() {
             router.push({
               pathname: '/playlist',
               params: {
-                googleBooksId,
+                ...(saved.data
+                  ? { bookId: saved.data.book.id, playlistId }
+                  : { googleBooksId }),
                 // An opened-but-empty field is an answer nobody gave.
                 profile: JSON.stringify({
                   ...profile,
