@@ -37,7 +37,19 @@ type Transaction = Parameters<Parameters<PrismaClient["$transaction"]>[0]>[0];
  * A supplied profile is used verbatim — it is the one the user saw and corrected. The
  * volume is still fetched: the `Book` row is minted from the catalogue, never the request.
  */
-async function resolveProfile(request: GeneratePlaylistRequest) {
+async function resolveProfile(userId: string, request: GeneratePlaylistRequest) {
+  if (request.bookId) {
+    const existing = await prisma.book.findUnique({ where: { id: request.bookId } });
+    if (!existing) throw ApiError.bookNotFound();
+    // A by-hand row is one reader's own; having scored it is what makes it theirs.
+    const owned = await prisma.playlist.findFirst({
+      where: { userId, bookId: existing.id },
+      select: { id: true },
+    });
+    if (!owned) throw ApiError.forbidden();
+
+    return { profile: request.moodProfile!, book: null, existing };
+  }
   if (request.manualBook) {
     return { profile: request.moodProfile ?? manualProfile(request.manualBook), book: null };
   }
@@ -141,10 +153,16 @@ export async function generatePlaylist(
   userId: string,
   request: GeneratePlaylistRequest,
 ): Promise<Playlist> {
-  const { profile, book } = await resolveProfile(request);
+  const resolved = await resolveProfile(userId, request);
+  const { profile, book } = resolved;
+  const existing = "existing" in resolved ? resolved.existing : undefined;
   // The by-hand path used to send Claude no book at all — only a genre word. It gets what
   // the reader typed instead, which Claude may recognise even where the catalogue did not.
-  const bookRef = book ?? manualBookRef(request.manualBook);
+  const bookRef =
+    book ??
+    (existing
+      ? { title: existing.title, authors: existing.authors }
+      : manualBookRef(request.manualBook));
 
   const context = request.readingContext;
   const exclude = await recentTracks(userId);
@@ -176,7 +194,7 @@ export async function generatePlaylist(
   // The transaction opens only once the network work is done, so no connection is held
   // across a Claude round-trip.
   return prisma.$transaction(async (tx) => {
-    const bookRow = await upsertBook(tx, book, request.manualBook);
+    const bookRow = existing ?? (await upsertBook(tx, book, request.manualBook));
     const trackIds = await upsertTracks(tx, tracks);
 
     const playlist = await tx.playlist.create({
