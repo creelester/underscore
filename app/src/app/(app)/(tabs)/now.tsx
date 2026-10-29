@@ -75,15 +75,19 @@ export default function NowScreen() {
 function AddButton() {
   const { theme, shadows } = useTheme();
 
+  // The gradient is the laid-out box, not an absolute fill: on iOS that escapes the round clip.
   return (
-    <Pressable
-      role="button"
-      aria-label="Score a new book"
-      onPress={() => router.navigate('/library')}
-      style={(state) => [styles.add, { boxShadow: shadows.glow }, pressed(state)]}>
-      <LinearGradient {...GRAD_WARM} style={[StyleSheet.absoluteFill, styles.add]} />
-      <Plus size={20} strokeWidth={2.4} color={theme.primaryInk} />
-    </Pressable>
+    <View style={[styles.add, { boxShadow: shadows.glow }]}>
+      <Pressable
+        role="button"
+        aria-label="Score a new book"
+        onPress={() => router.navigate('/library')}
+        style={pressed}>
+        <LinearGradient {...GRAD_WARM} style={styles.add}>
+          <Plus size={20} strokeWidth={2.4} color={theme.primaryInk} />
+        </LinearGradient>
+      </Pressable>
+    </View>
   );
 }
 
