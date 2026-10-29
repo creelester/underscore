@@ -5,10 +5,12 @@ import {
   type Playlist,
 } from '@underscore/shared';
 import * as Linking from 'expo-linking';
+import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView, Share, View } from 'react-native';
 
 import { AppBackdrop } from '@/components/app-backdrop';
+import { DeletePlaylistSheet } from '@/components/delete-playlist-sheet';
 import { PlaylistActionsSheet } from '@/components/playlist-actions-sheet';
 import { PlaylistHero } from '@/components/playlist-hero';
 import { PlaylistSavedSheet } from '@/components/playlist-saved-sheet';
@@ -17,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { AppTabBar } from '@/components/ui/tab-bar';
 import { Text } from '@/components/ui/text';
 import { Toast } from '@/components/ui/toast';
+import { useDeletePlaylist } from '@/features/bookshelf/use-delete-playlist';
 import { useLinkSpotify } from '@/features/music-connector/use-link-spotify';
 import { useMusicConnectorStatus } from '@/features/music-connector/use-music-connector-status';
 import { useExportPlaylist, useSyncPlaylist } from '@/features/playlists/use-export-playlist';
@@ -29,7 +32,7 @@ import { moodSentence, playlistEyebrow, trackSummary } from '@/lib/playlist-disp
  *
  * Every control here goes through Spotify, so each one connects it first if it has to.
  * Nothing on screen is inert: the actions the design shows that have no endpoint yet
- * (rename, regenerate, delete, removing a track) are absent, not disabled.
+ * (rename, regenerate, removing a track) are absent, not disabled.
  */
 
 const TOAST_MS = 2200;
@@ -37,12 +40,14 @@ const TOAST_MS = 2200;
 export function PlaylistView({ playlist }: { playlist: Playlist }) {
   const [actionsOpen, setActionsOpen] = useState(false);
   const [savedOpen, setSavedOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [toast, setToast] = useState<string>();
 
   const { data: status } = useMusicConnectorStatus();
   const link = useLinkSpotify();
   const exportPlaylist = useExportPlaylist(playlist.id);
   const sync = useSyncPlaylist(playlist.id);
+  const deletePlaylist = useDeletePlaylist(playlist.id);
 
   const flash = useFlash(setToast);
 
@@ -118,6 +123,24 @@ export function PlaylistView({ playlist }: { playlist: Playlist }) {
       flash('Synced with Spotify.');
     } catch (error) {
       flash(isApiError(error) ? error.message : 'Could not reach Spotify.');
+    }
+  };
+
+  const confirmDelete = () => {
+    setActionsOpen(false);
+    setDeleteOpen(true);
+  };
+
+  const remove = async () => {
+    try {
+      await deletePlaylist.mutateAsync();
+      setDeleteOpen(false);
+      // No `Playlist deleted` toast, unlike the prototype: it would unmount with this
+      // screen, and the row gone from the library says it.
+      router.dismissTo('/library');
+    } catch (error) {
+      setDeleteOpen(false);
+      flash(isApiError(error) ? error.message : 'Could not delete this playlist.');
     }
   };
 
@@ -211,7 +234,17 @@ export function PlaylistView({ playlist }: { playlist: Playlist }) {
         summary={summary}
         onSync={resync}
         onShare={share}
+        onDelete={confirmDelete}
         isSyncing={sync.isPending}
+      />
+
+      <DeletePlaylistSheet
+        isOpen={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        onConfirm={remove}
+        title={playlist.name}
+        isExported={isSaved}
+        isDeleting={deletePlaylist.isPending}
       />
 
       <PlaylistSavedSheet
