@@ -17,11 +17,6 @@ const BAND_HEIGHT = 132;
 export function NowCard({ playlist }: { playlist: Playlist }) {
   const { book } = playlist;
 
-  const rescore = () =>
-    book.googleBooksId
-      ? router.push(`/book/${book.googleBooksId}`)
-      : router.push({ pathname: '/score-by-hand', params: { title: book.title } });
-
   return (
     <CardShell>
       <LinearGradient {...moodGradient(playlist.moodProfile.mood)} style={{ height: BAND_HEIGHT }} />
@@ -45,10 +40,13 @@ export function NowCard({ playlist }: { playlist: Playlist }) {
           <Button className="flex-1 px-3" onPress={() => router.push(`/playlist/${playlist.id}`)}>
             <Text>Resume</Text>
           </Button>
-          <Button variant="secondary" className="flex-1 px-3" onPress={rescore}>
-            {/* Uppercased and tracked, it overruns half a card on narrower phones. */}
+          {/* The design's `Story turned?`, renamed by Cristina; re-scores this book's own row. */}
+          <Button
+            variant="secondary"
+            className="flex-1 px-3"
+            onPress={() => router.push({ pathname: '/mood', params: { playlistId: playlist.id } })}>
             <Text numberOfLines={1} adjustsFontSizeToFit>
-              Story turned?
+              Score again
             </Text>
           </Button>
         </View>
