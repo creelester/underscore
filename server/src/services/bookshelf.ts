@@ -35,15 +35,32 @@ export async function listBookshelf(
   };
 }
 
+function assertOwned<T extends { userId: string }>(row: T | null, userId: string): T {
+  if (!row) throw ApiError.playlistNotFound();
+  // Distinct from a 404 on purpose: the id is real, the caller just does not own it.
+  if (row.userId !== userId) throw ApiError.forbidden();
+  return row;
+}
+
 export async function getPlaylist(userId: string, playlistId: string): Promise<Playlist> {
   const row = await prisma.playlist.findUnique({
     where: { id: playlistId },
     include: withRelations,
   });
 
-  if (!row) throw ApiError.playlistNotFound();
-  // Distinct from a 404 on purpose: the id is real, the caller just does not own it.
-  if (row.userId !== userId) throw ApiError.forbidden();
+  return toApiPlaylist(assertOwned(row, userId));
+}
 
-  return toApiPlaylist(row);
+/**
+ * Its tracks go with it by cascade; the `Book` and `Track` rows stay, being shared. So does
+ * any copy in the reader's Spotify, which is theirs once exported.
+ */
+export async function deletePlaylist(userId: string, playlistId: string): Promise<void> {
+  const row = await prisma.playlist.findUnique({
+    where: { id: playlistId },
+    select: { userId: true },
+  });
+  assertOwned(row, userId);
+
+  await prisma.playlist.delete({ where: { id: playlistId } });
 }
