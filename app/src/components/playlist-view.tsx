@@ -5,6 +5,7 @@ import {
   type Playlist,
 } from '@underscore/shared';
 import * as Linking from 'expo-linking';
+import { Play } from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView, Share, View } from 'react-native';
 
@@ -165,18 +166,15 @@ export function PlaylistView({ playlist }: { playlist: Playlist }) {
               <Text>{isSaved ? 'Saved ✓' : 'Save to Spotify'}</Text>
             </Button>
             {/* The design plays here in-app. There is no in-app player, and the MVP's
-                playback is the hand-off, so this opens Spotify — saving first if needed.
-                Sized by class, not `style`: a style prop is dropped on native. Square at
-                the row's height, so the base `rounded-pill` reads as a circle. */}
+                playback is the hand-off, so this opens Spotify — saving first if needed. */}
             <Button
               size="lg"
-              className="w-14 px-0"
+              icon={Play}
+              iconFill
               aria-label="Open in Spotify"
               disabled={isPending}
-              onPress={openInSpotify}>
-              {/* Variation selector: bare U+25B6 renders as the blue emoji triangle. */}
-              <Text className="text-[17px]">▶︎</Text>
-            </Button>
+              onPress={openInSpotify}
+            />
           </View>
 
           <View>
