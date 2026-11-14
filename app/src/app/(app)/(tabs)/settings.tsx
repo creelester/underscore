@@ -5,6 +5,7 @@ import { ScrollView, View } from 'react-native';
 
 import { SettingsRow, SettingsSection } from '@/components/settings-row';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { VerifyEmailCard } from '@/components/verify-email-card';
 import { useBookshelf } from '@/features/bookshelf/use-bookshelf';
@@ -13,6 +14,8 @@ import { useLinkSpotify } from '@/features/music-connector/use-link-spotify';
 import { useMusicConnectorStatus } from '@/features/music-connector/use-music-connector-status';
 import { MOOD_STOPS, angleToPoints } from '@/lib/gradients';
 import { authClient, useSessionUser } from '@/lib/auth-client';
+import { setThemeOverride } from '@/lib/theme-preference';
+import { useTheme } from '@/lib/use-theme';
 
 const AVATAR = 60;
 const SERVICE_ICON = 36;
@@ -21,6 +24,7 @@ const DIAGONAL = angleToPoints(135);
 
 export default function SettingsScreen() {
   const user = useSessionUser();
+  const { isLight } = useTheme();
 
   return (
     <ScrollView
@@ -44,6 +48,19 @@ export default function SettingsScreen() {
             <View
               className="bg-surface-raised rounded-pill"
               style={{ width: SERVICE_ICON, height: SERVICE_ICON }}
+            />
+          }
+        />
+      </SettingsSection>
+
+      <SettingsSection label="Preferences">
+        <SettingsRow
+          label="Light theme"
+          trailing={
+            <Switch
+              checked={isLight}
+              onCheckedChange={(light) => setThemeOverride(light ? 'light' : 'dark')}
+              accessibilityLabel="Light theme"
             />
           }
         />
