@@ -38,13 +38,13 @@ export function ResendCodeLink({
       disabled={waiting || disabled}
       onPress={onPress}
       style={pressed}
-      className="items-center">
+      className="items-start">
       <Text className="text-ink-muted font-body text-body-sm">
         Didn&apos;t get it?{' '}
         {waiting ? (
-          <Text className="text-ink-faint">Send a new code in {secondsLeft}s</Text>
+          <Text className="text-ink-faint text-body-sm">Send a new code in {secondsLeft}s</Text>
         ) : (
-          <Text className="text-primary">Send a new code</Text>
+          <Text className="text-primary text-body-sm">Send a new code</Text>
         )}
       </Text>
     </Pressable>
