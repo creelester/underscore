@@ -27,7 +27,7 @@ export const { signIn, signUp, signOut, useSession } = authClient;
  * The session's `data` infers as `never` through the plugin cast above, so the fields we
  * actually read are named here rather than asserted at each call site.
  */
-export type SessionUser = { email: string; emailVerified: boolean };
+export type SessionUser = { name: string; email: string; emailVerified: boolean };
 
 export function useSessionUser(): SessionUser | undefined {
   const { data } = useSession();
