@@ -26,8 +26,8 @@ import { useTheme } from '@/lib/use-theme';
 /**
  * The library home and the entry point to a new score; there is no separate grid or
  * pushed search screen. Saved playlists come first — the three newest under `RECENT`,
- * the rest under `YOUR PLAYLISTS` — and Google Books is the fallback, reached only
- * once the shelf has nothing matching the query.
+ * the rest under `YOUR PLAYLISTS`. A query searches both: shelf matches first, then
+ * Google Books in its own section, so a saved book never hides the catalogue's copy.
  */
 
 const SEARCH_DEBOUNCE_MS = 700;
@@ -87,24 +87,16 @@ export default function LibraryScreen() {
   const rest = saved.slice(RECENT_COUNT);
 
   const isLongEnough = trimmed.length >= MIN_QUERY_LENGTH;
-  // The catalogue is the fallback, and an unloaded shelf is not the same as an empty
-  // one: searching Google before it lands would skip over a book already saved.
   const isShelfSettled = !bookshelf.isPending;
-  const isFallbackActive =
-    isShelfSettled && settled.length >= MIN_QUERY_LENGTH && saved.length === 0;
-  const search = useBookSearch(isFallbackActive ? settled : '');
-  const results = isFallbackActive ? (search.data ?? []) : [];
+  const isCatalogueActive = settled.length >= MIN_QUERY_LENGTH;
+  const search = useBookSearch(isCatalogueActive ? settled : '');
+  const results = isCatalogueActive ? (search.data ?? []) : [];
 
   // Any non-empty query, not `isLongEnough`: one character shows the searching state
   // while `MIN_QUERY_LENGTH` still holds the request back.
   const isSearching =
-    !!trimmed &&
-    saved.length === 0 &&
-    (!isShelfSettled ||
-      !isLongEnough ||
-      settled !== trimmed ||
-      search.isFetching);
-  const isFailed = isFallbackActive && !search.isFetching && search.isError;
+    !!trimmed && (!isLongEnough || settled !== trimmed || search.isFetching);
+  const isFailed = isCatalogueActive && !search.isFetching && search.isError;
   const isNoMatch =
     isLongEnough &&
     saved.length === 0 &&
@@ -112,32 +104,26 @@ export default function LibraryScreen() {
     !isFailed &&
     results.length === 0;
 
-  let sectionLabel: string;
-  if (!trimmed) {
-    sectionLabel = 'Your playlists';
-  } else if (saved.length > 0) {
-    sectionLabel = 'In your library';
-  } else if (isSearching) {
-    sectionLabel = 'Searching…';
+  let catalogueLabel: string;
+  if (isSearching) {
+    catalogueLabel = 'Searching…';
   } else if (isFailed) {
-    sectionLabel = 'Search unavailable';
+    catalogueLabel = 'Search unavailable';
   } else if (results.length > 0) {
     const plural = results.length === 1 ? 'result' : 'results';
-    sectionLabel = `Found ${results.length} ${plural}`;
+    catalogueLabel = `Found ${results.length} ${plural}`;
   } else {
-    sectionLabel = 'No results';
+    catalogueLabel = 'No results';
   }
 
+  const isShelfLoading = !isShelfSettled && !trimmed;
   // Gated on there being nothing to show rather than on `isSearching` alone, so
   // refining a term keeps the previous rows up until the debounce settles
   // instead of dropping to placeholders between every edit.
-  const isSkeletonVisible =
-    (isSearching && results.length === 0) || (!isShelfSettled && !trimmed);
+  const isCatalogueSkeletonVisible = isSearching && results.length === 0;
 
-  // A shelf whose every match already fits in `RECENT` leaves nothing below it, so the
-  // second section only earns its label once there are rows or a search to report.
-  const isSectionVisible =
-    rest.length > 0 || isSkeletonVisible || (!!trimmed && saved.length === 0);
+  // A shelf whose every match already fits in `RECENT` leaves nothing below it.
+  const isShelfSectionVisible = rest.length > 0 || isShelfLoading;
   // A query replaces the empty state, so the two are never on screen together.
   const isEmptyLibraryVisible =
     isShelfSettled && saved.length === 0 && !trimmed;
@@ -169,16 +155,19 @@ export default function LibraryScreen() {
           </LibrarySection>
         )}
 
-        {isSectionVisible && (
-          <LibrarySection label={sectionLabel}>
-            {isSkeletonVisible &&
-              Array.from({ length: SKELETON_ROWS }, (_, index) => (
-                <LibraryRowSkeleton key={index} />
-              ))}
+        {isShelfSectionVisible && (
+          <LibrarySection label={trimmed ? 'In your library' : 'Your playlists'}>
+            {isShelfLoading && <SkeletonRows />}
 
             {rest.map((playlist) => (
               <SavedPlaylistRow key={playlist.id} playlist={playlist} />
             ))}
+          </LibrarySection>
+        )}
+
+        {!!trimmed && (
+          <LibrarySection label={catalogueLabel}>
+            {isCatalogueSkeletonVisible && <SkeletonRows />}
 
             {results.map((book) => (
               <LibraryRow
@@ -203,8 +192,8 @@ export default function LibraryScreen() {
         {/* Search answers 502 when the catalogue is down; "no match" would blame the
             query for an outage. */}
         {isFailed && (
-          <View className='gap-[10px] px-1 pt-5 pb-1'>
-            <Text className='text-foreground font-display text-[19px] leading-[25px]'>
+          <View className='gap-2.5 px-1 pt-5 pb-1'>
+            <Text className='text-foreground font-display text-title'>
               Search is unavailable right now.
             </Text>
             <Text className='text-ink-muted font-body text-body-sm'>
@@ -214,8 +203,8 @@ export default function LibraryScreen() {
         )}
 
         {isNoMatch && (
-          <View className='gap-[10px] px-1 pt-5 pb-1'>
-            <Text className='text-foreground font-display text-[19px] leading-[25px]'>
+          <View className='gap-2.5 px-1 pt-5 pb-1'>
+            <Text className='text-foreground font-display text-title'>
               No match for “{trimmed}”.
             </Text>
             <Text className='text-ink-muted font-body text-body-sm'>
@@ -245,6 +234,12 @@ export default function LibraryScreen() {
       </Button>
     </View>
   );
+}
+
+function SkeletonRows() {
+  return Array.from({ length: SKELETON_ROWS }, (_, index) => (
+    <LibraryRowSkeleton key={index} />
+  ));
 }
 
 function SavedPlaylistRow({ playlist }: { playlist: Playlist }) {
