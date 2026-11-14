@@ -132,6 +132,7 @@ export const SPOTIFY_PLAYLIST_SCOPES = ["playlist-modify-private"] as const;
 export const MusicConnectorStatusResponseSchema = z.object({
   linked: z.boolean(),
   provider: z.literal("spotify"),
+  avatarUrl: z.string().nullable(),
 });
 export type MusicConnectorStatusResponse = z.infer<typeof MusicConnectorStatusResponseSchema>;
 

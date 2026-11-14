@@ -16,6 +16,7 @@ export function useDisconnectSpotify() {
       queryClient.setQueryData<MusicConnectorStatusResponse>(musicConnectorKeys.status(), {
         linked: false,
         provider: 'spotify',
+        avatarUrl: null,
       });
     },
   });
