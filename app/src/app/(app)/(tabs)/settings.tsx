@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link } from 'expo-router';
 import { useMemo } from 'react';
@@ -14,6 +15,7 @@ import { useLinkSpotify } from '@/features/music-connector/use-link-spotify';
 import { useMusicConnectorStatus } from '@/features/music-connector/use-music-connector-status';
 import { MOOD_STOPS, angleToPoints } from '@/lib/gradients';
 import { authClient, useSessionUser } from '@/lib/auth-client';
+import { MOTION } from '@/lib/theme';
 import { setThemeOverride } from '@/lib/theme-preference';
 import { useTheme } from '@/lib/use-theme';
 
@@ -84,6 +86,7 @@ export default function SettingsScreen() {
 
 function Profile({ name }: { name: string }) {
   const bookshelf = useBookshelf();
+  const avatarUrl = useMusicConnectorStatus().data?.avatarUrl;
   const booksScored = useMemo(
     () => new Set(bookshelf.data?.map((playlist) => playlist.book.id)).size,
     [bookshelf.data],
@@ -91,11 +94,21 @@ function Profile({ name }: { name: string }) {
 
   return (
     <View className="flex-row items-center gap-4">
-      <LinearGradient
-        colors={MOOD_STOPS.nostalgic}
-        {...DIAGONAL}
-        style={{ width: AVATAR, height: AVATAR, borderRadius: AVATAR / 2 }}
-      />
+      {/* Cristina's call: the Spotify picture, with the design's gradient as the fallback. */}
+      {avatarUrl ? (
+        <Image
+          source={avatarUrl}
+          transition={MOTION.durMed}
+          accessibilityIgnoresInvertColors
+          style={{ width: AVATAR, height: AVATAR, borderRadius: AVATAR / 2 }}
+        />
+      ) : (
+        <LinearGradient
+          colors={MOOD_STOPS.nostalgic}
+          {...DIAGONAL}
+          style={{ width: AVATAR, height: AVATAR, borderRadius: AVATAR / 2 }}
+        />
+      )}
       <View className="min-w-0 flex-1">
         <Text numberOfLines={1} className="text-foreground font-display text-body">
           {name}
