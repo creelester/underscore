@@ -63,15 +63,6 @@ export const ManualBookSchema = z.object({
 export type ManualBook = z.infer<typeof ManualBookSchema>;
 
 /**
- * A Google volume id, not an internal book id: search persists nothing, so that is the
- * only handle the client holds. The server re-fetches the volume and mints the `Book`
- * row itself, so book metadata is never client-supplied on that path.
- */
-const bookOrManualRefinement = <T extends { googleBooksId?: string; manualBook?: unknown }>(
-  data: T,
-) => (data.googleBooksId ? !data.manualBook : !!data.manualBook);
-
-/**
  * Only a Google volume reaches the Mood Engine. The by-hand path states its own mood, so
  * there is nothing here to analyse and nothing ever called this with a genre.
  */
@@ -87,9 +78,15 @@ export type MoodProfileResponse = z.infer<typeof MoodProfileResponseSchema>;
 
 export const GeneratePlaylistRequestSchema = z
   .object({
+    /**
+     * A volume id, not an internal one: search persists nothing, so it is all a new book
+     * has. The server re-fetches it, so book metadata is never client-supplied.
+     */
     googleBooksId: z.string().optional(),
     /** The reader's own description of a book the catalogue could not find. */
     manualBook: ManualBookSchema.optional(),
+    /** A book this reader already scored, re-scored in place on its stored metadata. */
+    bookId: z.string().optional(),
     /**
      * The profile the user was shown, corrections included. Omitted, the server runs
      * the Mood Engine itself — sent, it is used verbatim, so a corrected mood reaches
@@ -102,8 +99,13 @@ export const GeneratePlaylistRequestSchema = z
      */
     readingContext: ReadingContextSchema.optional(),
   })
-  .refine(bookOrManualRefinement, {
-    message: "Exactly one of googleBooksId or manualBook must be set",
+  .refine(
+    (data) => [data.googleBooksId, data.manualBook, data.bookId].filter(Boolean).length === 1,
+    { message: "Exactly one of googleBooksId, manualBook or bookId must be set" },
+  )
+  // There is no volume to run the Mood Engine on: the mood screen always sends the read.
+  .refine((data) => !data.bookId || !!data.moodProfile, {
+    message: "A re-score needs a moodProfile",
   });
 export type GeneratePlaylistRequest = z.infer<typeof GeneratePlaylistRequestSchema>;
 

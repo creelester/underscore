@@ -27,11 +27,13 @@ export function LibraryRow({
   title,
   meta,
   cover,
+  trailing,
   onPress,
 }: {
   title: string;
   meta: string;
   cover: ReactNode;
+  trailing?: ReactNode;
   onPress: () => void;
 }) {
   return (
@@ -50,6 +52,8 @@ export function LibraryRow({
           {meta}
         </Text>
       </View>
+
+      {trailing}
     </Pressable>
   );
 }
