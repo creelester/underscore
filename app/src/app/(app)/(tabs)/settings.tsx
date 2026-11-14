@@ -4,6 +4,7 @@ import { Link } from 'expo-router';
 import { useMemo } from 'react';
 import { ScrollView, View } from 'react-native';
 
+import { AppIconPicker } from '@/components/app-icon-picker';
 import { SettingsRow, SettingsSection } from '@/components/settings-row';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -55,6 +56,7 @@ export default function SettingsScreen() {
       </SettingsSection>
 
       <SettingsSection label="Preferences">
+        <AppIconPicker />
         <SettingsRow
           label="Light theme"
           trailing={

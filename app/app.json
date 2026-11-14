@@ -40,7 +40,96 @@
         }
       ],
       "expo-secure-store",
-      "expo-image"
+      "expo-image",
+      [
+        "expo-alternate-app-icons",
+        [
+          {
+            "name": "Glow",
+            "ios": {
+              "light": "./assets/ios/light-glow.png",
+              "dark": "./assets/ios/dark-glow.png"
+            },
+            "android": {
+              "foregroundImage": "./assets/android/dark-glow-foreground.png",
+              "backgroundImage": "./assets/android/dark-glow-background.png",
+              "monochromeImage": "./assets/android/monochrome.png"
+            }
+          },
+          {
+            "name": "Melancholy",
+            "ios": {
+              "light": "./assets/ios/light-melancholy.png",
+              "dark": "./assets/ios/dark-melancholy.png"
+            },
+            "android": {
+              "foregroundImage": "./assets/android/dark-melancholy-foreground.png",
+              "backgroundImage": "./assets/android/dark-melancholy-background.png",
+              "monochromeImage": "./assets/android/monochrome.png"
+            }
+          },
+          {
+            "name": "Dreamy",
+            "ios": {
+              "light": "./assets/ios/light-dreamy.png",
+              "dark": "./assets/ios/dark-dreamy.png"
+            },
+            "android": {
+              "foregroundImage": "./assets/android/dark-dreamy-foreground.png",
+              "backgroundImage": "./assets/android/dark-dreamy-background.png",
+              "monochromeImage": "./assets/android/monochrome.png"
+            }
+          },
+          {
+            "name": "Cozy",
+            "ios": {
+              "light": "./assets/ios/light-cozy.png",
+              "dark": "./assets/ios/dark-cozy.png"
+            },
+            "android": {
+              "foregroundImage": "./assets/android/dark-cozy-foreground.png",
+              "backgroundImage": "./assets/android/dark-cozy-background.png",
+              "monochromeImage": "./assets/android/monochrome.png"
+            }
+          },
+          {
+            "name": "Hopeful",
+            "ios": {
+              "light": "./assets/ios/light-hopeful.png",
+              "dark": "./assets/ios/dark-hopeful.png"
+            },
+            "android": {
+              "foregroundImage": "./assets/android/dark-hopeful-foreground.png",
+              "backgroundImage": "./assets/android/dark-hopeful-background.png",
+              "monochromeImage": "./assets/android/monochrome.png"
+            }
+          },
+          {
+            "name": "Tense",
+            "ios": {
+              "light": "./assets/ios/light-tense.png",
+              "dark": "./assets/ios/dark-tense.png"
+            },
+            "android": {
+              "foregroundImage": "./assets/android/dark-tense-foreground.png",
+              "backgroundImage": "./assets/android/dark-tense-background.png",
+              "monochromeImage": "./assets/android/monochrome.png"
+            }
+          },
+          {
+            "name": "Nostalgic",
+            "ios": {
+              "light": "./assets/ios/light-nostalgic.png",
+              "dark": "./assets/ios/dark-nostalgic.png"
+            },
+            "android": {
+              "foregroundImage": "./assets/android/dark-nostalgic-foreground.png",
+              "backgroundImage": "./assets/android/dark-nostalgic-background.png",
+              "monochromeImage": "./assets/android/monochrome.png"
+            }
+          }
+        ]
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
