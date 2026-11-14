@@ -1,6 +1,6 @@
 import { expoClient } from '@better-auth/expo/client';
 import type { BetterAuthClientPlugin } from 'better-auth/client';
-import { emailOTPClient } from 'better-auth/client/plugins';
+import { emailOTPClient, inferAdditionalFields } from 'better-auth/client/plugins';
 import { createAuthClient } from 'better-auth/react';
 import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
@@ -18,7 +18,12 @@ const expoAuthPlugin = expoClient({
 
 export const authClient = createAuthClient({
   baseURL: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000',
-  plugins: [emailOTPClient(), expoAuthPlugin],
+  plugins: [
+    emailOTPClient(),
+    expoAuthPlugin,
+    // Spelled out rather than inferred from the server's `auth`, which the app cannot import.
+    inferAdditionalFields({ user: { allowExplicit: { type: 'boolean', required: false } } }),
+  ],
 });
 
 export const { signIn, signUp, signOut, useSession } = authClient;
@@ -27,7 +32,12 @@ export const { signIn, signUp, signOut, useSession } = authClient;
  * The session's `data` infers as `never` through the plugin cast above, so the fields we
  * actually read are named here rather than asserted at each call site.
  */
-export type SessionUser = { name: string; email: string; emailVerified: boolean };
+export type SessionUser = {
+  name: string;
+  email: string;
+  emailVerified: boolean;
+  allowExplicit: boolean;
+};
 
 export function useSessionUser(): SessionUser | undefined {
   const { data } = useSession();

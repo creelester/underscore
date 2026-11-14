@@ -42,6 +42,7 @@ const SearchResultSchema = z.object({
           id: z.string(),
           name: z.string(),
           duration_ms: z.number(),
+          explicit: z.boolean(),
           artists: z.array(z.object({ name: z.string() })),
           album: z
             .object({ images: z.array(z.object({ url: z.string() })).optional() })
@@ -91,23 +92,30 @@ async function accessToken(): Promise<string> {
   return fetchToken();
 }
 
-async function search({ artist, title }: AnchorSuggestion, token: string) {
+/** Deep enough to usually reach the clean edit of the same recording. */
+const CLEAN_SEARCH_DEPTH = 5;
+
+async function search({ artist, title }: AnchorSuggestion, token: string, limit: number) {
   return api.get("/search", {
     // Field filters, not the bare words: an anchor is an artist and a title, and
     // Spotify matches those far better than it matches free text.
-    params: { q: `track:"${title}" artist:"${artist}"`, type: "track", limit: 1 },
+    params: { q: `track:"${title}" artist:"${artist}"`, type: "track", limit },
     headers: { Authorization: `Bearer ${token}` },
   });
 }
 
 /** Null when the catalog has no match — the caller drops the anchor and carries on. */
-async function resolveAnchor(anchor: AnchorSuggestion): Promise<Track | null> {
-  let response = await search(anchor, await accessToken());
+async function resolveAnchor(
+  anchor: AnchorSuggestion,
+  allowExplicit: boolean,
+): Promise<Track | null> {
+  const limit = allowExplicit ? 1 : CLEAN_SEARCH_DEPTH;
+  let response = await search(anchor, await accessToken(), limit);
 
   // A token can be revoked before it expires. One refresh; a second 401 is credentials.
   if (response.status === 401) {
     cachedToken = null;
-    response = await search(anchor, await accessToken());
+    response = await search(anchor, await accessToken(), limit);
     if (response.status === 401) {
       throw ApiError.upstreamUnavailable("Spotify rejected the app credentials");
     }
@@ -119,7 +127,7 @@ async function resolveAnchor(anchor: AnchorSuggestion): Promise<Track | null> {
     throw ApiError.upstreamUnavailable("Spotify returned an unrecognized search result", parsed.error);
   }
 
-  const item = parsed.data.tracks?.items[0];
+  const item = parsed.data.tracks?.items.find((track) => allowExplicit || !track.explicit);
   if (!item) return null;
 
   return {
@@ -135,12 +143,17 @@ async function resolveAnchor(anchor: AnchorSuggestion): Promise<Track | null> {
  * Resolved tracks in anchor order, misses dropped. Deduplicated by track id: Claude
  * repeats itself across 20 suggestions, and two anchors can resolve to one recording.
  */
-export async function resolveAnchors(anchors: AnchorSuggestion[]): Promise<Track[]> {
+export async function resolveAnchors(
+  anchors: AnchorSuggestion[],
+  { allowExplicit }: { allowExplicit: boolean },
+): Promise<Track[]> {
   const resolved: (Track | null)[] = [];
 
   for (let start = 0; start < anchors.length; start += SEARCH_CONCURRENCY) {
     const batch = anchors.slice(start, start + SEARCH_CONCURRENCY);
-    resolved.push(...(await Promise.all(batch.map(resolveAnchor))));
+    resolved.push(
+      ...(await Promise.all(batch.map((anchor) => resolveAnchor(anchor, allowExplicit)))),
+    );
   }
 
   const seen = new Set<string>();

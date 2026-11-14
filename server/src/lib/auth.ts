@@ -65,6 +65,12 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+  // A Better Auth field so the app sets it with `updateUser` rather than an endpoint of ours.
+  user: {
+    additionalFields: {
+      allowExplicit: { type: "boolean", required: false, defaultValue: true, input: true },
+    },
+  },
   // Sign-in is deliberately not gated on this. Verifying is what lets a social provider link
   // into an existing password account: Better Auth refuses that link while the local address
   // is unverified, which is what made Google sign-in fail with `account_not_linked`.

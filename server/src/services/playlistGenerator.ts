@@ -168,7 +168,11 @@ export async function generatePlaylist(
   const exclude = await recentTracks(userId);
 
   let suggested = await suggestAnchors({ profile, book: bookRef, context, exclude });
-  let tracks = await resolveAnchors(suggested.tracks);
+  const { allowExplicit } = await prisma.user.findUniqueOrThrow({
+    where: { id: userId },
+    select: { allowExplicit: true },
+  });
+  let tracks = await resolveAnchors(suggested.tracks, { allowExplicit });
 
   // Claude names tracks that turn out not to exist in the catalog; too few surviving
   // means the suggestions were the problem, so ask once more before settling — this time
@@ -182,7 +186,7 @@ export async function generatePlaylist(
       context,
       exclude: [...exclude, ...tried],
     });
-    tracks = await resolveAnchors(suggested.tracks);
+    tracks = await resolveAnchors(suggested.tracks, { allowExplicit });
   }
 
   if (tracks.length === 0) {

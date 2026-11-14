@@ -1,3 +1,4 @@
+import { useMutation } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link } from 'expo-router';
 import { useMemo } from 'react';
@@ -64,6 +65,7 @@ export default function SettingsScreen() {
             />
           }
         />
+        {user && <ExplicitRow allowExplicit={user.allowExplicit} />}
       </SettingsSection>
 
       {/* Reset password is ours, not the design's: without it the signed-in reset flow
@@ -143,6 +145,29 @@ function SpotifyRow() {
             <Text>{isLinked ? 'Disconnect' : 'Connect'}</Text>
           </Button>
         )
+      }
+    />
+  );
+}
+
+/** Applies from the next playlist on; the ones already scored keep their tracks. */
+function ExplicitRow({ allowExplicit }: { allowExplicit: boolean }) {
+  const update = useMutation({
+    mutationFn: async (next: boolean) => {
+      const { error } = await authClient.updateUser({ allowExplicit: next });
+      if (error) throw error;
+    },
+  });
+
+  return (
+    <SettingsRow
+      label="Explicit tracks"
+      trailing={
+        <Switch
+          checked={update.isPending ? update.variables : allowExplicit}
+          onCheckedChange={(next) => update.mutate(next)}
+          accessibilityLabel="Explicit tracks"
+        />
       }
     />
   );

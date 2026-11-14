@@ -39,6 +39,7 @@ export function toSpotifyTrack(anchor: FixtureAnchor) {
     id: trackId(anchor),
     name: anchor.title,
     duration_ms: 180_000,
+    explicit: false,
     artists: [{ name: anchor.artist }],
     // No images: album art would be one more thing for the browser to fetch, and
     // `albumArtUrl` is nullable precisely because Spotify omits it.
