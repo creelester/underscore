@@ -53,6 +53,7 @@ export default function SettingsScreen() {
         />
       </SettingsSection>
 
+      {/* The design's App icon, Nudge and Explicit tracks rows are cut from the MVP. */}
       <SettingsSection label="Preferences">
         <SettingsRow
           label="Light theme"
