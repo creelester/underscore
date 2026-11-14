@@ -20,6 +20,7 @@ export const THEME = {
     btnSecondaryFill: 'rgba(43,15,61,0.10)',
     btnTertiaryFill: '#2B0F3D',
     btnTertiaryInk: '#FFF8EF',
+    destructive: '#EA0C5F',
   },
   dark: {
     background: '#0B0410',
@@ -37,6 +38,7 @@ export const THEME = {
     btnSecondaryFill: 'rgba(255,255,255,0.12)',
     btnTertiaryFill: '#2B0F3D',
     btnTertiaryInk: '#FFF8EF',
+    destructive: '#EA0C5F',
   },
 } as const;
 
