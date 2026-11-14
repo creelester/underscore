@@ -1,22 +1,19 @@
 import type { Playlist } from '@underscore/shared';
 import { router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Play, Plus } from 'lucide-react-native';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
 import { BookCover } from '@/components/book-cover';
 import { LibraryRow, LibrarySection } from '@/components/library-section';
 import { NowCard, NowCardSkeleton } from '@/components/now-card';
+import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { useBookshelf } from '@/features/bookshelf/use-bookshelf';
 import { isApiError } from '@/lib/api-client';
-import { GRAD_WARM } from '@/lib/gradients';
 import { moodSentence } from '@/lib/playlist-display';
-import { pressed } from '@/lib/pressed';
 import { CONTENT_GAP, RADIUS } from '@/lib/theme';
 import { useTheme } from '@/lib/use-theme';
 
-const ADD_SIZE = 40;
 const SECTION_TILE = 46;
 
 export default function NowScreen() {
@@ -30,9 +27,13 @@ export default function NowScreen() {
     <View className="flex-1 gap-4">
       <View className="flex-row items-center justify-between">
         <Text className="text-foreground font-display text-display-md tracking-tight">
-          Now playing
+          Now Reading
         </Text>
-        <AddButton />
+        <Button
+          icon={Plus}
+          aria-label="Score a new book"
+          onPress={() => router.navigate('/library')}
+        />
       </View>
 
       <ScrollView
@@ -72,25 +73,6 @@ export default function NowScreen() {
   );
 }
 
-function AddButton() {
-  const { theme, shadows } = useTheme();
-
-  // The gradient is the laid-out box, not an absolute fill: on iOS that escapes the round clip.
-  return (
-    <View style={[styles.add, { boxShadow: shadows.glow }]}>
-      <Pressable
-        role="button"
-        aria-label="Score a new book"
-        onPress={() => router.navigate('/library')}
-        style={pressed}>
-        <LinearGradient {...GRAD_WARM} style={styles.add}>
-          <Plus size={20} strokeWidth={2.4} color={theme.primaryInk} />
-        </LinearGradient>
-      </Pressable>
-    </View>
-  );
-}
-
 function SectionRow({ playlist }: { playlist: Playlist }) {
   const { theme } = useTheme();
 
@@ -113,13 +95,3 @@ function SectionRow({ playlist }: { playlist: Playlist }) {
     />
   );
 }
-
-const styles = StyleSheet.create({
-  add: {
-    width: ADD_SIZE,
-    height: ADD_SIZE,
-    borderRadius: RADIUS.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
