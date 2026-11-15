@@ -1,7 +1,11 @@
 node_modules/
 dist/
+# Every .env: config/env.ts loads `.env.${NODE_ENV}`, so .env.production is a file it
+# would read and git would otherwise commit.
 .env
-.env.local
+.env.*
+!.env.example
+!.env.test
 *.log
 
 # Expo
@@ -22,6 +26,9 @@ docs/design/
 
 # Prisma
 server/prisma/migrations/dev.db
+
+# Agent worktrees — a checkout per agent, and never ours to commit.
+.claude/worktrees/
 
 # macOS
 .DS_Store
