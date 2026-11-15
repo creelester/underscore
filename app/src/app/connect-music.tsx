@@ -11,8 +11,9 @@ import { moodGradient } from '@/lib/gradients';
 import { pressedStyle } from '@/lib/pressed';
 
 /**
- * Onboarding step 4 — "Connect music". Frontend only: both rows land on sign-up until
- * the Spotify connector ships. Apple Music is a "Coming soon" row, inert by design.
+ * Onboarding step 4 — "Connect music". Both rows land on sign-up because linking needs a
+ * session and there is none yet here; the real flow is `useLinkSpotify`, from Settings or
+ * the first export. Apple Music is a "Coming soon" row, inert by design.
  */
 export default function ConnectMusicScreen() {
   const insets = useSafeAreaInsets();
@@ -45,7 +46,6 @@ export default function ConnectMusicScreen() {
         </Text>
 
         <View className='mt-1 gap-3'>
-          {/* TODO: start the Spotify OAuth flow here once the connector endpoints exist. */}
           <Pressable
             role='button'
             onPress={() => router.push('/sign-up')}
@@ -95,7 +95,7 @@ export default function ConnectMusicScreen() {
           <Text>Connect later</Text>
         </Button>
         <Text className='text-ink-faint font-body text-center text-body-sm'>
-          You can hear 30-second previews without connecting
+          You can build and browse playlists without connecting
         </Text>
       </View>
     </View>
