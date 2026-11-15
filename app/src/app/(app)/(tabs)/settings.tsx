@@ -4,6 +4,8 @@ import { Link } from 'expo-router';
 import { useMemo } from 'react';
 import { ScrollView, View } from 'react-native';
 
+import AppleMusicIcon from '@/assets/images/apple-music-icon.svg';
+import SpotifyIcon from '@/assets/images/spotify-icon.svg';
 import { SettingsRow, SettingsSection } from '@/components/settings-row';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -41,20 +43,17 @@ export default function SettingsScreen() {
       {user && !user.emailVerified && <VerifyEmailCard email={user.email} />}
 
       <SettingsSection label="Connected">
+        {/* Cristina's call: the services' own marks, where the design has gradient discs. */}
         <SpotifyRow />
         <SettingsRow
           dimmed
           title="Apple Music"
           subtitle="Coming soon"
-          leading={
-            <View
-              className="bg-surface-raised rounded-pill"
-              style={{ width: SERVICE_ICON, height: SERVICE_ICON }}
-            />
-          }
+          leading={<AppleMusicIcon width={SERVICE_ICON} height={SERVICE_ICON} />}
         />
       </SettingsSection>
 
+      {/* The design's App icon, Nudge and Explicit tracks rows are cut from the MVP. */}
       <SettingsSection label="Preferences">
         <SettingsRow
           label="Light theme"
@@ -139,13 +138,7 @@ function SpotifyRow() {
     <SettingsRow
       title="Spotify"
       subtitle={status.isPending ? undefined : subtitle}
-      leading={
-        <LinearGradient
-          colors={MOOD_STOPS.hopeful}
-          {...DIAGONAL}
-          style={{ width: SERVICE_ICON, height: SERVICE_ICON, borderRadius: SERVICE_ICON / 2 }}
-        />
-      }
+      leading={<SpotifyIcon width={SERVICE_ICON} height={SERVICE_ICON} />}
       trailing={
         !status.isPending && (
           <Button
