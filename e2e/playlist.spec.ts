@@ -1,10 +1,11 @@
 import type { Page } from "@playwright/test";
-import { PACING_LABELS, PlaylistSchema } from "@underscore/shared";
+import { ApiErrorSchema, PACING_LABELS, PlaylistSchema } from "@underscore/shared";
 
 import { fixtureBook, type FixtureBook } from "./fixtures/catalog";
 import { FIXTURE_ANCHORS } from "./fixtures/tracks";
 import {
   GENERATE_TIMEOUT_MS,
+  createShelf,
   expectTrackRow,
   expectedPlaylistName,
   logIn,
@@ -32,9 +33,14 @@ import { expect, savedPlaylistFor, test } from "./shelf";
 const TESSELLATE = fixtureBook("e2e-tessellate");
 /** The one shelf book whose anchors come back unnamed, so its playlist falls back. */
 const LANTERN = fixtureBook("e2e-lantern");
+/** A second playlist to keep, so a shelf that loses one still has a row to show. */
+const SALTMARSH = fixtureBook("e2e-saltmarsh");
 
 /** A mood in the reader's own words, as the mood screen's `Something else` would send it. */
 const TYPED_MOOD = "like rain on a tin roof";
+
+/** The confirm sheet's heading, which is what says it is open. */
+const DELETE_CONFIRM = "Delete this playlist?";
 
 const capitalize = (word: string) => word[0].toUpperCase() + word.slice(1);
 
@@ -48,8 +54,12 @@ const moodLine = (book: FixtureBook, typed?: string) => {
   return `${moods.join(", ")} · ${PACING_LABELS[book.analysis.pacing]}`;
 };
 
+/** A saved playlist's row in the library, which is also the way into its screen. */
+const libraryRow = (page: Page, saved: SavedPlaylist) =>
+  page.getByRole("button", { name: expectedPlaylistName(saved.book) });
+
 async function openFromLibrary(page: Page, saved: SavedPlaylist) {
-  await page.getByRole("button", { name: expectedPlaylistName(saved.book) }).click();
+  await libraryRow(page, saved).click();
   await expect(page).toHaveURL(new RegExp(`/playlist/${saved.id}$`));
 }
 
@@ -143,5 +153,97 @@ test.describe("a saved playlist", () => {
     // Read back off the stored profile, so the phrase survived generation rather than
     // only reaching Claude. It sits among the moods, not in a line of its own.
     await expect(page.getByText(moodLine(LANTERN, TYPED_MOOD), { exact: true })).toBeVisible();
+  });
+});
+
+/** The `•••` menu, as far as the confirm. */
+async function openDeleteConfirm(page: Page) {
+  await page.getByRole("button", { name: "Playlist options" }).click();
+  await page.getByRole("button", { name: "Delete playlist", exact: true }).click();
+  await expect(page.getByText(DELETE_CONFIRM, { exact: true })).toBeVisible();
+}
+
+test.describe("deleting a saved playlist", () => {
+  // A shelf apiece below, so the same budget the export specs take for a generation.
+  test.describe.configure({ timeout: 90_000 });
+
+  test("keeps it when the reader backs out of the confirm", async ({ shelf, page }) => {
+    // The shared shelf will do: backing out is what this test asserts, so it writes nothing.
+    const saved = savedPlaylistFor(shelf, TESSELLATE.googleBooksId);
+    await logIn(page, shelf);
+    await openFromLibrary(page, saved);
+
+    await openDeleteConfirm(page);
+    await page.getByRole("button", { name: "Keep", exact: true }).click();
+
+    await expect(page.getByText(DELETE_CONFIRM, { exact: true })).toBeHidden();
+    await expect(page).toHaveURL(new RegExp(`/playlist/${saved.id}$`));
+    await expect(
+      playlistHeader(page).getByText(expectedPlaylistName(TESSELLATE), { exact: true }),
+    ).toBeVisible();
+
+    // Back to the library and reloaded, so the row is one the shelf still serves rather
+    // than one React Query is still holding.
+    await page.goBack();
+    await expect(page).toHaveURL(/\/library$/);
+    await page.reload();
+    await expect(libraryRow(page, saved)).toBeVisible();
+  });
+
+  test("takes it off the shelf and lands back on the library", async ({ page }) => {
+    const shelf = await createShelf("playlist-delete", [SALTMARSH, TESSELLATE]);
+    const [kept, deleted] = shelf.playlists;
+    await logIn(page, shelf);
+    await openFromLibrary(page, deleted);
+
+    await openDeleteConfirm(page);
+    await page.getByRole("button", { name: "Delete", exact: true }).click();
+
+    await expect(page).toHaveURL(/\/library$/);
+    // The kept row first, so the shelf has loaded before the absence is believed.
+    await expect(libraryRow(page, kept)).toBeVisible();
+    await expect(libraryRow(page, deleted)).toHaveCount(0);
+
+    // Reloaded, because a row gone from the cache is not a playlist gone from the shelf.
+    await page.reload();
+    await expect(libraryRow(page, kept)).toBeVisible();
+    await expect(libraryRow(page, deleted)).toHaveCount(0);
+  });
+});
+
+/**
+ * `assertOwned` in server/src/services/bookshelf.ts, which nothing on screen can reach:
+ * the app only ever offers a reader their own playlists.
+ */
+test.describe("deleting a playlist that is not yours", () => {
+  test.describe.configure({ timeout: 90_000 });
+  test.skip(({ isMobile }) => isMobile, "API-level; a second device project adds no coverage");
+
+  test("refuses a stranger's delete and leaves the playlist with its owner", async () => {
+    const owner = await signUpOverApi("playlist-owner");
+    const stranger = await signUpOverApi("playlist-stranger");
+
+    try {
+      const generated = await owner.api.post("/api/playlists/generate", {
+        data: { googleBooksId: SALTMARSH.googleBooksId },
+        timeout: GENERATE_TIMEOUT_MS,
+      });
+      expect(generated.ok(), await generated.text()).toBe(true);
+      const playlist = PlaylistSchema.parse(await generated.json());
+
+      const refused = await stranger.api.delete(`/api/bookshelf/${playlist.id}`);
+      expect(refused.status()).toBe(403);
+      expect(ApiErrorSchema.parse(await refused.json())).toMatchObject({
+        code: "FORBIDDEN",
+        retryable: false,
+      });
+
+      const stillThere = await owner.api.get(`/api/bookshelf/${playlist.id}`);
+      expect(stillThere.status()).toBe(200);
+      expect(PlaylistSchema.parse(await stillThere.json()).id).toBe(playlist.id);
+    } finally {
+      await owner.api.dispose();
+      await stranger.api.dispose();
+    }
   });
 });
