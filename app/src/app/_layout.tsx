@@ -29,6 +29,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AnimatedSplashOverlay } from '@/components/splash-overlay';
 import { useSession } from '@/lib/auth-client';
 import { queryClient } from '@/lib/query-client';
+import { readThemeOverride } from '@/lib/theme-preference';
 import { NAV_THEME } from '@/lib/theme';
 import { useTheme } from '@/lib/use-theme';
 
@@ -41,15 +42,23 @@ SplashScreen.preventAutoHideAsync();
  * at mount. Web seeds to `'light'` from the absent `dark` class instead of falling back
  * to the system, so it needs the scheme resolved by hand.
  *
- * `darkMode` stays `'class'`, not `'media'`, so a Profile theme override can call
- * `colorScheme.set()` later — under `'media'` that throws.
+ * A stored Settings override replaces all of this on both platforms. `darkMode` stays
+ * `'class'`, not `'media'`, because `colorScheme.set()` throws under `'media'`.
  */
 function useDeviceColorScheme() {
   useEffect(() => {
+    const override = readThemeOverride();
+    if (override) {
+      colorScheme.set(override);
+      return;
+    }
     if (Platform.OS !== 'web') return;
 
-    const apply = (scheme: ColorSchemeName | null | undefined) =>
+    // Re-read per change: the reader may have picked a theme since mount.
+    const apply = (scheme: ColorSchemeName | null | undefined) => {
+      if (readThemeOverride()) return;
       colorScheme.set(scheme === 'dark' ? 'dark' : 'light');
+    };
 
     apply(Appearance.getColorScheme());
     const subscription = Appearance.addChangeListener((preferences) =>
