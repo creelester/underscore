@@ -35,6 +35,17 @@ const TokenSchema = z.object({
   scope: z.string().optional(),
 });
 
+/** `images` needs no scope beyond the playlist one we ask for. */
+const ProfileSchema = z.object({
+  id: z.string(),
+  images: z.array(z.object({ url: z.string(), width: z.number().nullable() })).optional(),
+});
+
+function widestImage(images: z.infer<typeof ProfileSchema>["images"]): string | null {
+  if (!images?.length) return null;
+  return images.reduce((wide, image) => ((image.width ?? 0) > (wide.width ?? 0) ? image : wide)).url;
+}
+
 function credentials(): string {
   if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
     throw ApiError.upstreamUnavailable("Spotify is not configured");
@@ -104,13 +115,15 @@ export async function completeSpotifyAuth(userId: string, code: string): Promise
   const profile = await api.get("/me", {
     headers: { Authorization: `Bearer ${token.data.access_token}` },
   });
-  const spotifyUserId = z.object({ id: z.string() }).safeParse(profile.data);
-  if (!spotifyUserId.success) {
+  const me = ProfileSchema.safeParse(profile.data);
+  if (!me.success) {
     throw ApiError.upstreamUnavailable("Spotify returned an unrecognized profile");
   }
 
   const fields = {
-    spotifyUserId: spotifyUserId.data.id,
+    spotifyUserId: me.data.id,
+    // Null as well as set, so reconnecting clears a picture removed on Spotify.
+    avatarUrl: widestImage(me.data.images),
     accessToken: token.data.access_token,
     refreshToken: token.data.refresh_token,
     accessTokenExpiresAt: new Date(Date.now() + token.data.expires_in * 1000),
@@ -166,10 +179,14 @@ export async function spotifyAccessToken(userId: string): Promise<string> {
 export async function spotifyLinkStatus(userId: string): Promise<MusicConnectorStatusResponse> {
   const connection = await prisma.spotifyConnection.findUnique({
     where: { userId },
-    select: { scope: true },
+    select: { scope: true, avatarUrl: true },
   });
 
-  return { linked: hasPlaylistScopes(connection?.scope), provider: "spotify" };
+  return {
+    linked: hasPlaylistScopes(connection?.scope),
+    provider: "spotify",
+    avatarUrl: connection?.avatarUrl ?? null,
+  };
 }
 
 export async function disconnectSpotify(userId: string): Promise<void> {
