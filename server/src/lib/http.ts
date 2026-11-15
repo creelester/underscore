@@ -31,6 +31,9 @@ export function createHttpClient({
     baseURL,
     timeout: timeoutMs,
     headers: { Accept: "application/json" },
+    // No upstream redirects an API call, and following one can carry the Authorization
+    // header off-origin. `validateStatus` below turns the unfollowed 3xx into an outage.
+    maxRedirects: 0,
     // Everything outside 2xx and the pass-through list is an outage.
     validateStatus: (status) =>
       (status >= 200 && status < 300) || passThroughStatuses.includes(status),
