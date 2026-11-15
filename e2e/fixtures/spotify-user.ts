@@ -75,3 +75,12 @@ export const readerSpotify = {
     return revoked.get(token);
   },
 };
+
+/** What `GET /me` serves as the reader's picture, and what the connector should store. */
+export const FIXTURE_SPOTIFY_AVATAR_URL = "https://i.scdn.co/image/e2e-fixture-avatar-640";
+
+/** Narrowest first, so pinning the avatar above proves the widest was the one picked. */
+export const FIXTURE_SPOTIFY_IMAGES = [
+  { url: "https://i.scdn.co/image/e2e-fixture-avatar-64", width: 64 },
+  { url: FIXTURE_SPOTIFY_AVATAR_URL, width: 640 },
+];
