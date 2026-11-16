@@ -132,6 +132,12 @@ export type BookshelfResponse = z.infer<typeof BookshelfResponseSchema>;
  */
 export const SPOTIFY_PLAYLIST_SCOPES = ["playlist-modify-private"] as const;
 
+/** Whether the splash offers `Try the demo` — false wherever the account is unconfigured. */
+export const DemoAvailabilityResponseSchema = z.object({
+  available: z.boolean(),
+});
+export type DemoAvailabilityResponse = z.infer<typeof DemoAvailabilityResponseSchema>;
+
 export const MusicConnectorStatusResponseSchema = z.object({
   linked: z.boolean(),
   provider: z.literal("spotify"),

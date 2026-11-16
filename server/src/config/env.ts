@@ -42,6 +42,10 @@ const EnvSchema = z
     SPOTIFY_API_BASE_URL: z.string().url().default("https://api.spotify.com/v1"),
     SEED_USER_EMAIL: z.string().optional(),
     SEED_USER_PASSWORD: z.string().optional(),
+    // The shared account behind `Try the demo`. Empty disables the route, so an
+    // environment that never set them has no way in rather than a broken button.
+    DEMO_USER_EMAIL: z.string().default(""),
+    DEMO_USER_PASSWORD: z.string().default(""),
   })
   // Better Auth reads the cookie's Secure flag off this URL's scheme, so an http:// value
   // in production ships session cookies without it — the one misconfiguration here that
