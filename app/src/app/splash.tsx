@@ -1,6 +1,6 @@
 import { router, useFocusEffect, type Href } from 'expo-router';
 import { useCallback, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -14,6 +14,7 @@ import { LogoLockup } from '@/components/logo-lockup';
 import { LOCKUP_TOP, SplashBackdrop } from '@/components/splash-backdrop';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
+import { useDemoAvailability, useDemoSession } from '@/features/demo/use-demo-session';
 import { useTheme } from '@/lib/use-theme';
 
 // `PUSH_AT_MS` lands short of `ZOOM_MS` so the pushed screen fades in while the disc is
@@ -31,6 +32,8 @@ export default function SplashScreen() {
   const { isLight } = useTheme();
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
+  const demoAvailability = useDemoAvailability();
+  const demo = useDemoSession();
 
   const zoom = useSharedValue(0);
   const column = useSharedValue(1);
@@ -82,6 +85,15 @@ export default function SplashScreen() {
     pushTimer.current = setTimeout(() => router.push(href), PUSH_AT_MS);
   };
 
+  /** No `leave()`: the fall animates towards a pushed screen, and this one replaces. */
+  const startDemo = async () => {
+    const opened = await demo
+      .mutateAsync()
+      .then(() => true)
+      .catch(() => false);
+    if (opened) router.replace('/');
+  };
+
   // The animated node carries no `className`: NativeWind's cssInterop and Reanimated both
   // rewrite `style`, and the class styles lose. Layout sits on the plain child. Insets are
   // applied by hand because `<SafeAreaView>` would drop the design's 34px bottom gap.
@@ -110,9 +122,26 @@ export default function SplashScreen() {
               onPress={() => leave('/how-it-works')}>
               <Text>Get started →</Text>
             </Button>
+            {/* Ours, not the design's: a portfolio visitor should reach a real shelf
+                without signing up. Web only — the session arrives as a browser cookie,
+                which native has no jar for. */}
+            {Platform.OS === 'web' && demoAvailability.data?.available && (
+              <Button
+                size="lg"
+                variant="secondary"
+                disabled={demo.isPending}
+                onPress={startDemo}>
+                <Text>{demo.isPending ? 'Opening the demo…' : 'Try the demo'}</Text>
+              </Button>
+            )}
             <Button size="lg" variant="secondary" onPress={() => leave('/login')}>
               <Text>I already have an account</Text>
             </Button>
+            {demo.isError && (
+              <Text className="text-ink-faint font-body text-body-sm text-center">
+                The demo could not be opened. Try signing in instead.
+              </Text>
+            )}
           </View>
         </View>
       </Animated.View>
