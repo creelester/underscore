@@ -227,7 +227,10 @@ The `bookId` path re-scores a book the caller already has a playlist on (the Now
 
 | Endpoint                                 | Auth             | Request            | Response (200)                                                                                                                                        | Errors                                                                                                                                                                                                                          |
 | ---------------------------------------- | ---------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/music-connector/status`        | session-required | —                  | `{ linked: boolean, provider: "spotify" }`                                                                                                            | —                                                                                                                                                                                                                               |
+| `GET /api/music-connector/status`        | session-required | —                  | `{ linked: boolean, provider: "spotify", avatarUrl: string \| null }`                                                                                 | —                                                                                                                                                                                                                               |
+| `GET /api/music-connector/authorize`     | session-required | query: `returnUrl` | `{ url: string }` — the consent URL to open                                                                                                           | `400 INVALID_INPUT` (unrecognized `returnUrl`)                                                                                                                                                                                  |
+| `GET /api/music-connector/callback`      | **none**         | query: `code`, `state`, `error` | `302` back to `returnUrl` with `?spotify=connected` or `?spotify=denied`                                                                 | `400 INVALID_INPUT` (missing or spent `state`)                                                                                                                                                                                  |
+| `DELETE /api/music-connector`            | session-required | —                  | `204` — nothing already in Spotify is touched                                                                                                         | `401 UNAUTHORIZED`                                                                                                                                                                                                              |
 | `POST /api/playlists/:playlistId/export` | session-required | path: `playlistId` | `{ spotifyPlaylistId: string, webUrl: string, deepLinkUri: string }` (idempotent — returns the existing export if `spotifyPlaylistId` is already set) | `404 PLAYLIST_NOT_FOUND`, `403 FORBIDDEN` (not owner), `409 SPOTIFY_NOT_LINKED` (client should prompt `link-social`), `401 SPOTIFY_TOKEN_EXPIRED` (client should prompt re-link), `502 UPSTREAM_UNAVAILABLE` (Spotify API down) |
 | `PUT /api/playlists/:playlistId/export`  | session-required | path: `playlistId`, body: `{ name?: string, description?: string, tracks?: boolean }` | Same shape as `POST` (creates the playlist first if it was never exported)                                        | Same as `POST`, plus `400 INVALID_INPUT`                                                                                                                                                                                                                  |
 
@@ -244,7 +247,46 @@ The `bookId` path re-scores a book the caller already has a playlist on (the Now
 
 The rename is written to our row as well as Spotify's, or the next track sync would carry the old name straight back. On a playlist never exported, any of these creates it, using the `name` and `description` given.
 
+`avatarUrl` is the reader's Spotify profile picture, or `null` — Spotify returns an empty
+image list for an account that never set one. It is `null` rather than absent because it is
+read back from a nullable column, per the project's `undefined`-vs-`null` rule.
+
+The `authorize`/`callback` pair is our own connector, separate from Better Auth's
+`/api/auth/callback/spotify` used for *signing in* with Spotify. `callback` is deliberately
+session-free: on native it arrives in a browser that has no session, since the session lives
+in SecureStore rather than a cookie, so the `state` row is the identity. Both ends validate
+`returnUrl` against the app's scheme or origin — what was allowed when the flow started is
+re-checked when it returns.
+
 Export needs the `playlist-modify-private` scope, which is the whole of what the connector asks for — creating, filling, renaming and unfollowing all sit behind it. It is requested at link time (`linkSocial`), never at sign-in, so `GET /api/music-connector/status` reports `linked: false` for a reader who signed in *with* Spotify and never granted it.
+
+---
+
+## Demo account
+
+One shared, pre-seeded account so a visitor can reach a real shelf without signing up.
+Present only where `DEMO_USER_EMAIL` and `DEMO_USER_PASSWORD` are both set.
+
+| Endpoint                 | Auth | Request | Response                                      | Errors                                        |
+| ------------------------ | ---- | ------- | --------------------------------------------- | --------------------------------------------- |
+| `GET /api/demo-session`  | none | —       | `{ available: boolean }`                      | —                                             |
+| `POST /api/demo-session` | none | —       | `204` with the session cookie set             | `403 FORBIDDEN` (no demo account configured)  |
+
+The sign-in happens server-side via `auth.api.signInEmail`, and the route forwards Better
+Auth's own `Set-Cookie`. The credentials never reach the client — in a web bundle everything
+reachable is public, so a demo password shipped to the app is a published password. `POST`
+returns no user: the app re-reads the session through `getSession()` rather than trusting a
+response body.
+
+`GET` exists so the client can decide whether to offer the button at all, rather than
+showing one that fails on tap where no demo account is configured.
+
+`POST` is rate limited on the caller's address (60/hour). Behind a platform edge that is
+nearer a global ceiling than a per-reader one, which is the intent — it bounds how many
+sessions a stranger can mint. Better Auth's own limiter covers `/api/auth/*` only.
+
+**Web only.** The session arrives as a browser cookie, and the app's axios client is not
+the Better Auth Expo client, so nothing stores it in SecureStore on native.
 
 ---
 
