@@ -26,13 +26,16 @@ export const musicConnectorRouter = Router();
  * The same set Better Auth trusts, and `exp://` is development-only for the same reason.
  */
 function isTrustedReturnUrl(returnUrl: string): boolean {
-  const allowed = [
-    `${env.APP_SCHEME}://`,
-    env.APP_ORIGIN,
-    ...(env.NODE_ENV === "development" ? ["exp://"] : []),
-  ];
+  const schemes = [`${env.APP_SCHEME}://`, ...(env.NODE_ENV === "development" ? ["exp://"] : [])];
+  if (schemes.some((prefix) => returnUrl.startsWith(prefix))) return true;
 
-  return allowed.some((prefix) => returnUrl.startsWith(prefix));
+  // Origin equality, not a prefix: `startsWith(APP_ORIGIN)` also admits
+  // `https://app.example.com.attacker.test`, which our own domain would then redirect to.
+  try {
+    return new URL(returnUrl).origin === new URL(env.APP_ORIGIN).origin;
+  } catch {
+    return false;
+  }
 }
 
 /** GET /api/music-connector/status — whether the connection can write a playlist. */

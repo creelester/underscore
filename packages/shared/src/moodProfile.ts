@@ -94,6 +94,9 @@ export const MAX_MOODS = 2;
 /** For a profile with no mood, matching the design's no-chip-selected default. */
 export const DEFAULT_MOOD: Mood = 'melancholy';
 
+/** Two sentences, per `MOOD_SYSTEM` — and a client sends this back into a billed prompt. */
+export const MAX_SUMMARY_LENGTH = 400;
+
 export const MoodProfileSchema = z.object({
   genre: z.array(z.enum(GENRES)).max(MAX_GENRES),
   /** Empty on the manual-genre path. */
@@ -108,7 +111,7 @@ export const MoodProfileSchema = z.object({
   /** A genre in the reader's own words, from the by-hand picker's `Something else`. */
   genreOther: z.string().trim().max(MAX_READING_DETAIL_LENGTH).optional(),
   pacing: z.enum(['slow', 'steady', 'fast']),
-  summary: z.string(),
+  summary: z.string().trim().max(MAX_SUMMARY_LENGTH),
 });
 export type MoodProfile = z.infer<typeof MoodProfileSchema>;
 

@@ -9,8 +9,11 @@ import { ReadingContextSchema } from "./readingContext";
 export const DEFAULT_BOOKSHELF_LIMIT = 20;
 export const MAX_BOOKSHELF_LIMIT = 50;
 
+/** A title and an author, not a paragraph — it becomes a Google Books query string. */
+export const MAX_SEARCH_QUERY_LENGTH = 200;
+
 export const BookSearchQuerySchema = z.object({
-  q: z.string().trim().min(1, "A search term is required"),
+  q: z.string().trim().min(1, "A search term is required").max(MAX_SEARCH_QUERY_LENGTH),
 });
 export type BookSearchQuery = z.infer<typeof BookSearchQuerySchema>;
 
