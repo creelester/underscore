@@ -4,7 +4,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { SPOTIFY_PLAYLIST_SCOPES } from "@underscore/shared";
 
 import { FIXTURE_BOOKS, type FixtureBook } from "./catalog";
-import { readerSpotify } from "./spotify-user";
+import { FIXTURE_SPOTIFY_IMAGES, readerSpotify } from "./spotify-user";
 import { FIXTURE_ANCHORS, parseSearchQuery, toSpotifyTrack } from "./tracks";
 
 /**
@@ -223,7 +223,10 @@ const server = createServer(async (req, res) => {
       return;
     }
 
-    sendJson(res, 200, { id: `fixture-spotify-user-${auth.token}` });
+    sendJson(res, 200, {
+      id: `fixture-spotify-user-${auth.token}`,
+      images: FIXTURE_SPOTIFY_IMAGES,
+    });
     return;
   }
 

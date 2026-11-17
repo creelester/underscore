@@ -14,7 +14,7 @@ import {
 import { E2E_API_URL, E2E_UPSTREAM_URL } from "../playwright.config";
 import { connectSpotify } from "./db";
 import { fixtureBook } from "./fixtures/catalog";
-import type { FixtureSpotifyPlaylist } from "./fixtures/spotify-user";
+import { FIXTURE_SPOTIFY_AVATAR_URL, type FixtureSpotifyPlaylist } from "./fixtures/spotify-user";
 import { GENERATE_TIMEOUT_MS, signUpOverApi } from "./helpers";
 
 /**
@@ -48,6 +48,12 @@ const IDENTITY_SCOPES = "user-read-email user-read-private";
  * check has to be set membership rather than equality. Space-delimited, as Spotify sends it.
  */
 const EXPORT_SCOPES = ["user-read-email", ...SPOTIFY_PLAYLIST_SCOPES].join(" ");
+
+/** No connection at all, or one granted without the playlist scope. */
+const UNLINKED = { linked: false, provider: "spotify", avatarUrl: null };
+
+/** `connectSpotify` stores no picture — only the real callback, off Spotify's `/me`, does. */
+const SEEDED_LINK = { linked: true, provider: "spotify", avatarUrl: null };
 
 const BOOK = fixtureBook("e2e-lantern");
 
@@ -238,7 +244,12 @@ test.describe("connecting Spotify", () => {
     expect(callback.status()).toBe(302);
     expect(callback.headers().location).toBe(`${RETURN_URL}?spotify=connected`);
 
-    expect(await status(reader)).toEqual({ linked: true, provider: "spotify" });
+    // Widest of the two pictures `/me` serves, which is what the callback stored.
+    expect(await status(reader)).toEqual({
+      linked: true,
+      provider: "spotify",
+      avatarUrl: FIXTURE_SPOTIFY_AVATAR_URL,
+    });
   });
 
   test("leaves the reader unconnected when consent is refused", async ({
@@ -257,7 +268,7 @@ test.describe("connecting Spotify", () => {
     expect(callback.status()).toBe(302);
     expect(callback.headers().location).toBe(`${RETURN_URL}?spotify=denied`);
 
-    expect(await status(reader)).toEqual({ linked: false, provider: "spotify" });
+    expect(await status(reader)).toEqual(UNLINKED);
   });
 
   test("spends the state, so the same callback cannot be replayed", async ({
@@ -292,18 +303,18 @@ test.describe("connecting Spotify", () => {
 
   test("forgets the connection when the reader disconnects", async ({ newReader }) => {
     const reader = await newReader(EXPORT_SCOPES);
-    expect(await status(reader)).toEqual({ linked: true, provider: "spotify" });
+    expect(await status(reader)).toEqual(SEEDED_LINK);
 
     const response = await reader.api.delete("/api/music-connector");
     expect(response.status()).toBe(204);
 
-    expect(await status(reader)).toEqual({ linked: false, provider: "spotify" });
+    expect(await status(reader)).toEqual(UNLINKED);
   });
 });
 
 test.describe("the music connector status", () => {
   test("reports a reader who has never connected Spotify as unlinked", async ({ newReader }) => {
-    expect(await status(await newReader())).toEqual({ linked: false, provider: "spotify" });
+    expect(await status(await newReader())).toEqual(UNLINKED);
   });
 
   // The regression this spec exists for. A row check rather than a scope check passes
@@ -311,19 +322,13 @@ test.describe("the music connector status", () => {
   test("reports a connection granted without the playlist scope as unlinked", async ({
     newReader,
   }) => {
-    expect(await status(await newReader(IDENTITY_SCOPES))).toEqual({
-      linked: false,
-      provider: "spotify",
-    });
+    expect(await status(await newReader(IDENTITY_SCOPES))).toEqual(UNLINKED);
   });
 
   test("reports a reader as linked once the row carries the playlist scope", async ({
     newReader,
   }) => {
-    expect(await status(await newReader(EXPORT_SCOPES))).toEqual({
-      linked: true,
-      provider: "spotify",
-    });
+    expect(await status(await newReader(EXPORT_SCOPES))).toEqual(SEEDED_LINK);
   });
 });
 

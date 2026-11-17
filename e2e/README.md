@@ -111,8 +111,11 @@ Better Auth's: `beginSpotifyAuth` builds the authorize URL from
 `SPOTIFY_ACCOUNTS_BASE_URL`, so `GET /authorize` on the fixture server stands in for
 the consent screen and redirects straight back to whatever `redirect_uri` it was
 given. `POST /api/token` answers an `authorization_code` grant with an access token,
-a refresh token and the granted scopes, and `GET /me` with the Spotify user id the
-callback stores. See [Connecting Spotify in a test](#connecting-spotify-in-a-test).
+a refresh token and the granted scopes, and `GET /me` with the Spotify user id and
+the two profile pictures the callback stores — `FIXTURE_SPOTIFY_AVATAR_URL` in
+`fixtures/spotify-user.ts` is the wider of them, which is the one that reaches
+`GET /api/music-connector/status` as `avatarUrl`.
+See [Connecting Spotify in a test](#connecting-spotify-in-a-test).
 
 `server/.env.test` carries the same base URLs, so running the e2e stack by hand
 needs the fixture server running too:
@@ -233,6 +236,9 @@ does not know.
 
 The token is also the key the fixture server files that reader's playlists under, so
 give every test its own.
+
+A seeded row carries no `avatarUrl`, so `status` answers it `null` — the spec's
+`SEEDED_LINK`. Only the real handshake stores a picture.
 
 ### Locators and copy
 
