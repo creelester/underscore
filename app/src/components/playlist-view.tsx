@@ -200,6 +200,16 @@ export function PlaylistView({ playlist }: { playlist: Playlist }) {
             />
           </View>
 
+          {/* Ours, where the design has no state for it. Said before the attempt because
+              Spotify turns an unapproved account away at its own consent screen, leaving
+              us no error to report. */}
+          {status && !status.linked && (
+            <Text className="text-ink-faint font-body text-body-sm">
+              Spotify only approves a few accounts for a demo app, so saving and opening may
+              not work for you.
+            </Text>
+          )}
+
           <View>
             {playlist.tracks.map(({ track, position }) => (
               <TrackRow

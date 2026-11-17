@@ -131,7 +131,9 @@ function SpotifyRow() {
   const isLinked = !!status.data?.linked;
   const isBusy = link.isPending || disconnect.isPending;
 
-  let subtitle = isLinked ? 'Connected' : 'Not connected';
+  // The demo caveat rides the subtitle: Spotify ends the round trip at its own consent
+  // screen for an unapproved account, so a failure here would never reach `link.isError`.
+  let subtitle = isLinked ? 'Connected' : 'Not connected — a demo allows a few approved accounts';
   if (link.isError || disconnect.isError) subtitle = 'Could not reach Spotify';
 
   return (
